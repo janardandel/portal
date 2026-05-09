@@ -1,0 +1,787 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Owner Dashboard — Pitthugram</title>
+    <link rel="icon" type="image/png" href="./favicon.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/@phosphor-icons/web" defer></script>
+    <link rel="stylesheet" href="./style.css">
+    <style>
+        .od-page { min-height: calc(100vh - 72px); background: var(--bg-base); padding: 2rem 1.5rem; }
+        .od-wrap { max-width: 1100px; margin: 0 auto; }
+
+        /* Top bar */
+        .od-top {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin-bottom: 2.5rem;
+        }
+        .od-top h1 { font-size: 1.5rem; font-weight: 800; margin-bottom: 0.25rem; }
+        .od-top h1 span { color: var(--primary); }
+        .od-top-sub { color: var(--text-secondary); font-size: 0.9rem; }
+        .od-top-right { display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; }
+
+        /* Panels grid */
+        .od-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(min(320px, 100%), 1fr));
+            gap: 1.5rem;
+        }
+        .od-panel-full { grid-column: 1 / -1; }
+
+        /* Panel card */
+        .od-panel {
+            background: var(--bg-surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: 1.75rem;
+        }
+        .od-panel-head {
+            display: flex;
+            align-items: center;
+            gap: 0.875rem;
+            margin-bottom: 1.5rem;
+        }
+        .od-panel-icon {
+            width: 46px;
+            height: 46px;
+            border-radius: var(--radius);
+            background: var(--primary-light);
+            border: 1px solid rgba(244,0,9,0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.35rem;
+            color: var(--primary);
+            flex-shrink: 0;
+        }
+        .od-panel-head h2 { font-size: 1.05rem; font-weight: 700; margin-bottom: 0.15rem; }
+        .od-panel-head p  { font-size: 0.82rem; color: var(--text-secondary); }
+
+        /* Form fields inside panels */
+        .od-field { margin-bottom: 1rem; }
+        .od-field label {
+            display: block;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            margin-bottom: 0.4rem;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+        .od-field input, .od-field select {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            background: var(--bg-input);
+            border: 1.5px solid var(--border-light);
+            border-radius: var(--radius);
+            font-family: var(--font-body);
+            font-size: 0.9rem;
+            color: var(--text-primary);
+            transition: var(--transition);
+        }
+        .od-field input::placeholder { color: var(--text-muted); }
+        .od-field input:focus, .od-field select:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px var(--primary-glow);
+            background: var(--bg-elevated);
+        }
+        .od-field select option { background: var(--bg-elevated); }
+        .od-field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+
+        /* Panel submit button */
+        .od-btn {
+            width: 100%;
+            padding: 0.85rem;
+            background: var(--primary);
+            color: #fff;
+            border: none;
+            border-radius: var(--radius);
+            font-size: 0.925rem;
+            font-weight: 700;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            transition: var(--transition);
+            font-family: var(--font-body);
+            margin-top: 0.5rem;
+        }
+        .od-btn:hover:not(:disabled) { background: var(--primary-dark); transform: translateY(-2px); box-shadow: var(--shadow-red); }
+        .od-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+        .od-btn-outline {
+            background: transparent;
+            color: var(--primary);
+            border: 1.5px solid rgba(244,0,9,0.3);
+        }
+        .od-btn-outline:hover:not(:disabled) { background: var(--primary-light); }
+
+        /* Panel feedback */
+        .od-feedback {
+            margin-top: 1rem;
+            padding: 0.75rem 1rem;
+            border-radius: var(--radius);
+            font-size: 0.85rem;
+            font-weight: 500;
+            display: none;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .od-feedback.success { background: var(--success-light); color: #6EE7B7; border: 1px solid rgba(16,185,129,0.3); display: flex; }
+        .od-feedback.error   { background: var(--danger-light);  color: #FCA5A5; border: 1px solid rgba(239,68,68,0.3);  display: flex; }
+
+        /* Users table */
+        .od-search-bar {
+            display: flex;
+            gap: 0.75rem;
+            margin-bottom: 1.25rem;
+        }
+        .od-search-bar input {
+            flex: 1;
+            padding: 0.7rem 1rem;
+            background: var(--bg-input);
+            border: 1.5px solid var(--border-light);
+            border-radius: var(--radius);
+            font-family: var(--font-body);
+            font-size: 0.9rem;
+            color: var(--text-primary);
+            transition: var(--transition);
+        }
+        .od-search-bar input::placeholder { color: var(--text-muted); }
+        .od-search-bar input:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-glow); background: var(--bg-elevated); }
+        .od-search-bar button {
+            padding: 0.7rem 1.25rem;
+            background: var(--primary);
+            color: #fff;
+            border: none;
+            border-radius: var(--radius);
+            font-family: var(--font-body);
+            font-size: 0.875rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            transition: var(--transition);
+            white-space: nowrap;
+        }
+        .od-search-bar button:hover { background: var(--primary-dark); }
+
+        .od-table-wrap { overflow-x: auto; }
+        .od-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.875rem;
+        }
+        .od-table th {
+            text-align: left;
+            padding: 0.75rem 1rem;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-muted);
+            border-bottom: 1px solid var(--border);
+            white-space: nowrap;
+        }
+        .od-table td {
+            padding: 0.875rem 1rem;
+            border-bottom: 1px solid var(--border);
+            color: var(--text-secondary);
+            vertical-align: middle;
+        }
+        .od-table tr:last-child td { border-bottom: none; }
+        .od-table tr:hover td { background: rgba(255,255,255,0.02); }
+        .od-table td strong { color: var(--text-primary); }
+
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        .status-active   { background: var(--success-light); color: var(--success); }
+        .status-inactive { background: var(--danger-light);  color: var(--danger);  }
+
+        .od-empty {
+            text-align: center;
+            padding: 3rem 1rem;
+            color: var(--text-muted);
+        }
+        .od-empty i { font-size: 2rem; display: block; margin-bottom: 0.75rem; color: var(--border-light); }
+
+        .od-loading {
+            text-align: center;
+            padding: 2rem 1rem;
+            color: var(--text-secondary);
+        }
+        .od-spinner {
+            width: 28px;
+            height: 28px;
+            border: 2px solid var(--border);
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin: 0 auto 0.75rem;
+        }
+
+        /* Moodle config notice */
+        .config-banner {
+            background: var(--warning-light);
+            border: 1px solid rgba(245,158,11,0.3);
+            border-radius: var(--radius);
+            padding: 0.875rem 1rem;
+            font-size: 0.875rem;
+            color: #FCD34D;
+            display: flex;
+            align-items: center;
+            gap: 0.625rem;
+            margin-bottom: 2rem;
+        }
+        .config-banner.hidden { display: none; }
+
+        /* ── Mobile / Tablet ── */
+        @media (max-width: 520px) {
+            .btn-label { display: none; }
+        }
+        @media (max-width: 480px) {
+            .od-field-row { grid-template-columns: 1fr; }
+            .od-page { padding: 1.25rem 1rem; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- Navbar -->
+<header class="navbar">
+    <div class="container nav-inner">
+        <a href="./teacher-home.html" class="logo">
+            <img src="./logo.png" alt="Pitthugram">
+        </a>
+        <div class="nav-actions" style="display:flex;gap:0.75rem;">
+            <button id="switchTeacherBtn" onclick="switchToTeacher()" class="btn btn-outline btn-sm" style="display:none;padding:0.5rem 1rem;">
+                <i class="ph ph-chalkboard-teacher"></i><span class="btn-label"> Teacher View</span>
+            </button>
+            <button onclick="logout()" class="btn btn-outline btn-sm" style="padding:0.5rem 1rem;border-color:rgba(239,68,68,0.4);color:#FCA5A5;">
+                <i class="ph ph-sign-out"></i><span class="btn-label"> Logout</span>
+            </button>
+        </div>
+    </div>
+</header>
+
+<div class="od-page">
+    <div class="od-wrap">
+
+        <!-- Top bar -->
+        <div class="od-top">
+            <div>
+                <h1>Owner Dashboard <span>·</span> Moodle Manager</h1>
+                <div class="od-top-sub">
+                    Signed in as <strong id="ownerEmail" style="color:var(--text-primary);">…</strong>
+                </div>
+            </div>
+            <div class="od-top-right">
+                <div class="user-chip">
+                    <div class="avatar"><i class="ph-fill ph-crown"></i></div>
+                    <span>Account Owner</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Moodle config not set warning -->
+        <div class="config-banner" id="configBanner">
+            <i class="ph-fill ph-warning"></i>
+            Moodle is not configured. Add your Moodle URL and token in the database (<code>moodle_config</code> table) to enable account management.
+        </div>
+
+        <div class="od-grid">
+
+            <!-- Panel 1: Create Teacher Account -->
+            <div class="od-panel">
+                <div class="od-panel-head">
+                    <div class="od-panel-icon"><i class="ph-fill ph-chalkboard-teacher"></i></div>
+                    <div>
+                        <h2>Create Teacher Account</h2>
+                        <p>Add a new teacher to your Moodle platform</p>
+                    </div>
+                </div>
+                <form onsubmit="createUser(event,'teacher')">
+                    <div class="od-field-row">
+                        <div class="od-field">
+                            <label>First Name</label>
+                            <input type="text" name="firstname" placeholder="Jane" required>
+                        </div>
+                        <div class="od-field">
+                            <label>Last Name</label>
+                            <input type="text" name="lastname" placeholder="Doe" required>
+                        </div>
+                    </div>
+                    <div class="od-field">
+                        <label>Username</label>
+                        <input type="text" name="username" placeholder="janedoe" required autocomplete="off">
+                    </div>
+                    <div class="od-field">
+                        <label>Email Address</label>
+                        <input type="email" name="email" placeholder="jane@yourschool.com" required>
+                    </div>
+                    <div class="od-field">
+                        <label>Temporary Password</label>
+                        <input type="text" name="password" placeholder="Min 8 chars, 1 digit, 1 uppercase" required autocomplete="new-password">
+                    </div>
+                    <button type="submit" class="od-btn" id="createTeacherBtn">
+                        <i class="ph ph-plus"></i> Create Teacher Account
+                    </button>
+                    <div class="od-feedback" id="createTeacherFeedback"></div>
+                </form>
+            </div>
+
+            <!-- Panel 2: Create Student Account -->
+            <div class="od-panel">
+                <div class="od-panel-head">
+                    <div class="od-panel-icon"><i class="ph-fill ph-student"></i></div>
+                    <div>
+                        <h2>Create Student Account</h2>
+                        <p>Add a new student to your Moodle platform</p>
+                    </div>
+                </div>
+                <form onsubmit="createUser(event,'student')">
+                    <div class="od-field-row">
+                        <div class="od-field">
+                            <label>First Name</label>
+                            <input type="text" name="firstname" placeholder="Ravi" required>
+                        </div>
+                        <div class="od-field">
+                            <label>Last Name</label>
+                            <input type="text" name="lastname" placeholder="Sharma" required>
+                        </div>
+                    </div>
+                    <div class="od-field">
+                        <label>Username</label>
+                        <input type="text" name="username" placeholder="ravisharma" required autocomplete="off">
+                    </div>
+                    <div class="od-field">
+                        <label>Email Address</label>
+                        <input type="email" name="email" placeholder="ravi@yourschool.com" required>
+                    </div>
+                    <div class="od-field">
+                        <label>Temporary Password</label>
+                        <input type="text" name="password" placeholder="Min 8 chars, 1 digit, 1 uppercase" required autocomplete="new-password">
+                    </div>
+                    <button type="submit" class="od-btn" id="createStudentBtn">
+                        <i class="ph ph-plus"></i> Create Student Account
+                    </button>
+                    <div class="od-feedback" id="createStudentFeedback"></div>
+                </form>
+            </div>
+
+            <!-- Panel 3: Disable / Suspend Account -->
+            <div class="od-panel">
+                <div class="od-panel-head">
+                    <div class="od-panel-icon" style="background:var(--danger-light);border-color:rgba(239,68,68,0.2);color:var(--danger);">
+                        <i class="ph-fill ph-prohibit"></i>
+                    </div>
+                    <div>
+                        <h2>Disable Account</h2>
+                        <p>Suspend a user from accessing Moodle</p>
+                    </div>
+                </div>
+                <form onsubmit="disableAccount(event)">
+                    <div class="od-field">
+                        <label>Username or Email</label>
+                        <input type="text" name="identifier" placeholder="username or email@domain.com" required autocomplete="off">
+                    </div>
+                    <div class="od-field">
+                        <label>Action</label>
+                        <select name="suspended">
+                            <option value="1">Suspend (disable login)</option>
+                            <option value="0">Reactivate (re-enable login)</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="od-btn od-btn-outline" id="disableBtn" style="color:var(--danger);border-color:rgba(239,68,68,0.3);">
+                        <i class="ph ph-prohibit"></i> Apply
+                    </button>
+                    <div class="od-feedback" id="disableFeedback"></div>
+                </form>
+            </div>
+
+            <!-- Panel 4: Reset Password -->
+            <div class="od-panel">
+                <div class="od-panel-head">
+                    <div class="od-panel-icon"><i class="ph-fill ph-key"></i></div>
+                    <div>
+                        <h2>Reset Password</h2>
+                        <p>Set a new password for any Moodle user</p>
+                    </div>
+                </div>
+                <form onsubmit="resetPassword(event)">
+                    <div class="od-field">
+                        <label>Username</label>
+                        <input type="text" name="username" placeholder="username" required autocomplete="off">
+                    </div>
+                    <div class="od-field">
+                        <label>New Password</label>
+                        <input type="text" name="newpassword" placeholder="Min 8 chars, 1 digit, 1 uppercase" required autocomplete="new-password">
+                    </div>
+                    <button type="submit" class="od-btn" id="resetPwBtn">
+                        <i class="ph ph-key"></i> Reset Password
+                    </button>
+                    <div class="od-feedback" id="resetPwFeedback"></div>
+                </form>
+            </div>
+
+            <!-- Panel 5: View All Users (full width) -->
+            <div class="od-panel od-panel-full">
+                <div class="od-panel-head">
+                    <div class="od-panel-icon"><i class="ph-fill ph-users-three"></i></div>
+                    <div>
+                        <h2>All Users</h2>
+                        <p>Browse and search all accounts on your Moodle platform</p>
+                    </div>
+                </div>
+                <div class="od-search-bar">
+                    <input type="text" id="userSearchInput" placeholder="Search by name, username, or email…">
+                    <button onclick="searchUsers()">
+                        <i class="ph ph-magnifying-glass"></i> Search
+                    </button>
+                    <button onclick="loadAllUsers()" style="background:var(--bg-elevated);border:1.5px solid var(--border-light);color:var(--text-secondary);">
+                        <i class="ph ph-arrow-clockwise"></i>
+                    </button>
+                </div>
+                <div id="usersTableArea">
+                    <div class="od-empty">
+                        <i class="ph ph-users-three"></i>
+                        Click Search or load all users to view accounts
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<script>
+let ownerToken  = null;
+let moodleURL   = null;
+let moodleToken = null;
+
+// ── Auth guard + role check ──
+(async function init() {
+    ownerToken = localStorage.getItem('pg_access_token');
+    if (!ownerToken) {
+        window.location.href = 'index.html';
+        return;
+    }
+
+    const user = JSON.parse(localStorage.getItem('pg_user') || '{}');
+    document.getElementById('ownerEmail').textContent = user.email || '…';
+
+    // Verify role server-side — do not trust localStorage alone
+    try {
+        const verifyRes = await fetch('/api/verify', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ userId: user.id, token: ownerToken })
+        });
+        const verifyData = await verifyRes.json();
+
+        if (!verifyRes.ok || verifyData.role !== 'owner') {
+            window.location.href = 'index.html';
+            return;
+        }
+
+        // Confirmed owner — show Teacher View switch
+        document.getElementById('switchTeacherBtn').style.display = 'inline-flex';
+    } catch (_) {
+        window.location.href = 'index.html';
+        return;
+    }
+
+    await loadMoodleConfig();
+})();
+
+async function loadMoodleConfig() {
+    try {
+        const res  = await fetch('/api/moodle-config', {
+            headers: { 'Authorization': 'Bearer ' + ownerToken }
+        });
+        const data = await res.json();
+        if (data.configured) {
+            moodleURL   = data.moodle_url.replace(/\/$/, '');
+            moodleToken = data.moodle_token;
+            document.getElementById('configBanner').classList.add('hidden');
+        }
+    } catch (_) {}
+}
+
+// ── Moodle REST helper ──
+async function moodleCall(wsfunction, params) {
+    if (!moodleURL || !moodleToken) {
+        throw new Error('Moodle is not configured. Add your credentials to the moodle_config table in Supabase.');
+    }
+    const body = new URLSearchParams({ wstoken: moodleToken, wsfunction, moodlewsrestformat: 'json' });
+    for (const [k, v] of Object.entries(params)) body.append(k, v);
+
+    const res = await fetch(moodleURL + '/webservice/rest/server.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: body.toString()
+    });
+    const data = await res.json();
+    if (data && data.exception) throw new Error(data.message || data.errorcode || 'Moodle API error');
+    return data;
+}
+
+// ── Panel helpers ──
+function setFeedback(id, msg, type) {
+    const el = document.getElementById(id);
+    el.textContent = msg;
+    el.className = 'od-feedback ' + type;
+}
+function clearFeedback(id) {
+    const el = document.getElementById(id);
+    el.className = 'od-feedback';
+}
+
+// ── Create user (teacher or student) ──
+async function createUser(e, role) {
+    e.preventDefault();
+    const form = e.target;
+    const btnId = role === 'teacher' ? 'createTeacherBtn' : 'createStudentBtn';
+    const fbId  = role === 'teacher' ? 'createTeacherFeedback' : 'createStudentFeedback';
+
+    const btn = document.getElementById(btnId);
+    btn.disabled = true;
+    clearFeedback(fbId);
+
+    const firstname = form.firstname.value.trim();
+    const lastname  = form.lastname.value.trim();
+    const username  = form.username.value.trim().toLowerCase();
+    const email     = form.email.value.trim();
+    const password  = form.password.value;
+
+    try {
+        await moodleCall('core_user_create_users', {
+            'users[0][username]':  username,
+            'users[0][firstname]': firstname,
+            'users[0][lastname]':  lastname,
+            'users[0][email]':     email,
+            'users[0][password]':  password,
+            'users[0][auth]':      'manual'
+        });
+        setFeedback(fbId, `${role === 'teacher' ? 'Teacher' : 'Student'} account for "${username}" created successfully.`, 'success');
+        form.reset();
+    } catch (err) {
+        setFeedback(fbId, err.message, 'error');
+    } finally {
+        btn.disabled = false;
+    }
+}
+
+// ── Disable / reactivate account ──
+async function disableAccount(e) {
+    e.preventDefault();
+    const form  = e.target;
+    const btn   = document.getElementById('disableBtn');
+    const fbId  = 'disableFeedback';
+
+    btn.disabled = true;
+    clearFeedback(fbId);
+
+    const identifier = form.identifier.value.trim();
+    const suspended  = form.suspended.value;
+
+    try {
+        // First find the user to get their Moodle ID
+        const isEmail   = identifier.includes('@');
+        const field     = isEmail ? 'email' : 'username';
+        const searchRes = await moodleCall('core_user_get_users', {
+            [`criteria[0][key]`]:   field,
+            [`criteria[0][value]`]: identifier
+        });
+
+        if (!searchRes.users || searchRes.users.length === 0) {
+            throw new Error(`No Moodle user found with ${field} "${identifier}".`);
+        }
+
+        const userId = searchRes.users[0].id;
+        await moodleCall('core_user_update_users', {
+            'users[0][id]':        userId,
+            'users[0][suspended]': suspended
+        });
+
+        const action = suspended === '1' ? 'suspended' : 'reactivated';
+        setFeedback(fbId, `User "${identifier}" has been ${action} successfully.`, 'success');
+        form.reset();
+    } catch (err) {
+        setFeedback(fbId, err.message, 'error');
+    } finally {
+        btn.disabled = false;
+    }
+}
+
+// ── Reset password ──
+async function resetPassword(e) {
+    e.preventDefault();
+    const form = e.target;
+    const btn  = document.getElementById('resetPwBtn');
+    const fbId = 'resetPwFeedback';
+
+    btn.disabled = true;
+    clearFeedback(fbId);
+
+    const username    = form.username.value.trim();
+    const newpassword = form.newpassword.value;
+
+    try {
+        const searchRes = await moodleCall('core_user_get_users', {
+            'criteria[0][key]':   'username',
+            'criteria[0][value]': username
+        });
+
+        if (!searchRes.users || searchRes.users.length === 0) {
+            throw new Error(`No Moodle user found with username "${username}".`);
+        }
+
+        const userId = searchRes.users[0].id;
+        await moodleCall('core_user_update_users', {
+            'users[0][id]':       userId,
+            'users[0][password]': newpassword
+        });
+
+        setFeedback(fbId, `Password for "${username}" has been reset successfully.`, 'success');
+        form.reset();
+    } catch (err) {
+        setFeedback(fbId, err.message, 'error');
+    } finally {
+        btn.disabled = false;
+    }
+}
+
+// ── View all users ──
+async function loadAllUsers() {
+    document.getElementById('userSearchInput').value = '';
+    renderUsersLoading();
+    try {
+        const data = await moodleCall('core_user_get_users', {
+            'criteria[0][key]': 'email',
+            'criteria[0][value]': '%'
+        });
+        renderUsersTable(data.users || []);
+    } catch (err) {
+        renderUsersError(err.message);
+    }
+}
+
+async function searchUsers() {
+    const q = document.getElementById('userSearchInput').value.trim();
+    if (!q) { loadAllUsers(); return; }
+
+    renderUsersLoading();
+    try {
+        // Search by username first, then email if no results
+        let users = [];
+        const byUsername = await moodleCall('core_user_get_users', {
+            'criteria[0][key]': 'username',
+            'criteria[0][value]': '%' + q + '%'
+        });
+        users = byUsername.users || [];
+
+        if (users.length === 0) {
+            const byEmail = await moodleCall('core_user_get_users', {
+                'criteria[0][key]': 'email',
+                'criteria[0][value]': '%' + q + '%'
+            });
+            users = byEmail.users || [];
+        }
+
+        renderUsersTable(users);
+    } catch (err) {
+        renderUsersError(err.message);
+    }
+}
+
+document.getElementById('userSearchInput').addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') searchUsers();
+});
+
+function renderUsersLoading() {
+    document.getElementById('usersTableArea').innerHTML =
+        '<div class="od-loading"><div class="od-spinner"></div>Fetching users from Moodle…</div>';
+}
+
+function renderUsersError(msg) {
+    document.getElementById('usersTableArea').innerHTML =
+        `<div class="od-feedback error" style="display:flex;margin:0;"><i class="ph-fill ph-warning-circle"></i>${msg}</div>`;
+}
+
+function renderUsersTable(users) {
+    if (!users.length) {
+        document.getElementById('usersTableArea').innerHTML =
+            '<div class="od-empty"><i class="ph ph-user-circle-minus"></i>No users found.</div>';
+        return;
+    }
+    const rows = users.map(u => {
+        const status = u.suspended
+            ? '<span class="status-badge status-inactive"><i class="ph ph-prohibit"></i>Suspended</span>'
+            : '<span class="status-badge status-active"><i class="ph ph-check-circle"></i>Active</span>';
+        return `
+            <tr>
+                <td><strong>${esc(u.fullname)}</strong></td>
+                <td>${esc(u.username)}</td>
+                <td>${esc(u.email)}</td>
+                <td>${status}</td>
+                <td><span style="font-size:0.8rem;color:var(--text-muted);">${u.roles?.map(r=>r.shortname).join(', ') || '—'}</span></td>
+            </tr>`;
+    }).join('');
+
+    document.getElementById('usersTableArea').innerHTML = `
+        <div class="od-table-wrap">
+            <table class="od-table">
+                <thead>
+                    <tr>
+                        <th>Full Name</th>
+                        <th>Username</th>
+                        <th>Email</th>
+                        <th>Status</th>
+                        <th>Roles</th>
+                    </tr>
+                </thead>
+                <tbody>${rows}</tbody>
+            </table>
+        </div>
+        <p style="font-size:0.8rem;color:var(--text-muted);margin-top:0.875rem;">${users.length} user${users.length !== 1 ? 's' : ''} found</p>`;
+}
+
+function esc(str) {
+    return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// ── Switch to Teacher View (owner only — button hidden for teachers) ──
+function switchToTeacher() {
+    // TODO: update href below to your site's teacher page once it exists
+    window.location.href = './teacher-home.html';
+}
+
+// ── Logout ──
+function logout() {
+    localStorage.removeItem('pg_access_token');
+    localStorage.removeItem('pg_refresh_token');
+    localStorage.removeItem('pg_user');
+    localStorage.removeItem('pg_role');
+    window.location.href = 'index.html';
+}
+</script>
+</body>
+</html>

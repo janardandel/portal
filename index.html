@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portal — Pitthugram</title>
+    <link rel="icon" type="image/png" href="./favicon.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/@phosphor-icons/web" defer></script>
+    <link rel="stylesheet" href="./style.css">
+    <style>
+        .portal-page {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1.5rem;
+            position: relative;
+            overflow: hidden;
+        }
+        .portal-glow {
+            position: absolute;
+            top: -200px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 1000px;
+            height: 700px;
+            background: radial-gradient(ellipse, rgba(244,0,9,0.08) 0%, transparent 70%);
+            pointer-events: none;
+            z-index: 0;
+        }
+    </style>
+</head>
+<body>
+
+<div class="portal-page">
+    <div class="portal-glow"></div>
+
+    <div class="login-card" style="position:relative;z-index:1;">
+        <a href="./index.html" class="login-logo">
+            <img src="./logo.png" alt="Pitthugram">
+        </a>
+
+        <div class="login-head">
+            <div class="icon-wrap">
+                <i class="ph-fill ph-lock-key"></i>
+            </div>
+            <h1>Welcome Back</h1>
+            <p>Sign in to your portal</p>
+        </div>
+
+        <div class="alert-box" id="alertBox">
+            <i class="ph-fill ph-warning-circle"></i>
+            <span id="alertMsg"></span>
+        </div>
+
+        <form id="loginForm" class="login-form">
+            <div class="form-group">
+                <label for="email">Email Address</label>
+                <div class="input-wrap">
+                    <i class="ph ph-envelope input-icon"></i>
+                    <input type="email" id="email" placeholder="your@email.com" required autocomplete="email">
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="password">Password</label>
+                <div class="input-wrap">
+                    <i class="ph ph-lock input-icon"></i>
+                    <input type="password" id="password" placeholder="Enter your password" required autocomplete="current-password">
+                    <button type="button" class="toggle-pw" id="togglePw">
+                        <i class="ph ph-eye" id="eyeIcon"></i>
+                    </button>
+                </div>
+            </div>
+            <button type="submit" class="btn-login" id="loginBtn">
+                <span>Sign In</span>
+                <i class="ph ph-arrow-right"></i>
+            </button>
+            <div id="loginSpinner" style="display:none;width:24px;height:24px;border:2px solid rgba(244,0,9,0.25);border-top-color:#f40009;border-radius:50%;animation:spin 0.7s linear infinite;margin:.75rem auto 0;"></div>
+        </form>
+
+        <div class="login-footer-note">
+            Having trouble? <a href="mailto:support@pitthugram.com">Contact Support</a>
+        </div>
+    </div>
+</div>
+
+<script>
+// Redirect if already authenticated — everyone lands on teacher-home
+if (localStorage.getItem('pg_access_token')) {
+    window.location.href = 'teacher-home.html';
+}
+
+document.getElementById('togglePw').addEventListener('click', function() {
+    const inp  = document.getElementById('password');
+    const icon = document.getElementById('eyeIcon');
+    if (inp.type === 'password') {
+        inp.type = 'text';
+        icon.className = 'ph ph-eye-slash';
+    } else {
+        inp.type = 'password';
+        icon.className = 'ph ph-eye';
+    }
+});
+
+function showAlert(msg, type) {
+    const box = document.getElementById('alertBox');
+    box.className = 'alert-box alert-' + type;
+    document.getElementById('alertMsg').textContent = msg;
+}
+
+document.getElementById('loginForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const email    = document.getElementById('email').value.trim();
+    const password = document.getElementById('password').value;
+
+    document.getElementById('alertBox').className = 'alert-box';
+    document.getElementById('loginBtn').style.display  = 'none';
+    document.getElementById('loginSpinner').style.display = 'block';
+
+    try {
+        const res  = await fetch('/api/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, password })
+        });
+        const data = await res.json();
+
+        if (!res.ok) throw new Error(data.error || 'Something went wrong. Please try again.');
+
+        localStorage.setItem('pg_access_token',  data.access_token);
+        localStorage.setItem('pg_refresh_token', data.refresh_token);
+        localStorage.setItem('pg_user',          JSON.stringify(data.user));
+        localStorage.setItem('pg_role',          data.role);
+
+        document.getElementById('loginSpinner').style.display = 'none';
+        showAlert('Login successful! Redirecting…', 'success');
+
+        // Everyone lands on teacher-home; owners can switch to their dashboard from there
+        setTimeout(() => { window.location.href = 'teacher-home.html'; }, 800);
+
+    } catch (err) {
+        document.getElementById('loginSpinner').style.display = 'none';
+        document.getElementById('loginBtn').style.display = 'flex';
+        showAlert(err.message || 'Something went wrong. Please try again.', 'error');
+    }
+});
+</script>
+</body>
+</html>
