@@ -7,12 +7,13 @@
  * of the authenticated owner. Supabase RLS ensures only owners
  * can read this row.
  */
+const SUPABASE_URL = 'https://lekvzyoarawotlsbeoqa.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imxla3Z6eW9hcmF3b3Rsc2Jlb3FhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgyOTgzNTIsImV4cCI6MjA5Mzg3NDM1Mn0.KO-UyQerUdbxxhqBDX5F51ZMU2WGIi6BLg-b-rDALmk';
+
 export async function onRequestGet(context) {
     const { request, env } = context;
-
-    if (!env.SUPABASE_URL || !env.SUPABASE_KEY) {
-        return json({ error: 'Server misconfiguration. Contact support.' }, 500);
-    }
+    const supabaseUrl = env.SUPABASE_URL || SUPABASE_URL;
+    const supabaseKey = env.SUPABASE_KEY || SUPABASE_KEY;
 
     const authHeader = request.headers.get('Authorization') || '';
     const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : '';
@@ -22,10 +23,10 @@ export async function onRequestGet(context) {
     }
 
     const res = await fetch(
-        `${env.SUPABASE_URL}/rest/v1/moodle_config?id=eq.1&select=moodle_url,moodle_token`,
+        `${supabaseUrl}/rest/v1/moodle_config?id=eq.1&select=moodle_url,moodle_token`,
         {
             headers: {
-                'apikey': env.SUPABASE_KEY,
+                'apikey': supabaseKey,
                 'Authorization': `Bearer ${token}`
             }
         }

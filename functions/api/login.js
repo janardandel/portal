@@ -6,12 +6,13 @@
  * Supabase URL and key are read from Cloudflare Pages secrets —
  * they are never exposed to the browser.
  */
+const SUPABASE_URL = 'https://lekvzyoarawotlsbeoqa.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imxla3Z6eW9hcmF3b3Rsc2Jlb3FhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgyOTgzNTIsImV4cCI6MjA5Mzg3NDM1Mn0.KO-UyQerUdbxxhqBDX5F51ZMU2WGIi6BLg-b-rDALmk';
+
 export async function onRequestPost(context) {
     const { request, env } = context;
-
-    if (!env.SUPABASE_URL || !env.SUPABASE_KEY) {
-        return json({ error: 'Server misconfiguration. Contact support.' }, 500);
-    }
+    const supabaseUrl = env.SUPABASE_URL || SUPABASE_URL;
+    const supabaseKey = env.SUPABASE_KEY || SUPABASE_KEY;
 
     let email, password;
     try {
@@ -25,12 +26,12 @@ export async function onRequestPost(context) {
     }
 
     // Step 1 — Supabase authentication
-    const authRes = await fetch(`${env.SUPABASE_URL}/auth/v1/token?grant_type=password`, {
+    const authRes = await fetch(`${supabaseUrl}/auth/v1/token?grant_type=password`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
-            'apikey': env.SUPABASE_KEY,
-            'Authorization': `Bearer ${env.SUPABASE_KEY}`
+            'apikey': supabaseKey,
+            'Authorization': `Bearer ${supabaseKey}`
         },
         body: JSON.stringify({ email, password })
     });
@@ -44,10 +45,10 @@ export async function onRequestPost(context) {
 
     // Step 2 — Fetch role from profiles table
     const profRes = await fetch(
-        `${env.SUPABASE_URL}/rest/v1/profiles?id=eq.${authData.user.id}&select=role`,
+        `${supabaseUrl}/rest/v1/profiles?id=eq.${authData.user.id}&select=role`,
         {
             headers: {
-                'apikey': env.SUPABASE_KEY,
+                'apikey': supabaseKey,
                 'Authorization': `Bearer ${authData.access_token}`
             }
         }
