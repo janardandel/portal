@@ -1,0 +1,1714 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz Builder — Pitthugram</title>
+    <link rel="icon" type="image/png" href="./favicon.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/@phosphor-icons/web" defer></script>
+    <link rel="stylesheet" href="./style.css">
+    <style>
+        /* ── Desktop sidebar (721px+) ── */
+        @media(min-width:721px){
+            #qbSidebar{display:flex!important;flex-direction:column!important;position:fixed!important;top:72px!important;left:0!important;width:260px!important;height:calc(100vh - 72px)!important;max-height:none!important;border-radius:0!important;transform:none!important;visibility:visible!important;opacity:1!important;z-index:50!important;}
+            #qbPage.qb-page{margin-left:260px!important;}
+            #qbPage .qb-layout{display:block!important;}
+        }
+
+        /* ── Schedule fields ── */
+        .schedule-fields select,.schedule-fields input{width:100%;padding:0.7rem 2.25rem 0.7rem 0.875rem;background:var(--bg-input);border:1.5px solid var(--border-light);border-radius:var(--radius);font-family:var(--font-body);font-size:0.9rem;color:var(--text-primary);color-scheme:dark;transition:var(--transition);appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24'%3E%3Cpath fill='%23888' d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 0.75rem center;cursor:pointer;}
+        .schedule-fields select:focus,.schedule-fields input:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-glow);background-color:var(--bg-elevated);}
+        .schedule-fields select option{background:var(--bg-elevated);}
+        @media(min-width:560px){.schedule-fields{grid-template-columns:repeat(2,1fr)!important;}}
+        @media(min-width:900px){.schedule-fields{grid-template-columns:repeat(4,1fr)!important;}}
+
+        /* ── Settings Modal ── */
+        .settings-modal-bg{position:fixed;inset:0;background:rgba(0,0,0,0.65);backdrop-filter:blur(4px);z-index:2000;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity 0.25s;}
+        .settings-modal-bg.show{opacity:1;pointer-events:all;}
+        .settings-modal-box{background:var(--bg-elevated);border:1px solid var(--border);border-radius:var(--radius-lg);padding:2rem 1.75rem 1.75rem;width:min(500px,94vw);max-height:88vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,0.5);transform:translateY(16px) scale(0.97);transition:transform 0.25s,opacity 0.25s;}
+        .settings-modal-bg.show .settings-modal-box{transform:translateY(0) scale(1);}
+        .settings-modal-title{font-size:1.05rem;font-weight:700;color:var(--text-primary);margin-bottom:0.35rem;display:flex;align-items:center;gap:0.55rem;}
+        .settings-modal-sub{font-size:0.83rem;color:var(--text-muted);margin-bottom:1.25rem;}
+        .settings-section-label{font-size:0.7rem;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.07em;margin-bottom:0.6rem;margin-top:1rem;}
+        .settings-section-label:first-of-type{margin-top:0;}
+        .settings-field{margin-bottom:1rem;}
+        .settings-field label{display:block;font-size:0.9rem;font-weight:600;color:var(--text-primary);margin-bottom:0.5rem;}
+        .settings-field input,.settings-field select{width:100%;padding:0.7rem 0.875rem;background:var(--bg-input);border:1.5px solid var(--border-light);border-radius:var(--radius);font-family:var(--font-body);font-size:0.9rem;color:var(--text-primary);transition:var(--transition);}
+        .settings-field input:focus,.settings-field select:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-glow);}
+        .settings-actions{display:flex;justify-content:flex-end;gap:0.65rem;margin-top:1.5rem;border-top:1px solid var(--border-light);padding-top:1.1rem;}
+        @media(max-width:400px){.settings-actions{flex-direction:column;} .settings-save-btn,.settings-cancel-btn{width:100%;justify-content:center;}}
+
+        /* ── My Quizzes View ── */
+        .my-quizzes-view{display:none;flex-direction:column;gap:1rem;}
+        .my-quizzes-view.show{display:flex;}
+        .quiz-item{background:var(--bg-surface);border:1px solid var(--border);border-radius:var(--radius);padding:1rem;margin-bottom:0.5rem;}
+        .quiz-item-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:0.5rem;}
+        .quiz-title{font-weight:600;color:var(--text-primary);}
+        .quiz-status{padding:0.25rem 0.5rem;border-radius:var(--radius-sm);font-size:0.8rem;font-weight:600;}
+        .quiz-status.pending{background:#fff3cd;color:#856404;}
+        .quiz-status.scheduled{background:#d1ecf1;color:#0c5460;}
+        .quiz-status.completed{background:#d4edda;color:#155724;}
+        .quiz-details{font-size:0.9rem;color:var(--text-muted);}
+        .quiz-actions{display:flex;gap:0.5rem;margin-top:0.5rem;}
+
+        /* ── Question Bank View ── */
+        .question-bank-view{display:none;flex-direction:column;gap:1rem;}
+        .question-bank-view.show{display:flex;}
+        .qb-search-bar{display:flex;gap:0.5rem;margin-bottom:1rem;}
+        .qb-search-input{flex:1;padding:0.5rem;border:1px solid var(--border);border-radius:var(--radius);font-size:0.9rem;}
+        .qb-filter-btn{padding:0.5rem 1rem;background:var(--bg-base);border:1px solid var(--border);border-radius:var(--radius);cursor:pointer;}
+        .qb-question-item{background:var(--bg-surface);border:1px solid var(--border);border-radius:var(--radius);padding:1rem;margin-bottom:0.5rem;}
+        .qb-question-text{font-weight:500;margin-bottom:0.5rem;}
+        .qb-question-meta{font-size:0.8rem;color:var(--text-muted);}
+
+        /* ── Loading states ── */
+        .sidebar-loading{opacity:0.6;pointer-events:none;}
+        .subject-loading::after{content:'...';color:var(--text-muted);}
+
+        /* ── Accessibility ── */
+        .qb-nav a:focus,.qb-subjects li:focus,.sidebar-link:focus{outline:2px solid var(--primary);outline-offset:2px;}
+        .qb-subjects li{cursor:pointer;}
+        .qb-subjects li[aria-label]{position:relative;}
+        .qb-subjects li[aria-label]::after{content:attr(aria-label);position:absolute;left:100%;top:50%;transform:translateY(-50%);background:var(--bg-elevated);color:var(--text-primary);padding:0.25rem 0.5rem;border-radius:var(--radius);font-size:0.8rem;white-space:nowrap;z-index:100;opacity:0;pointer-events:none;transition:opacity 0.2s;}
+        .qb-subjects li:hover::after{opacity:1;}
+
+        /* ── Question counts ── */
+        .subject-count{font-size:0.8rem;color:var(--text-muted);font-weight:500;}
+
+        /* ── Highlight effect for selected questions ── */
+        .question-row.highlight{background:var(--primary-light);border-left:4px solid var(--primary);}
+
+        /* ── Settings buttons ── */
+        .settings-cancel-btn,.settings-save-btn{padding:0.5rem 1.1rem;background:transparent;border:1.5px solid var(--border-light);border-radius:var(--radius);font-family:var(--font-body);font-size:0.875rem;font-weight:600;color:var(--text-muted);cursor:pointer;transition:var(--transition);}
+        .settings-cancel-btn:hover{border-color:var(--text-muted);color:var(--text-primary);}
+        .settings-save-btn{background:var(--primary);border-color:var(--primary);color:#fff;}
+        .settings-save-btn:hover{background:var(--primary-dark,#c8000a);}
+        .batch-modal-bg{position:fixed;inset:0;background:rgba(0,0,0,0.65);backdrop-filter:blur(4px);z-index:2000;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity 0.25s;}
+        .batch-modal-bg.show{opacity:1;pointer-events:all;}
+        .batch-modal-box{background:var(--bg-elevated);border:1px solid var(--border);border-radius:var(--radius-lg);padding:2rem 1.75rem 1.75rem;width:min(500px,94vw);max-height:88vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,0.5);transform:translateY(16px) scale(0.97);transition:transform 0.25s,opacity 0.25s;}
+        .batch-modal-bg.show .batch-modal-box{transform:translateY(0) scale(1);}
+        /* Bottom-sheet on phones */
+        @media(max-width:560px){
+            .batch-modal-bg{align-items:flex-end;}
+            .batch-modal-box{width:100%;max-width:100%;border-radius:1.25rem 1.25rem 0 0;padding:1.5rem 1.25rem 2.25rem;max-height:92vh;transform:translateY(100%);}
+            .batch-modal-bg.show .batch-modal-box{transform:translateY(0);}
+        }
+        .batch-modal-title{font-size:1.05rem;font-weight:700;color:var(--text-primary);margin-bottom:0.35rem;display:flex;align-items:center;gap:0.55rem;}
+        .batch-modal-sub{font-size:0.83rem;color:var(--text-muted);margin-bottom:1.25rem;}
+        .batch-section-label{font-size:0.7rem;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.07em;margin-bottom:0.6rem;margin-top:1rem;}
+        .batch-section-label:first-of-type{margin-top:0;}
+        .batch-btn-grid{display:flex;flex-wrap:wrap;gap:0.45rem;margin-bottom:0.25rem;}
+        .batch-btn{padding:0.5rem 1rem;background:var(--bg-base);border:1.5px solid var(--border-light);border-radius:var(--radius);font-family:var(--font-body);font-size:0.875rem;font-weight:600;color:var(--text-secondary);cursor:pointer;transition:var(--transition);white-space:nowrap;}
+        .batch-btn:hover{border-color:var(--primary);color:var(--primary);background:var(--primary-light);}
+        .batch-btn.active{background:var(--primary);border-color:var(--primary);color:#fff;box-shadow:0 2px 8px rgba(244,0,9,0.35);}
+        @media(max-width:360px){.batch-btn{padding:0.45rem 0.75rem;font-size:0.8rem;}}
+        .batch-modal-actions{display:flex;justify-content:flex-end;gap:0.65rem;margin-top:1.5rem;border-top:1px solid var(--border-light);padding-top:1.1rem;}
+        @media(max-width:400px){.batch-modal-actions{flex-direction:column;} .batch-cancel-btn,.batch-start-btn{width:100%;justify-content:center;}}
+        .batch-cancel-btn{padding:0.5rem 1.1rem;background:transparent;border:1.5px solid var(--border-light);border-radius:var(--radius);font-family:var(--font-body);font-size:0.875rem;font-weight:600;color:var(--text-muted);cursor:pointer;transition:var(--transition);}
+        .batch-cancel-btn:hover{border-color:var(--text-muted);color:var(--text-primary);}
+        .batch-start-btn{padding:0.5rem 1.35rem;background:var(--primary);border:none;border-radius:var(--radius);font-family:var(--font-body);font-size:0.875rem;font-weight:700;color:#fff;cursor:pointer;transition:var(--transition);display:flex;align-items:center;gap:0.45rem;opacity:0.45;pointer-events:none;}
+        .batch-start-btn.ready{opacity:1;pointer-events:all;}
+        .batch-start-btn:hover{background:var(--primary-dark,#c8000a);}
+        .batch-filters{display:none;background:var(--bg-base);border:1.5px solid var(--primary);border-radius:var(--radius);margin-top:0.85rem;padding:1rem;flex-direction:column;gap:0.65rem;}
+        .batch-filters.visible{display:flex;}
+        .batch-filters-label{font-size:0.7rem;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.07em;margin-bottom:0.15rem;}
+        .batch-filter-select{width:100%;padding:0.65rem 2.25rem 0.65rem 0.875rem;background:var(--bg-input);border:1.5px solid var(--border-light);border-radius:var(--radius);font-family:var(--font-body);font-size:0.9rem;color:var(--text-primary);color-scheme:dark;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24'%3E%3Cpath fill='%23888' d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 0.75rem center;cursor:pointer;transition:var(--transition);}
+        .batch-filter-select:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-glow);background-color:var(--bg-elevated);}
+        .batch-filter-select option{background:var(--bg-elevated);}
+        .batch-filters-row{display:grid;grid-template-columns:1fr 1fr;gap:0.65rem;}
+        @media(max-width:380px){.batch-filters-row{grid-template-columns:1fr;}}
+        /* ── Collapsible sections ── */
+        .comp-exam-group{position:relative;}
+        .comp-exam-label{cursor:pointer;display:flex;align-items:center;gap:0.35rem;padding:0.5rem 0;transition:var(--transition);}
+        .comp-exam-label:hover{background:var(--primary-light);color:var(--primary);border-radius:var(--radius-sm);}
+        .comp-exam-label::after{content:'';display:inline-block;width:0;height:0;border-left:4px solid transparent;border-right:4px solid transparent;border-top:4px solid currentColor;margin-left:auto;transition:transform 0.2s;}
+        .comp-exam-label.collapsed::after{transform:rotate(-90deg);}
+        .comp-exam-icon{font-size:1rem;}
+        .qb-subjects{list-style:none;margin:0;padding:0;max-height:500px;overflow:hidden;transition:max-height 0.3s ease;}
+        .qb-subjects.collapsed{max-height:0;}
+        .qb-subjects li{transition:opacity 0.2s;}
+        .qb-subjects.collapsed li{opacity:0;pointer-events:none;}
+        .qb-subjects-sublist{list-style:none;margin:0;padding:0 0 0 1.25rem;}
+        .qb-subjects-sublist li{display:flex;align-items:center;justify-content:space-between;gap:0.75rem;padding:0.7rem 0.95rem;border-radius:var(--radius);background:var(--bg-surface);color:var(--text-secondary);font-size:0.9rem;}
+        .qb-subjects-sublist li:hover{background:var(--primary-light);color:var(--primary);}
+
+        /* ── Class groups (expandable classes) ── */
+        .class-item{cursor:pointer;}
+        .class-item:hover{background:var(--primary-light);color:var(--primary);}
+        .class-item::after{content:'▾';margin-left:auto;font-size:0.8rem;}
+        .class-item.collapsed::after{content:'▸';}
+        /* ── Chapter / Filter bar ── */
+        .chapter-bar{background:var(--bg-surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:1rem 1.25rem;}
+        .chapter-bar-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:0.75rem;flex-wrap:wrap;gap:0.5rem;}
+        .chapter-bar-title{font-size:0.875rem;font-weight:700;color:var(--text-primary);display:flex;align-items:center;gap:0.45rem;}
+        .chapter-bar-title i{color:var(--primary);font-size:1rem;}
+        .chapter-bar-reset{background:none;border:1px solid var(--border-light);border-radius:var(--radius-sm);padding:0.25rem 0.65rem;font-size:0.78rem;color:var(--text-muted);cursor:pointer;font-family:var(--font-body);transition:var(--transition);}
+        .chapter-bar-reset:hover{border-color:var(--danger);color:var(--danger);}
+        .filter-dropdowns-row{display:grid;grid-template-columns:1fr 1fr;gap:0.65rem;}
+        @media(max-width:480px){.filter-dropdowns-row{grid-template-columns:1fr;}}
+        @media(max-width:720px){.chapter-bar{padding:0.85rem 1rem;}}
+
+        /* ── New Quiz button in top bar (mobile only) ── */
+        .new-quiz-mobile-btn { display:none; align-items:center; gap:0.4rem; padding:0.5rem 1rem; background:var(--primary); border:none; border-radius:var(--radius); font-family:var(--font-body); font-size:0.85rem; font-weight:700; color:#fff; cursor:pointer; transition:var(--transition); white-space:nowrap; }
+        .new-quiz-mobile-btn:hover { background:var(--primary-dark,#c8000a); }
+
+        /* ── Navbar Home btn visible on all sizes ── */
+        .nav-actions{display:flex!important;}
+
+        @media(max-width:720px){
+
+            /* Sidebar toggle shows hamburger to open sidebar on mobile */
+            #sidebarToggle { display:inline-flex !important; }
+
+            /* Page padding */
+            #qbPage.qb-page { padding:1rem 1rem 6rem !important; }
+
+            /* Top bar: single clean row */
+            .qb-top { flex-wrap:nowrap; align-items:center; gap:0.5rem; margin-bottom:1.25rem; }
+            .qb-top-left { flex:1; min-width:0; display:flex; align-items:center; gap:0.5rem; }
+            .qb-top h1 { font-size:1.1rem; white-space:nowrap; }
+            .new-quiz-mobile-btn { display:inline-flex; }
+
+            /* User chip: show only logout icon on mobile */
+            .user-chip .avatar { display:none; }
+            #userEmail { display:none; }
+            .user-chip .btn-sm { padding:0.45rem 0.75rem; font-size:0.8rem; border-radius:var(--radius); }
+            .user-chip { gap:0; }
+            .logout-label { display:none; }
+
+            /* Question rows: wrapping text + bigger tap target */
+            .question-row { padding:0.9rem 0.5rem; align-items:flex-start; }
+            .q-checkbox { width:20px; height:20px; margin-top:0.2rem; flex-shrink:0; }
+            .q-text { white-space:normal; word-break:break-word; font-size:0.9rem; line-height:1.5; }
+
+            /* Meta row */
+            .qb-meta { font-size:0.82rem; }
+
+            /* Empty & loading states */
+            .empty-state { padding:2.5rem 1.25rem; }
+            .loading-state { padding:2.5rem 1.25rem; }
+
+            /* Schedule bar */
+            .schedule-bar { position:sticky; top:0; margin-top:1rem; padding:1.25rem; border-radius:var(--radius); z-index:10; }
+            .schedule-bar h3 { font-size:0.9rem; margin-bottom:1rem; }
+            .schedule-fields { grid-template-columns:1fr !important; gap:0.65rem; margin-bottom:1rem; }
+            .schedule-fields label { font-size:0.72rem; }
+            .btn-schedule { font-size:0.9rem; padding:0.85rem; }
+
+            /* Success modal */
+            .modal-box { padding:2rem 1.25rem; }
+        }
+
+        @media(max-width:400px){
+            .qb-top h1 { font-size:1rem; }
+            .new-quiz-mobile-btn { padding:0.45rem 0.75rem; font-size:0.78rem; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- Navbar -->
+<header class="navbar">
+    <div class="container nav-inner">
+        <a href="./teacher-home.html" class="logo">
+            <img src="./logo.png" alt="Pitthugram">
+        </a>
+        <div class="nav-actions">
+            <a href="./teacher-home.html" class="btn btn-outline btn-sm" style="padding:0.5rem 1rem;">
+                <i class="ph ph-house"></i> Dashboard
+            </a>
+        </div>
+    </div>
+</header>
+
+<!-- Quiz Builder -->
+<div class="qb-page" id="qbPage">
+    <div class="qb-wrap">
+        <div class="qb-layout">
+            <aside class="qb-sidebar" id="qbSidebar">
+                <div class="qb-brand">
+                    <img src="./logo.png" alt="Pitthugram">
+                    <span>Pitthugram</span>
+                    <button class="sidebar-close" id="sidebarClose" aria-label="Close menu">
+                        <i class="ph ph-x"></i>
+                    </button>
+                </div>
+                <nav class="qb-nav">
+                    <ul>
+                        <li><a href="#" onclick="showDashboard(event)"><i class="ph ph-house"></i> Dashboard</a></li>
+                        <li><a href="#" onclick="openBatchModal(event)"><i class="ph ph-plus-circle"></i> New Quiz</a></li>
+                        <li><a href="#" onclick="showMyQuizzes(event)"><i class="ph ph-bookmark"></i> My Quizzes</a></li>
+                        <li><a href="#" onclick="showQuestionBank(event)"><i class="ph ph-list"></i> Question Bank <span class="item-count" id="sbTotalCount">...</span></a></li>
+                    </ul>
+                </nav>
+                <div class="qb-section">
+                    <div class="comp-exam-group">
+                        <div class="comp-exam-label" onclick="toggleSection('jee')" id="jeeToggle">
+                            <span class="comp-exam-icon">🏆</span>
+                            JEE
+                        </div>
+                        <ul class="qb-subjects" id="jeeSubjectList">
+                            <li onclick="quickLoad('JEE','Physics')"><i class="ph ph-atom"></i> Physics <span class="subject-count">(...)</span></li>
+                            <li onclick="quickLoad('JEE','Chemistry')"><i class="ph ph-flask"></i> Chemistry <span class="subject-count">(...)</span></li>
+                            <li onclick="quickLoad('JEE','Mathematics')"><i class="ph ph-calculator"></i> Mathematics <span class="subject-count">(...)</span></li>
+                        </ul>
+                    </div>
+                    <div class="comp-exam-group">
+                        <div class="comp-exam-label" onclick="toggleSection('neet')" id="neetToggle">
+                            <span class="comp-exam-icon">🌿</span>
+                            NEET
+                        </div>
+                        <ul class="qb-subjects" id="neetSubjectList">
+                            <li onclick="quickLoad('NEET','Physics')"><i class="ph ph-atom"></i> Physics <span class="subject-count">(...)</span></li>
+                            <li onclick="quickLoad('NEET','Chemistry')"><i class="ph ph-flask"></i> Chemistry <span class="subject-count">(...)</span></li>
+                            <li onclick="quickLoad('NEET','Biology')"><i class="ph ph-leaf"></i> Biology <span class="subject-count">(...)</span></li>
+                        </ul>
+                    </div>
+                    <div class="comp-exam-group">
+                        <div class="comp-exam-label" onclick="toggleSection('school')" id="schoolToggle">
+                            <span class="comp-exam-icon">🎓</span>
+                            School Classes
+                        </div>
+                        <ul class="qb-subjects" id="schoolSubjectList">
+                            <li class="class-item collapsed" onclick="loadSchoolClassSubjects('6')" id="class6Toggle">
+                                <i class="ph ph-graduation-cap"></i> Class 6 <span class="subject-count">(...)</span>
+                            </li>
+                            <li class="class-item collapsed" onclick="loadSchoolClassSubjects('7')" id="class7Toggle">
+                                <i class="ph ph-graduation-cap"></i> Class 7 <span class="subject-count">(...)</span>
+                            </li>
+                            <li class="class-item collapsed" onclick="loadSchoolClassSubjects('8')" id="class8Toggle">
+                                <i class="ph ph-graduation-cap"></i> Class 8 <span class="subject-count">(...)</span>
+                            </li>
+                            <li class="class-item collapsed" onclick="loadSchoolClassSubjects('9')" id="class9Toggle">
+                                <i class="ph ph-graduation-cap"></i> Class 9 <span class="subject-count">(...)</span>
+                            </li>
+                            <li class="class-item collapsed" onclick="loadSchoolClassSubjects('10')" id="class10Toggle">
+                                <i class="ph ph-graduation-cap"></i> Class 10 <span class="subject-count">(...)</span>
+                            </li>
+                            <li class="class-item collapsed" onclick="loadSchoolClassSubjects('11')" id="class11Toggle">
+                                <i class="ph ph-graduation-cap"></i> Class 11 <span class="subject-count">(...)</span>
+                            </li>
+                            <li class="class-item collapsed" onclick="loadSchoolClassSubjects('12')" id="class12Toggle">
+                                <i class="ph ph-graduation-cap"></i> Class 12 <span class="subject-count">(...)</span>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="qb-sidebar-foot">
+                    <a href="#" class="sidebar-link" onclick="openSettingsModal(event)"><i class="ph ph-gear"></i> Settings</a>
+                    <a href="#" class="sidebar-link" onclick="confirmLogout(event)"><i class="ph ph-sign-out"></i> Logout</a>
+                </div>
+            </aside>
+            <div class="sidebar-backdrop" id="sidebarBackdrop"></div>
+
+            <div class="qb-main">
+                <!-- Auth Gate (shown when not logged in) -->
+                <div class="auth-gate" id="authGate" style="display:flex;">
+                    <div class="auth-card">
+                        <i class="ph-fill ph-lock"></i>
+                        <h2>Login Required</h2>
+                        <p>Please sign in with your teacher account to access the quiz builder.</p>
+                        <a href="./index.html" class="btn btn-primary">
+                            <i class="ph ph-sign-in"></i> Go to Login
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Quiz Content (shown when logged in) -->
+                <div id="qbContent" style="display:none; flex-direction:column; gap:1.5rem;">
+
+                <!-- Top bar -->
+                <div class="qb-top">
+                    <div class="qb-top-left">
+                        <button class="sidebar-toggle" id="sidebarToggle" aria-label="Open menu">
+                            <i class="ph ph-list"></i>
+                        </button>
+                        <h1>Quiz <span>Builder</span></h1>
+                        <button class="new-quiz-mobile-btn" onclick="openBatchModal(event)" aria-label="New Quiz">
+                            <i class="ph ph-plus-circle"></i> New Quiz
+                        </button>
+                    </div>
+                    <div class="user-chip">
+                        <div class="avatar"><i class="ph-fill ph-user"></i></div>
+                        <span id="userEmail">Loading...</span>
+                        <button class="btn-sm" onclick="logout()">
+                            <i class="ph ph-sign-out"></i> <span class="logout-label">Logout</span>
+                        </button>
+                    </div>
+                </div>
+
+
+        <!-- Subject + Chapter filter bar (shows after class/exam is chosen) -->
+        <div id="chapterBar" class="chapter-bar" style="display:none;">
+            <div class="chapter-bar-header">
+                <span class="chapter-bar-title">
+                    <i class="ph ph-funnel-simple"></i>
+                    <span id="chapterBarTitle">Filters</span>
+                </span>
+                <button class="chapter-bar-reset" onclick="clearSubjectFilter()">
+                    <i class="ph ph-x"></i> Clear filter
+                </button>
+            </div>
+            <div class="filter-dropdowns-row">
+                <div>
+                    <p class="batch-filters-label">Subject</p>
+                    <select class="batch-filter-select" id="filterSubject" onchange="onFilterSubjectChange()">
+                        <option value="">All Subjects</option>
+                    </select>
+                </div>
+                <div>
+                    <p class="batch-filters-label">Chapter</p>
+                    <select class="batch-filter-select" id="filterChapter" onchange="onFilterChapterChange()">
+                        <option value="">All Chapters</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <!-- Meta -->
+        <div class="qb-meta">
+            <div>
+                Showing <strong id="totalCount">0</strong> questions &nbsp;·&nbsp;
+                <strong id="selCount">0</strong> selected
+            </div>
+            <button class="btn-clear-sel" onclick="clearSel()" id="clearBtn" style="display:none;">
+                Clear selection
+            </button>
+        </div>
+
+        <!-- Error -->
+        <div class="qb-err" id="qbErr">
+            <i class="ph-fill ph-warning-circle"></i>
+            <span id="qbErrMsg"></span>
+        </div>
+
+        <!-- Questions -->
+        <div id="qContainer">
+            <div class="loading-state">
+                <div class="loader"></div>
+                <p>Loading questions...</p>
+            </div>
+        </div>
+
+        <!-- Schedule bar -->
+        <div class="schedule-bar" id="scheduleBar" style="display:none;">
+            <h3>
+                <i class="ph-fill ph-calendar-check"></i>
+                Schedule Quix
+                <span class="count-pill" id="schedCount">0</span>
+            </h3>
+            <div class="schedule-fields">
+                <div>
+                    <label>Quiz Title</label>
+                    <input type="text" id="quizTitle" placeholder="e.g. Chapter 3 Test">
+                </div>
+                <div>
+                    <label>Date</label>
+                    <input type="date" id="quizDate">
+                </div>
+                <div>
+                    <label>Time</label>
+                    <select id="quizTime">
+                        <option value="">Select Time</option>
+                        <option value="06:00">6:00 AM</option>
+                        <option value="06:30">6:30 AM</option>
+                        <option value="07:00">7:00 AM</option>
+                        <option value="07:30">7:30 AM</option>
+                        <option value="08:00">8:00 AM</option>
+                        <option value="08:30">8:30 AM</option>
+                        <option value="09:00">9:00 AM</option>
+                        <option value="09:30">9:30 AM</option>
+                        <option value="10:00">10:00 AM</option>
+                        <option value="10:30">10:30 AM</option>
+                        <option value="11:00">11:00 AM</option>
+                        <option value="11:30">11:30 AM</option>
+                        <option value="12:00">12:00 PM</option>
+                        <option value="12:30">12:30 PM</option>
+                        <option value="13:00">1:00 PM</option>
+                        <option value="13:30">1:30 PM</option>
+                        <option value="14:00">2:00 PM</option>
+                        <option value="14:30">2:30 PM</option>
+                        <option value="15:00">3:00 PM</option>
+                        <option value="15:30">3:30 PM</option>
+                        <option value="16:00">4:00 PM</option>
+                        <option value="16:30">4:30 PM</option>
+                        <option value="17:00">5:00 PM</option>
+                        <option value="17:30">5:30 PM</option>
+                        <option value="18:00">6:00 PM</option>
+                        <option value="18:30">6:30 PM</option>
+                        <option value="19:00">7:00 PM</option>
+                        <option value="19:30">7:30 PM</option>
+                        <option value="20:00">8:00 PM</option>
+                        <option value="20:30">8:30 PM</option>
+                        <option value="21:00">9:00 PM</option>
+                    </select>
+                </div>
+            </div>
+            <button class="btn-schedule" id="schedBtn" onclick="scheduleQuiz()">
+                <i class="ph ph-paper-plane-tilt"></i>
+                Schedule Quiz
+            </button>
+        </div>
+
+                </div><!-- /qbContent -->
+            </div><!-- /qb-main -->
+        </div><!-- /qb-layout -->
+    </div><!-- /qb-wrap -->
+</div><!-- /qbPage -->
+
+<!-- New Quiz — Batch Selection Modal -->
+<div class="batch-modal-bg" id="batchModal">
+    <div class="batch-modal-box">
+        <p class="batch-modal-title"><i class="ph ph-plus-circle"></i> New Quiz — Select Batch</p>
+        <p class="batch-modal-sub">Choose the class or competitive batch you want to create a quiz for.</p>
+
+        <p class="batch-section-label"><i class="ph ph-trophy"></i> Competitive Exams</p>
+        <div class="batch-btn-grid">
+            <button class="batch-btn" data-batch="JEE">JEE</button>
+            <button class="batch-btn" data-batch="NEET">NEET</button>
+        </div>
+
+        <!-- Filters appear HERE — immediately below the selected batch -->
+        <div class="batch-filters" id="batchFilters">
+            <p class="batch-filters-label" style="font-size:0.75rem;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.07em;margin-bottom:0.5rem;">
+                <i class="ph ph-funnel"></i> &nbsp;Subject &amp; Chapter
+            </p>
+            <div class="batch-filters-row" id="mSubjectRow">
+                <div>
+                    <p class="batch-filters-label">Subject</p>
+                    <select class="batch-filter-select" id="mSubject">
+                        <option value="">Select Subject</option>
+                    </select>
+                </div>
+                <div>
+                    <p class="batch-filters-label">Chapter</p>
+                    <select class="batch-filter-select" id="mChapter">
+                        <option value="">All Chapters</option>
+                    </select>
+                </div>
+            </div>
+            <div>
+                <p class="batch-filters-label">Difficulty</p>
+                <select class="batch-filter-select" id="mDifficulty">
+                    <option value="">All Levels</option>
+                    <option value="Basic">Basic</option>
+                    <option value="Intermediate">Intermediate</option>
+                    <option value="Advanced">Advanced</option>
+                </select>
+            </div>
+        </div>
+
+        <p class="batch-section-label" style="margin-top:1.1rem;"><i class="ph ph-student"></i> School Classes</p>
+        <div class="batch-btn-grid">
+            <button class="batch-btn" data-batch="6">Class 6</button>
+            <button class="batch-btn" data-batch="7">Class 7</button>
+            <button class="batch-btn" data-batch="8">Class 8</button>
+            <button class="batch-btn" data-batch="9">Class 9</button>
+            <button class="batch-btn" data-batch="10">Class 10</button>
+            <button class="batch-btn" data-batch="11">Class 11</button>
+            <button class="batch-btn" data-batch="12">Class 12</button>
+        </div>
+
+        <div class="batch-modal-actions">
+            <button class="batch-cancel-btn" onclick="closeBatchModal()">Cancel</button>
+            <button class="batch-start-btn" id="batchStartBtn" onclick="startNewQuiz()">
+                <i class="ph ph-arrow-right"></i> Start Quiz
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Settings Modal -->
+<div class="settings-modal-bg" id="settingsModal">
+    <div class="settings-modal-box">
+        <p class="settings-modal-title"><i class="ph ph-gear"></i> Settings</p>
+        <p class="settings-modal-sub">Customize your quiz builder experience.</p>
+
+        <div class="settings-field">
+            <label for="settingTheme">Theme</label>
+            <select id="settingTheme">
+                <option value="light">Light</option>
+                <option value="dark">Dark</option>
+                <option value="auto">Auto</option>
+            </select>
+        </div>
+
+        <div class="settings-field">
+            <label for="settingNotifications">Email Notifications</label>
+            <select id="settingNotifications">
+                <option value="all">All updates</option>
+                <option value="important">Important only</option>
+                <option value="none">None</option>
+            </select>
+        </div>
+
+        <div class="settings-field">
+            <label for="settingDefaultClass">Default Class</label>
+            <select id="settingDefaultClass">
+                <option value="">None</option>
+                <option value="JEE">JEE</option>
+                <option value="NEET">NEET</option>
+                <option value="6">Class 6</option>
+                <option value="7">Class 7</option>
+                <option value="8">Class 8</option>
+                <option value="9">Class 9</option>
+                <option value="10">Class 10</option>
+                <option value="11">Class 11</option>
+                <option value="12">Class 12</option>
+            </select>
+        </div>
+
+        <div class="settings-actions">
+            <button class="settings-cancel-btn" onclick="closeSettingsModal()">Cancel</button>
+            <button class="settings-save-btn" onclick="saveSettings()">
+                <i class="ph ph-check"></i> Save Settings
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- My Quizzes View -->
+<div class="my-quizzes-view" id="myQuizzesView">
+    <div class="qb-top">
+        <div class="qb-top-left">
+            <button class="sidebar-toggle" id="sidebarToggle" aria-label="Open menu">
+                <i class="ph ph-list"></i>
+            </button>
+            <h1>My <span>Quizzes</span></h1>
+        </div>
+    </div>
+    <div id="myQuizzesContainer">
+        <div class="loading-state">
+            <div class="loader"></div>
+            <p>Loading your quizzes...</p>
+        </div>
+    </div>
+</div>
+
+<!-- Question Bank View -->
+<div class="question-bank-view" id="questionBankView">
+    <div class="qb-top">
+        <div class="qb-top-left">
+            <button class="sidebar-toggle" id="sidebarToggle" aria-label="Open menu">
+                <i class="ph ph-list"></i>
+            </button>
+            <h1>Question <span>Bank</span></h1>
+        </div>
+    </div>
+    <div class="qb-search-bar">
+        <input type="text" class="qb-search-input" id="qbSearchInput" placeholder="Search questions...">
+        <button class="qb-filter-btn" onclick="toggleQBFilter()">
+            <i class="ph ph-funnel"></i> Filter
+        </button>
+    </div>
+    <div id="questionBankContainer">
+        <div class="loading-state">
+            <div class="loader"></div>
+            <p>Loading questions...</p>
+        </div>
+    </div>
+</div>
+<div class="modal-bg" id="successModal">
+    <div class="modal-box">
+        <div class="modal-icon">
+            <i class="ph-fill ph-check-circle"></i>
+        </div>
+        <h2>Quiz Scheduled!</h2>
+        <p id="successMsg">Your quiz has been scheduled successfully.</p>
+        <button class="btn btn-primary" onclick="closeModal()" style="width:100%;justify-content:center;">
+            <i class="ph ph-arrow-clockwise"></i> Schedule Another
+        </button>
+    </div>
+</div>
+
+<script>
+const SUPABASE_URL = 'https://qnqcysdeolnooxxcafwz.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFucWN5c2Rlb2xub294eGNhZnd6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYzNTc0NjUsImV4cCI6MjA5MTkzMzQ2NX0.hOuPKv1zqQup7JfEpe-SJWT9Duz0RUwcCPwJb0zE_0Q';
+const N8N_WEBHOOK  = 'YOUR_N8N_WEBHOOK_URL'; // Replace when n8n is ready
+
+let allQuestions       = [];
+let selected           = new Set();
+let scheduleBarVisible = false;
+let currentUser        = null;
+let activeClass        = '';
+let activeSubject      = '';
+let activeChapter      = '';
+let activeDifficulty   = '';
+
+// ── Auth ──────────────────────────────────────────────
+function checkAuth() {
+    const token = localStorage.getItem('pg_access_token');
+    const user  = localStorage.getItem('pg_user');
+    if (!token || !user) {
+        currentUser = null;
+        document.getElementById('authGate').style.display  = 'flex';
+        document.getElementById('qbContent').style.display = 'none';
+        return false;
+    }
+    currentUser = JSON.parse(user);
+    document.getElementById('userEmail').textContent       = currentUser.email;
+    document.getElementById('authGate').style.display      = 'none';
+    document.getElementById('qbContent').style.display     = 'flex';
+
+    if (window.innerWidth > 720) {
+        if (typeof forceSidebarVisible === 'function') forceSidebarVisible();
+    }
+    return true;
+}
+
+function logout() {
+    localStorage.removeItem('pg_access_token');
+    localStorage.removeItem('pg_refresh_token');
+    localStorage.removeItem('pg_user');
+    localStorage.removeItem('pg_role');
+    window.location.href = './index.html';
+}
+
+// ── Fetch questions ───────────────────────────────────
+async function fetchQuestions() {
+    const cls        = activeClass;
+    const subject    = activeSubject;
+    const chapter    = activeChapter;
+    const difficulty = activeDifficulty;
+    const token      = localStorage.getItem('pg_access_token');
+
+    const CLASS_DB_MAP = { '6': '9' };
+    const dbCls = CLASS_DB_MAP[cls] || cls;
+
+    let url = SUPABASE_URL + '/rest/v1/questions?is_active=eq.true&select=*&order=class,subject,chapter,difficulty_level';
+    if (dbCls)      url += '&class=eq.'            + encodeURIComponent(dbCls);
+    if (subject)    url += '&subject=eq.'          + encodeURIComponent(subject);
+    if (chapter)    url += '&chapter=eq.'          + encodeURIComponent(chapter);
+    if (difficulty) url += '&difficulty_level=eq.' + encodeURIComponent(difficulty);
+
+    const headers = { 'apikey': SUPABASE_KEY };
+    if (token) headers['Authorization'] = 'Bearer ' + token;
+
+    let res = await fetch(url, { headers });
+    if (!res.ok && token) {
+        res = await fetch(url, { headers: { 'apikey': SUPABASE_KEY } });
+    }
+    if (!res.ok) {
+        let errMsg = `Failed to load questions (${res.status})`;
+        try {
+            const errData = await res.json();
+            if (errData.error_description) errMsg = errData.error_description;
+            else if (errData.msg) errMsg = errData.msg;
+            else if (errData.error) errMsg = errData.error;
+        } catch (_) {}
+        throw new Error(errMsg);
+    }
+    return res.json();
+}
+
+
+function getConnectionHint() {
+    if (window.location.protocol === 'file:') {
+        return 'Please serve this site through a local web server instead of opening files directly.';
+    }
+    return '';
+}
+
+// ── Render ────────────────────────────────────────────
+function render(questions) {
+    allQuestions = questions;
+    document.getElementById('totalCount').textContent = questions.length;
+    const container = document.getElementById('qContainer');
+
+    if (!questions.length) {
+        container.innerHTML = `<div class="empty-state"><i class="ph ph-magnifying-glass"></i><p>No questions found for this filter.<br>Try a different subject or level.</p></div>`;
+        return;
+    }
+
+    const list = document.createElement('div');
+    list.className = 'question-list';
+
+    questions.forEach(q => {
+        const isSel = selected.has(q.id);
+
+        const row = document.createElement('div');
+        row.className = 'question-row' + (isSel ? ' selected' : '');
+        row.dataset.id = q.id;
+        row.innerHTML = `
+            <input type="checkbox" class="q-checkbox" ${isSel ? 'checked' : ''} aria-label="Select question">
+            <span class="q-text">${q.question_text}</span>`;
+
+        const checkbox = row.querySelector('.q-checkbox');
+        checkbox.addEventListener('change', () => {
+            toggleCard(q.id, row);
+        });
+
+        list.appendChild(row);
+    });
+
+    container.innerHTML = '';
+    container.appendChild(list);
+    updateUI();
+}
+
+function toggleCard(id, card) {
+    if (selected.has(id)) { selected.delete(id); card.classList.remove('selected'); }
+    else                   { selected.add(id);    card.classList.add('selected'); }
+    updateUI();
+}
+
+function updateUI() {
+    const n = selected.size;
+    document.getElementById('selCount').textContent    = n;
+    document.getElementById('schedCount').textContent  = n;
+    const scheduleBar = document.getElementById('scheduleBar');
+    const visible = n > 0;
+    scheduleBar.style.display = visible ? 'block' : 'none';
+    if (visible && !scheduleBarVisible) {
+        scheduleBar.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+    scheduleBarVisible = visible;
+    document.getElementById('clearBtn').style.display = visible ? 'inline' : 'none';
+}
+
+function clearSel() {
+    selected.clear();
+    document.querySelectorAll('.question-row.selected').forEach(c => c.classList.remove('selected'));
+    updateUI();
+}
+
+// ── Schedule ──────────────────────────────────────────
+async function scheduleQuiz() {
+    if (!currentUser) {
+        return showErr('Please sign in to schedule quizzes.');
+    }
+
+    const cls   = activeClass;
+    const title = document.getElementById('quizTitle').value.trim();
+    const date  = document.getElementById('quizDate').value;
+    const time  = document.getElementById('quizTime').value;
+
+    if (!selected.size) return showErr('Please select at least one question.');
+    if (!cls)           return showErr('No class selected. Please use New Quiz to select a class first.');
+    if (!title)         return showErr('Please enter a quiz title.');
+    if (!date)          return showErr('Please select a date.');
+    if (!time)          return showErr('Please select a time.');
+
+    const btn = document.getElementById('schedBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<div class="loader" style="width:18px;height:18px;border-width:2px;margin:0;border-color:rgba(255,255,255,0.3);border-top-color:#fff;"></div> &nbsp;Scheduling...';
+
+    const token = localStorage.getItem('pg_access_token');
+    const selQuestions = allQuestions.filter(q => selected.has(q.id));
+
+    try {
+        // Save to Supabase
+        const saveRes = await fetch(SUPABASE_URL + '/rest/v1/scheduled_quizzes', {
+            method: 'POST',
+            headers: {
+                'apikey': SUPABASE_KEY,
+                'Authorization': 'Bearer ' + token,
+                'Content-Type': 'application/json',
+                'Prefer': 'return=representation'
+            },
+            body: JSON.stringify({
+                teacher_wordpress_id: currentUser.id,
+                class:                cls,
+                quiz_title:           title,
+                scheduled_date:       date,
+                scheduled_time:       time,
+                question_ids:         [...selected],
+                status:               'pending'
+            })
+        });
+
+        if (!saveRes.ok) throw new Error('Failed to save quiz to database.');
+
+        // Fire n8n webhook when ready
+        if (N8N_WEBHOOK !== 'YOUR_N8N_WEBHOOK_URL') {
+            await fetch(N8N_WEBHOOK, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    class:          cls,
+                    quiz_title:     title,
+                    scheduled_date: date,
+                    scheduled_time: time,
+                    question_ids:   [...selected],
+                    questions:      selQuestions,
+                    teacher_email:  currentUser.email,
+                    teacher_id:     currentUser.id
+                })
+            });
+        }
+
+        const clsLabel = isNaN(cls) ? cls : 'Class ' + cls;
+        document.getElementById('successMsg').textContent =
+            '"' + title + '" for ' + clsLabel + ' scheduled for ' + date + ' at ' + time + '. It will appear in Moodle automatically.';
+        document.getElementById('successModal').classList.add('show');
+
+    } catch(err) {
+        showErr(err.message || 'Something went wrong. Please try again.');
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="ph ph-paper-plane-tilt"></i> Schedule Quiz';
+    }
+}
+
+function closeModal() {
+    document.getElementById('successModal').classList.remove('show');
+    selected.clear();
+    document.getElementById('quizTitle').value = '';
+    document.getElementById('quizDate').value  = '';
+    document.getElementById('quizTime').value  = '';
+    refresh();
+}
+
+function showErr(msg) {
+    const el = document.getElementById('qbErr');
+    document.getElementById('qbErrMsg').textContent = msg;
+    el.classList.add('show');
+    setTimeout(() => el.classList.remove('show'), 4000);
+}
+
+
+function openSidebar() {
+    document.getElementById('qbSidebar').classList.add('open');
+    document.getElementById('sidebarBackdrop').classList.add('show');
+    document.body.style.overflow = 'hidden';
+}
+
+function closeSidebar() {
+    document.getElementById('qbSidebar').classList.remove('open');
+    document.getElementById('sidebarBackdrop').classList.remove('show');
+    document.body.style.overflow = '';
+}
+
+const sidebarToggle = document.getElementById('sidebarToggle');
+const sidebarClose = document.getElementById('sidebarClose');
+const sidebarBackdrop = document.getElementById('sidebarBackdrop');
+if (sidebarToggle) sidebarToggle.addEventListener('click', openSidebar);
+if (sidebarClose) sidebarClose.addEventListener('click', closeSidebar);
+if (sidebarBackdrop) sidebarBackdrop.addEventListener('click', closeSidebar);
+
+// Remove a class from this set once you've added its questions in Supabase
+const EMPTY_CLASSES = new Set([]);
+
+// ── Refresh ───────────────────────────────────────────
+async function refresh() {
+    const cls = activeClass;
+    if (!cls) {
+        document.getElementById('qContainer').innerHTML = `<div class="empty-state"><i class="ph ph-graduation-cap"></i><p>Pick a subject from the sidebar <strong>(JEE / NEET)</strong> or tap <strong>New Quiz</strong> to load questions.</p></div>`;
+        allQuestions = [];
+        document.getElementById('totalCount').textContent = '0';
+        return;
+    }
+    if (EMPTY_CLASSES.has(cls)) {
+        render([]);
+        return;
+    }
+    document.getElementById('qContainer').innerHTML = `<div class="loading-state"><div class="loader"></div><p>Loading questions...</p></div>`;
+    try {
+        const questions = await fetchQuestions();
+        render(questions);
+    } catch(err) {
+        const hint = getConnectionHint();
+        document.getElementById('qContainer').innerHTML = `<div class="empty-state"><i class="ph ph-warning-circle"></i><p>${err.message}<br>${hint || 'Please refresh the page.'}</p></div>`;
+        showErr(err.message + (hint ? ' ' + hint : ''));
+    }
+}
+
+
+
+// ── New Quiz Batch Modal ──────────────────────────────
+let selectedBatch = null;
+
+function openBatchModal(e) {
+    if (e) e.preventDefault();
+    selectedBatch = null;
+    document.querySelectorAll('.batch-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById('batchStartBtn').classList.remove('ready');
+    document.getElementById('batchModal').classList.add('show');
+    closeSidebar();
+}
+
+function closeBatchModal() {
+    document.getElementById('batchModal').classList.remove('show');
+    document.getElementById('batchFilters').classList.remove('visible');
+    selectedBatch = null;
+}
+
+function startNewQuiz() {
+    if (!selectedBatch) return;
+    const batch      = selectedBatch;
+    const subject    = document.getElementById('mSubject').value;
+    const chapter    = document.getElementById('mChapter').value;
+    const difficulty = document.getElementById('mDifficulty').value;
+    closeBatchModal();
+
+    activeClass      = batch;
+    activeSubject    = subject;
+    activeChapter    = chapter;
+    activeDifficulty = difficulty;
+    _filterAllRows   = [];
+
+    refresh();
+    loadFilterBar(batch, subject).then(() => {
+        if (chapter) {
+            const selCh = document.getElementById('filterChapter');
+            selCh.value = chapter;
+        }
+    });
+    document.getElementById('qbContent').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+document.getElementById('batchModal').addEventListener('click', function(e) {
+    if (e.target === this) closeBatchModal();
+});
+
+document.querySelectorAll('.batch-btn').forEach(btn => {
+    btn.addEventListener('click', async function() {
+        document.querySelectorAll('.batch-btn').forEach(b => b.classList.remove('active'));
+        this.classList.add('active');
+        selectedBatch    = this.dataset.batch;
+        const preSubject = this.dataset.subject || '';
+        document.getElementById('batchStartBtn').classList.add('ready');
+
+        // Show filters and scroll them into view within the modal
+        const batchFiltersEl = document.getElementById('batchFilters');
+        batchFiltersEl.classList.add('visible');
+        setTimeout(() => batchFiltersEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 60);
+
+        // Reset dropdowns
+        const mSub = document.getElementById('mSubject');
+        const mCh  = document.getElementById('mChapter');
+        mSub.innerHTML = '<option value="">All Subjects</option>';
+        mCh.innerHTML  = '<option value="">All Chapters</option>';
+        document.getElementById('mDifficulty').value = '';
+
+        try {
+            const CLASS_DB_MAP = { '6': '9' };
+            const dbCls = CLASS_DB_MAP[selectedBatch] || selectedBatch;
+
+            // Always fetch ALL subjects + chapters for this class (no subject filter)
+            const res = await fetch(
+                SUPABASE_URL + '/rest/v1/questions?select=subject,chapter&class=eq.' + encodeURIComponent(dbCls) + '&limit=10000',
+                { headers: { 'apikey': SUPABASE_KEY } }
+            );
+            if (!res.ok) throw new Error('Failed to load subjects (HTTP ' + res.status + ')');
+            const allRows = await res.json();
+
+            // Populate subject dropdown with all subjects for this class
+            const subjects = [...new Set(allRows.map(q => q.subject).filter(Boolean))].sort();
+            subjects.forEach(s => {
+                const o = document.createElement('option');
+                o.value = s; o.textContent = s;
+                mSub.appendChild(o);
+            });
+
+            // Helper: populate chapters for a given subject (or all if blank)
+            function populateChapters(subj) {
+                mCh.innerHTML = '<option value="">All Chapters</option>';
+                const rows = subj ? allRows.filter(q => q.subject === subj) : allRows;
+                const chapters = [...new Set(rows.map(q => q.chapter).filter(Boolean))].sort();
+                chapters.forEach(c => {
+                    const o = document.createElement('option');
+                    o.value = c; o.textContent = c;
+                    mCh.appendChild(o);
+                });
+            }
+
+            // Pre-select subject (if a subject button was clicked) and load its chapters
+            if (preSubject) mSub.value = preSubject;
+            populateChapters(mSub.value);
+
+            // Re-populate chapters whenever subject changes
+            mSub.onchange = () => populateChapters(mSub.value);
+
+        } catch(err) {
+            console.error('Failed to load filters:', err);
+            mSub.innerHTML = '<option value="">Error loading subjects</option>';
+            mCh.innerHTML  = '<option value="">—</option>';
+            showErr('Could not load subjects: ' + err.message);
+        }
+    });
+});
+
+// ── Filter bar — load subjects + chapters from Supabase ──
+let _filterAllRows = []; // cached rows for the active class (subject+chapter only)
+
+async function loadFilterBar(cls, preSubject) {
+    const bar     = document.getElementById('chapterBar');
+    const title   = document.getElementById('chapterBarTitle');
+    const selSub  = document.getElementById('filterSubject');
+    const selCh   = document.getElementById('filterChapter');
+
+    const label = isNaN(cls) ? cls : 'Class ' + cls;
+    title.textContent = label;
+    bar.style.display = 'block';
+
+    selSub.innerHTML = '<option value="">Loading…</option>';
+    selCh.innerHTML  = '<option value="">All Chapters</option>';
+
+    try {
+        const CLASS_DB_MAP = { '6': '9' };
+        const dbCls = CLASS_DB_MAP[cls] || cls;
+
+        const res = await fetch(
+            SUPABASE_URL + '/rest/v1/questions?select=subject,chapter&class=eq.' + encodeURIComponent(dbCls) + '&limit=10000',
+            { headers: { 'apikey': SUPABASE_KEY } }
+        );
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+
+        _filterAllRows = await res.json();
+
+        const subjects = [...new Set(_filterAllRows.map(q => q.subject).filter(Boolean))].sort();
+        selSub.innerHTML = '<option value="">All Subjects</option>';
+        subjects.forEach(s => {
+            const o = document.createElement('option');
+            o.value = s; o.textContent = s;
+            selSub.appendChild(o);
+        });
+
+        if (preSubject) selSub.value = preSubject;
+        _populateChapterDropdown(selSub.value);
+
+    } catch (err) {
+        selSub.innerHTML = '<option value="">— ' + err.message + ' —</option>';
+        console.error('Filter bar load error:', err);
+    }
+}
+
+function _populateChapterDropdown(subj) {
+    const selCh = document.getElementById('filterChapter');
+    selCh.innerHTML = '<option value="">All Chapters</option>';
+    const rows = subj ? _filterAllRows.filter(q => q.subject === subj) : _filterAllRows;
+    const chapters = [...new Set(rows.map(q => q.chapter).filter(Boolean))].sort();
+    chapters.forEach(c => {
+        const o = document.createElement('option');
+        o.value = c; o.textContent = c;
+        selCh.appendChild(o);
+    });
+}
+
+function onFilterSubjectChange() {
+    activeSubject = document.getElementById('filterSubject').value;
+    activeChapter = '';
+    document.getElementById('filterChapter').value = '';
+    _populateChapterDropdown(activeSubject);
+    refresh();
+}
+
+function onFilterChapterChange() {
+    activeChapter = document.getElementById('filterChapter').value;
+    refresh();
+}
+
+// ── Quick-load a subject directly from sidebar ────────
+async function quickLoad(batch, subject) {
+    activeClass      = batch;
+    activeSubject    = subject;
+    activeChapter    = '';
+    activeDifficulty = '';
+
+    // Highlight active subject in sidebar
+    document.querySelectorAll('.qb-subjects li[onclick]').forEach(li => li.classList.remove('active-subject'));
+    document.querySelectorAll('#jeeSubjectList li, #neetSubjectList li').forEach(li => {
+        if (li.getAttribute('onclick') === `quickLoad('${batch}','${subject}')`) {
+            li.classList.add('active-subject');
+        }
+    });
+
+    closeSidebar();
+    refresh();
+    await loadFilterBar(batch, subject);
+}
+
+function clearSubjectFilter() {
+    activeClass      = '';
+    activeSubject    = '';
+    activeChapter    = '';
+    activeDifficulty = '';
+    _filterAllRows   = [];
+    document.querySelectorAll('.qb-subjects li[onclick]').forEach(li => li.classList.remove('active-subject'));
+    document.querySelectorAll('.qb-subjects-sublist').forEach(sub => sub.remove());
+    document.getElementById('chapterBar').style.display = 'none';
+    document.getElementById('filterSubject').innerHTML = '<option value="">All Subjects</option>';
+    document.getElementById('filterChapter').innerHTML = '<option value="">All Chapters</option>';
+    refresh();
+}
+
+// ── Sidebar stats ─────────────────────────────────────
+async function loadSidebarStats() {
+    try {
+        const res = await fetch(
+            SUPABASE_URL + '/rest/v1/questions?is_active=eq.true&select=id',
+            { headers: { 'apikey': SUPABASE_KEY } }
+        );
+        if (!res.ok) return;
+        const data = await res.json();
+        document.getElementById('sbTotalCount').textContent = data.length;
+
+        // Load subject counts
+        await loadSubjectCounts();
+    } catch (_) {}
+}
+
+async function loadSubjectCounts() {
+    try {
+        const res = await fetch(
+            SUPABASE_URL + '/rest/v1/questions?is_active=eq.true&select=class,subject',
+            { headers: { 'apikey': SUPABASE_KEY } }
+        );
+        if (!res.ok) return;
+        const questions = await res.json();
+
+        const counts = {};
+        questions.forEach(q => {
+            const key = `${q.class}-${q.subject || ''}`;
+            counts[key] = (counts[key] || 0) + 1;
+            
+            // Also count total per class
+            const classKey = `${q.class}-total`;
+            counts[classKey] = (counts[classKey] || 0) + 1;
+        });
+
+        // Update JEE subjects
+        ['Physics', 'Chemistry', 'Mathematics'].forEach(subject => {
+            const count = counts[`JEE-${subject}`] || 0;
+            const li = document.querySelector(`#jeeSubjectList li[onclick*="JEE','${subject}'"]`);
+            if (li) {
+                const countSpan = li.querySelector('.subject-count');
+                if (countSpan) countSpan.textContent = `(${count})`;
+                li.setAttribute('aria-label', `${count} questions`);
+            }
+        });
+
+        // Update NEET subjects
+        ['Physics', 'Chemistry', 'Biology'].forEach(subject => {
+            const count = counts[`NEET-${subject}`] || 0;
+            const li = document.querySelector(`#neetSubjectList li[onclick*="NEET','${subject}'"]`);
+            if (li) {
+                const countSpan = li.querySelector('.subject-count');
+                if (countSpan) countSpan.textContent = `(${count})`;
+                li.setAttribute('aria-label', `${count} questions`);
+            }
+        });
+
+        // Update School classes
+        ['6', '7', '8', '9', '10', '11', '12'].forEach(cls => {
+            const count = counts[`${cls}-total`] || 0;
+            const label = document.getElementById(`class${cls}Toggle`);
+            if (label) {
+                const countSpan = label.querySelector('.subject-count');
+                if (countSpan) countSpan.textContent = `(${count})`;
+                label.setAttribute('aria-label', `${count} subjects`);
+            }
+        });
+    } catch (err) {
+        console.error('Failed to load subject counts:', err);
+    }
+}
+
+// ── Navigation Functions ───────────────────────────────
+function showDashboard(e) {
+    if (e) e.preventDefault();
+    hideAllViews();
+    document.getElementById('qbContent').style.display = 'flex';
+    document.querySelector('.qb-nav a[href="#"][onclick="showDashboard(event)"]').classList.add('active');
+    closeSidebar();
+    refresh();
+}
+
+function showMyQuizzes(e) {
+    if (e) e.preventDefault();
+    hideAllViews();
+    document.getElementById('myQuizzesView').classList.add('show');
+    document.querySelector('.qb-nav a[href="#"][onclick="showMyQuizzes(event)"]').classList.add('active');
+    closeSidebar();
+    loadMyQuizzes();
+}
+
+function showQuestionBank(e) {
+    if (e) e.preventDefault();
+    hideAllViews();
+    document.getElementById('questionBankView').classList.add('show');
+    document.querySelector('.qb-nav a[href="#"][onclick="showQuestionBank(event)"]').classList.add('active');
+    closeSidebar();
+    loadQuestionBank();
+}
+
+function hideAllViews() {
+    document.getElementById('qbContent').style.display = 'none';
+    document.getElementById('myQuizzesView').classList.remove('show');
+    document.getElementById('questionBankView').classList.remove('show');
+    document.querySelectorAll('.qb-nav a').forEach(a => a.classList.remove('active'));
+}
+
+// ── My Quizzes ────────────────────────────────────────
+async function loadMyQuizzes() {
+    if (!currentUser) return;
+
+    const container = document.getElementById('myQuizzesContainer');
+    container.innerHTML = `<div class="loading-state"><div class="loader"></div><p>Loading your quizzes...</p></div>`;
+
+    try {
+        const token = localStorage.getItem('pg_access_token');
+        const res = await fetch(
+            SUPABASE_URL + '/rest/v1/scheduled_quizzes?teacher_wordpress_id=eq.' + encodeURIComponent(currentUser.id) + '&order=scheduled_date.desc',
+            { headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + token } }
+        );
+        if (!res.ok) throw new Error('Failed to load quizzes');
+
+        const quizzes = await res.json();
+
+        if (!quizzes.length) {
+            container.innerHTML = `<div class="empty-state"><i class="ph ph-bookmark"></i><p>You haven't scheduled any quizzes yet.</p></div>`;
+            return;
+        }
+
+        const html = quizzes.map(quiz => {
+            const date = new Date(quiz.scheduled_date + 'T' + quiz.scheduled_time);
+            const status = getQuizStatus(quiz.status, date);
+            return `
+                <div class="quiz-item">
+                    <div class="quiz-item-header">
+                        <div class="quiz-title">${quiz.quiz_title}</div>
+                        <span class="quiz-status ${status.class}">${status.text}</span>
+                    </div>
+                    <div class="quiz-details">
+                        ${quiz.class} • ${quiz.question_ids.length} questions • ${date.toLocaleDateString()} at ${date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                    </div>
+                    <div class="quiz-actions">
+                        <button class="btn btn-sm" onclick="viewQuizDetails(${quiz.id})">View Details</button>
+                        ${status.canEdit ? `<button class="btn btn-outline btn-sm" onclick="editQuiz(${quiz.id})">Edit</button>` : ''}
+                    </div>
+                </div>
+            `;
+        }).join('');
+
+        container.innerHTML = html;
+    } catch (err) {
+        container.innerHTML = `<div class="empty-state"><i class="ph ph-warning-circle"></i><p>Failed to load quizzes: ${err.message}</p></div>`;
+    }
+}
+
+function getQuizStatus(status, scheduledDate) {
+    const now = new Date();
+    if (status === 'completed') return { class: 'completed', text: 'Completed', canEdit: false };
+    if (scheduledDate > now) return { class: 'scheduled', text: 'Scheduled', canEdit: true };
+    return { class: 'pending', text: 'Pending', canEdit: true };
+}
+
+function viewQuizDetails(id) {
+    // Placeholder for quiz details view
+    alert('Quiz details view not implemented yet. Quiz ID: ' + id);
+}
+
+function editQuiz(id) {
+    // Placeholder for quiz editing
+    alert('Quiz editing not implemented yet. Quiz ID: ' + id);
+}
+
+// ── Question Bank ─────────────────────────────────────
+let allQBQuestions = [];
+let filteredQBQuestions = [];
+
+async function loadQuestionBank() {
+    const container = document.getElementById('questionBankContainer');
+    container.innerHTML = `<div class="loading-state"><div class="loader"></div><p>Loading questions...</p></div>`;
+
+    try {
+        const res = await fetch(
+            SUPABASE_URL + '/rest/v1/questions?is_active=eq.true&select=*&order=class,subject,chapter',
+            { headers: { 'apikey': SUPABASE_KEY } }
+        );
+        if (!res.ok) throw new Error('Failed to load questions');
+
+        allQBQuestions = await res.json();
+        filteredQBQuestions = [...allQBQuestions];
+        renderQuestionBank();
+    } catch (err) {
+        container.innerHTML = `<div class="empty-state"><i class="ph ph-warning-circle"></i><p>Failed to load questions: ${err.message}</p></div>`;
+    }
+}
+
+function renderQuestionBank() {
+    const container = document.getElementById('questionBankContainer');
+    const html = filteredQBQuestions.map(q => `
+        <div class="qb-question-item">
+            <div class="qb-question-text">${q.question_text}</div>
+            <div class="qb-question-meta">${q.class} • ${q.subject} • ${q.chapter} • ${q.difficulty_level}</div>
+        </div>
+    `).join('');
+
+    container.innerHTML = html || `<div class="empty-state"><i class="ph ph-magnifying-glass"></i><p>No questions match your search.</p></div>`;
+}
+
+function toggleQBFilter() {
+    // Placeholder for advanced filtering
+    alert('Advanced filtering not implemented yet');
+}
+
+// Search functionality
+document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.getElementById('qbSearchInput');
+    if (searchInput) {
+        searchInput.addEventListener('input', function() {
+            const query = this.value.toLowerCase();
+            filteredQBQuestions = allQBQuestions.filter(q =>
+                q.question_text.toLowerCase().includes(query) ||
+                q.subject.toLowerCase().includes(query) ||
+                q.chapter.toLowerCase().includes(query)
+            );
+            renderQuestionBank();
+        });
+    }
+});
+
+// ── Settings ──────────────────────────────────────────
+function openSettingsModal(e) {
+    if (e) e.preventDefault();
+    document.getElementById('settingsModal').classList.add('show');
+    closeSidebar();
+    loadSettings();
+}
+
+function closeSettingsModal() {
+    document.getElementById('settingsModal').classList.remove('show');
+}
+
+function loadSettings() {
+    // Load saved settings from localStorage
+    const theme = localStorage.getItem('qb_theme') || 'auto';
+    const notifications = localStorage.getItem('qb_notifications') || 'all';
+    const defaultClass = localStorage.getItem('qb_default_class') || '';
+
+    document.getElementById('settingTheme').value = theme;
+    document.getElementById('settingNotifications').value = notifications;
+    document.getElementById('settingDefaultClass').value = defaultClass;
+}
+
+function saveSettings() {
+    const theme = document.getElementById('settingTheme').value;
+    const notifications = document.getElementById('settingNotifications').value;
+    const defaultClass = document.getElementById('settingDefaultClass').value;
+
+    localStorage.setItem('qb_theme', theme);
+    localStorage.setItem('qb_notifications', notifications);
+    localStorage.setItem('qb_default_class', defaultClass);
+
+    // Apply theme
+    applyTheme(theme);
+
+    closeSettingsModal();
+    showSuccess('Settings saved successfully!');
+}
+
+function applyTheme(theme) {
+    const root = document.documentElement;
+    if (theme === 'dark') {
+        root.setAttribute('data-theme', 'dark');
+    } else if (theme === 'light') {
+        root.setAttribute('data-theme', 'light');
+    } else {
+        // Auto theme based on system preference
+        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        root.setAttribute('data-theme', prefersDark ? 'dark' : 'light');
+    }
+}
+
+// ── Enhanced Quick Load ───────────────────────────────
+async function quickLoad(batch, subject) {
+    // Show loading state
+    const li = document.querySelector(`li[onclick="quickLoad('${batch}','${subject || ''}')"]`) || 
+               document.querySelector(`.qb-subjects-sublist li[onclick*="${batch}'], '${subject}')"]`);
+    if (li) li.classList.add('subject-loading');
+
+    try {
+        activeClass      = batch;
+        activeSubject    = subject || '';
+        activeChapter    = '';
+        activeDifficulty = '';
+
+        // Highlight active subject in sidebar
+        document.querySelectorAll('.qb-subjects li[onclick]').forEach(li => li.classList.remove('active-subject'));
+        document.querySelectorAll('.qb-subjects-sublist li').forEach(li => li.classList.remove('active-subject'));
+        
+        // Find the active li by checking onclick content
+        const allLis = [...document.querySelectorAll('.qb-subjects li'), ...document.querySelectorAll('.qb-subjects-sublist li')];
+        const activeLi = allLis.find(li => li.onclick && li.onclick.toString().includes(`quickLoad('${batch}','${subject}')`));
+        if (activeLi) activeLi.classList.add('active-subject');
+
+        closeSidebar();
+        await refresh();
+        await loadFilterBar(batch, subject || '');
+    } finally {
+        if (li) li.classList.remove('subject-loading');
+    }
+}
+
+// ── Logout with Confirmation ──────────────────────────
+function confirmLogout(e) {
+    if (e) e.preventDefault();
+    if (confirm('Are you sure you want to logout?')) {
+        logout();
+    }
+}
+
+// ── Section Toggle ───────────────────────────────────
+function toggleSection(sectionId) {
+    const label = document.getElementById(sectionId + 'Toggle');
+    const list = document.getElementById(sectionId + 'SubjectList');
+
+    if (list.classList.contains('collapsed')) {
+        list.classList.remove('collapsed');
+        label.classList.remove('collapsed');
+        localStorage.setItem('qb_section_' + sectionId, 'expanded');
+    } else {
+        list.classList.add('collapsed');
+        label.classList.add('collapsed');
+        localStorage.setItem('qb_section_' + sectionId, 'collapsed');
+    }
+}
+
+function loadSectionStates() {
+    ['jee', 'neet', 'school'].forEach(sectionId => {
+        const state = localStorage.getItem('qb_section_' + sectionId) || (sectionId === 'school' ? 'collapsed' : 'expanded');
+        const label = document.getElementById(sectionId + 'Toggle');
+        const list = document.getElementById(sectionId + 'SubjectList');
+
+        if (state === 'collapsed') {
+            list.classList.add('collapsed');
+            label.classList.add('collapsed');
+        } else {
+            list.classList.remove('collapsed');
+            label.classList.remove('collapsed');
+        }
+    });
+}
+
+function sanitizeId(value) {
+    return String(value).replace(/[^a-zA-Z0-9_-]+/g, '');
+}
+
+function findSchoolSubjectItem(cls, subject) {
+    return Array.from(document.querySelectorAll(`#class${cls}Subjects li`)).find(li => li.dataset.subject === subject);
+}
+
+// ── School Class Subjects ────────────────────────────
+async function loadSchoolClassSubjects(cls) {
+    const selectedLi = document.getElementById(`class${cls}Toggle`);
+    const existingSubList = document.getElementById(`class${cls}Subjects`);
+
+    // If this class is already expanded, collapse it
+    if (existingSubList) {
+        existingSubList.remove();
+        if (selectedLi) selectedLi.classList.add('collapsed');
+        return;
+    }
+
+    // Highlight the selected class (don't remove highlighting from others)
+    if (selectedLi) selectedLi.classList.remove('collapsed');
+
+    // Load subjects for this class
+    try {
+        const CLASS_DB_MAP = { '6': '9' };
+        const dbCls = CLASS_DB_MAP[cls] || cls;
+
+        const res = await fetch(
+            SUPABASE_URL + '/rest/v1/questions?select=subject&class=eq.' + encodeURIComponent(dbCls) + '&limit=1000',
+            { headers: { 'apikey': SUPABASE_KEY } }
+        );
+        if (!res.ok) throw new Error('Failed to load subjects');
+
+        const questions = await res.json();
+        const subjects = [...new Set(questions.map(q => q.subject).filter(Boolean))].sort();
+
+        // Create subject sub-list
+        const subList = document.createElement('ul');
+        subList.className = 'qb-subjects-sublist';
+        subList.id = `class${cls}Subjects`;
+        subList.style.cssText = 'margin-left:1rem;margin-top:0.5rem;';
+
+        if (subjects.length === 0) {
+            const li = document.createElement('li');
+            li.innerHTML = `<i class="ph ph-info"></i> No subjects found for this class`;
+            li.style.cssText = 'padding:0.5rem 0.5rem;font-size:0.8rem;color:var(--text-muted);font-style:italic;';
+            subList.appendChild(li);
+        } else {
+            subjects.forEach(subject => {
+                const count = questions.filter(q => q.subject === subject).length;
+                const li = document.createElement('li');
+                li.dataset.subject = subject;
+                li.innerHTML = `<i class="ph ph-book"></i> ${subject} <span class="subject-count">(${count})</span>`;
+                li.onclick = () => toggleSchoolSubject(cls, subject);
+                li.setAttribute('aria-label', `${count} questions`);
+                li.style.cssText = 'padding:0.5rem 0.5rem;cursor:pointer;font-size:0.85rem;';
+                subList.appendChild(li);
+            });
+        }
+
+        // Add the sublist after the selected class item
+        if (selectedLi) {
+            selectedLi.insertAdjacentElement('afterend', subList);
+        }
+
+    } catch (err) {
+        console.error('Failed to load subjects for class', cls, err);
+        // Don't show error for missing data, just show empty list
+        // showErr('Failed to load subjects for Class ' + cls);
+        // Reset state on error
+        if (selectedLi) selectedLi.classList.add('collapsed');
+    }
+}
+
+async function toggleSchoolSubject(cls, subject) {
+    const subjectLi = findSchoolSubjectItem(cls, subject);
+    const questionListId = `subject${cls}${sanitizeId(subject)}Questions`;
+    const existingQuestionList = document.getElementById(questionListId);
+
+    // If this subject is already expanded, collapse it
+    if (existingQuestionList) {
+        existingQuestionList.remove();
+        if (subjectLi) subjectLi.classList.remove('active-subject');
+        return;
+    }
+
+    // Highlight the selected subject and clear existing active subject for this class
+    document.querySelectorAll(`#class${cls}Subjects li.active-subject`).forEach(li => li.classList.remove('active-subject'));
+    if (subjectLi) subjectLi.classList.add('active-subject');
+
+    // Load questions for this subject
+    try {
+        const CLASS_DB_MAP = { '6': '9' };
+        const dbCls = CLASS_DB_MAP[cls] || cls;
+
+        const res = await fetch(
+            SUPABASE_URL + '/rest/v1/questions?select=id,question,options,answer,explanation,difficulty,chapter&class=eq.' + encodeURIComponent(dbCls) + '&subject=eq.' + encodeURIComponent(subject) + '&limit=100',
+            { headers: { 'apikey': SUPABASE_KEY } }
+        );
+        if (!res.ok) throw new Error('Failed to load questions');
+
+        const questions = await res.json();
+
+        // Create question sub-list
+        const questionList = document.createElement('ul');
+        questionList.className = 'qb-subjects-sublist';
+        questionList.id = questionListId;
+        questionList.style.cssText = 'margin-left:1.5rem;margin-top:0.5rem;max-height:300px;overflow-y:auto;';
+
+        if (questions.length === 0) {
+            const li = document.createElement('li');
+            li.innerHTML = `<i class="ph ph-info"></i> No questions found for this subject`;
+            li.style.cssText = 'padding:0.4rem 0.5rem;font-size:0.8rem;color:var(--text-muted);font-style:italic;';
+            questionList.appendChild(li);
+        } else {
+            questions.forEach(q => {
+                const li = document.createElement('li');
+                li.innerHTML = `<i class="ph ph-circle"></i> ${q.question.substring(0, 50)}...`;
+                li.onclick = () => loadQuestionDetails(q);
+                li.setAttribute('aria-label', `Question: ${q.question}`);
+                li.style.cssText = 'padding:0.4rem 0.5rem;cursor:pointer;font-size:0.8rem;border-left:2px solid var(--border-light);margin-left:0.5rem;';
+                li.onmouseover = () => li.style.borderLeftColor = 'var(--primary)';
+                li.onmouseout = () => li.style.borderLeftColor = 'var(--border-light)';
+                questionList.appendChild(li);
+            });
+        }
+
+        // Add the question list after the selected subject li
+        if (subjectLi) {
+            subjectLi.insertAdjacentElement('afterend', questionList);
+        }
+
+    } catch (err) {
+        console.error('Failed to load questions for subject', subject, err);
+        // Don't show error for missing data, just show empty list
+        // showErr('Failed to load questions for ' + subject);
+        // Reset state on error
+        if (subjectLi) subjectLi.classList.remove('active-subject');
+    }
+}
+
+// ── Load Single Question Details ──────────────────────
+function loadQuestionDetails(question) {
+    // Set active filters to match this question
+    activeClass = question.class || '';
+    activeSubject = question.subject || '';
+    activeChapter = question.chapter || '';
+    activeDifficulty = question.difficulty || '';
+
+    // Load questions for this subject/chapter/difficulty combination
+    quickLoad(activeClass, activeSubject);
+    
+    // After loading, scroll to and highlight the specific question
+    setTimeout(() => {
+        const questionRow = document.querySelector(`.question-row[data-id="${question.id}"]`);
+        if (questionRow) {
+            questionRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            questionRow.classList.add('highlight');
+            setTimeout(() => questionRow.classList.remove('highlight'), 2000);
+        }
+    }, 1000);
+}
+
+// ── Init ──────────────────────────────────────────────
+async function init() {
+    if (!checkAuth()) return;
+
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('quizDate').min = today;
+
+    // Apply saved theme
+    const savedTheme = localStorage.getItem('qb_theme') || 'auto';
+    applyTheme(savedTheme);
+
+    document.getElementById('qContainer').innerHTML = `<div class="empty-state"><i class="ph ph-graduation-cap"></i><p>Pick a subject from the sidebar <strong>(JEE / NEET)</strong> or tap <strong>New Quiz</strong> to load questions.</p></div>`;
+
+    loadSidebarStats();
+
+    // Show dashboard by default
+    showDashboard();
+
+    // Load section collapsed states
+    loadSectionStates();
+
+    // Set up keyboard navigation
+    setupKeyboardNavigation();
+}
+
+function setupKeyboardNavigation() {
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            closeSidebar();
+            closeSettingsModal();
+        }
+    });
+}
+
+function forceSidebarVisible() {
+    if (window.innerWidth < 721) return;
+    var sb = document.getElementById('qbSidebar');
+    var pg = document.getElementById('qbPage');
+    var layout = document.querySelector('#qbPage .qb-layout');
+    if (sb) {
+        sb.style.setProperty('position', 'fixed', 'important');
+        sb.style.setProperty('top', '72px', 'important');
+        sb.style.setProperty('left', '0', 'important');
+        sb.style.setProperty('width', '280px', 'important');
+        sb.style.setProperty('height', 'calc(100vh - 72px)', 'important');
+        sb.style.setProperty('display', 'flex', 'important');
+        sb.style.setProperty('flex-direction', 'column', 'important');
+        sb.style.setProperty('transform', 'none', 'important');
+        sb.style.setProperty('visibility', 'visible', 'important');
+        sb.style.setProperty('opacity', '1', 'important');
+        sb.style.setProperty('z-index', '50', 'important');
+    }
+    if (pg) pg.style.setProperty('margin-left', '280px', 'important');
+    if (layout) layout.style.setProperty('display', 'block', 'important');
+}
+forceSidebarVisible();
+window.addEventListener('resize', forceSidebarVisible);
+
+init();
+</script>
+</body>
+</html>
