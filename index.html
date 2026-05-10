@@ -91,8 +91,10 @@
 const SUPABASE_URL = 'https://lekvzyoarawotlsbeoqa.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imxla3Z6eW9hcmF3b3Rsc2Jlb3FhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgyOTgzNTIsImV4cCI6MjA5Mzg3NDM1Mn0.KO-UyQerUdbxxhqBDX5F51ZMU2WGIi6BLg-b-rDALmk';
 
-if (localStorage.getItem('pg_access_token')) {
-    window.location.href = 'teacher-home.html';
+const existingToken = localStorage.getItem('pg_access_token');
+const existingRole  = localStorage.getItem('pg_role');
+if (existingToken) {
+    window.location.href = existingRole === 'owner' ? 'owner-dashboard.html' : 'teacher-home.html';
 }
 
 document.getElementById('togglePw').addEventListener('click', function() {
@@ -147,7 +149,10 @@ document.getElementById('loginForm').addEventListener('submit', async function(e
 
         document.getElementById('loginSpinner').style.display = 'none';
         showAlert('Login successful! Redirecting…', 'success');
-        setTimeout(() => { window.location.href = 'teacher-home.html'; }, 800);
+
+        setTimeout(() => {
+            window.location.href = role === 'owner' ? 'owner-dashboard.html' : 'teacher-home.html';
+        }, 800);
 
     } catch (err) {
         document.getElementById('loginSpinner').style.display = 'none';
