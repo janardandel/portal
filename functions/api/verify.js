@@ -1,18 +1,8 @@
-/**
- * POST /api/verify
- * Body: { userId, token }
- * Returns: { role }
- *
- * Called by owner-dashboard on every load to confirm the session
- * user is still an owner according to Supabase.
- */
 const SUPABASE_URL = 'https://lekvzyoarawotlsbeoqa.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imxla3Z6eW9hcmF3b3Rsc2Jlb3FhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgyOTgzNTIsImV4cCI6MjA5Mzg3NDM1Mn0.KO-UyQerUdbxxhqBDX5F51ZMU2WGIi6BLg-b-rDALmk';
 
 export async function onRequestPost(context) {
-    const { request, env } = context;
-    const supabaseUrl = env.SUPABASE_URL || SUPABASE_URL;
-    const supabaseKey = env.SUPABASE_KEY || SUPABASE_KEY;
+    const { request } = context;
 
     let userId, token;
     try {
@@ -26,10 +16,10 @@ export async function onRequestPost(context) {
     }
 
     const profRes = await fetch(
-        `${supabaseUrl}/rest/v1/profiles?id=eq.${userId}&select=role`,
+        `${SUPABASE_URL}/rest/v1/profiles?id=eq.${userId}&select=role`,
         {
             headers: {
-                'apikey': supabaseKey,
+                'apikey': SUPABASE_KEY,
                 'Authorization': `Bearer ${token}`
             }
         }
