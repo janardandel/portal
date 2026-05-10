@@ -96,7 +96,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 const existingToken = localStorage.getItem('pg_access_token');
 const existingRole  = localStorage.getItem('pg_role');
 if (existingToken) {
-    window.location.href = existingRole === 'owner' ? 'owner-dashboard.html' : 'teacher-home.html';
+    window.location.href = existingRole === 'owner' ? 'owner-dashboard.html' : 'quiz-builder.html';
 }
 
 document.getElementById('togglePw').addEventListener('click', function() {
@@ -146,7 +146,7 @@ document.getElementById('loginForm').addEventListener('submit', async function(e
         showAlert('Login successful! Redirecting…', 'success');
 
         setTimeout(() => {
-            window.location.href = role === 'owner' ? 'owner-dashboard.html' : 'teacher-home.html';
+            window.location.href = role === 'owner' ? 'owner-dashboard.html' : 'quiz-builder.html';
         }, 800);
 
     } catch (err) {
