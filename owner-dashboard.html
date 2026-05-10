@@ -472,6 +472,9 @@
 </div>
 
 <script>
+const SUPABASE_URL = 'https://lekvzyoarawotlsbeoqa.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imxla3Z6eW9hcmF3b3Rsc2Jlb3FhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgyOTgzNTIsImV4cCI6MjA5Mzg3NDM1Mn0.KO-UyQerUdbxxhqBDX5F51ZMU2WGIi6BLg-b-rDALmk';
+
 let ownerToken  = null;
 let moodleURL   = null;
 let moodleToken = null;
@@ -487,16 +490,15 @@ let moodleToken = null;
     const user = JSON.parse(localStorage.getItem('pg_user') || '{}');
     document.getElementById('ownerEmail').textContent = user.email || '…';
 
-    // Verify role server-side — do not trust localStorage alone
+    // Verify role directly from Supabase
     try {
-        const verifyRes = await fetch('/api/verify', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ userId: user.id, token: ownerToken })
+        const profRes = await fetch(`${SUPABASE_URL}/rest/v1/profiles?id=eq.${user.id}&select=role`, {
+            headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${ownerToken}` }
         });
-        const verifyData = await verifyRes.json();
+        const profiles = await profRes.json();
+        const verifiedRole = profiles[0]?.role;
 
-        if (!verifyRes.ok || verifyData.role !== 'owner') {
+        if (!profRes.ok || verifiedRole !== 'owner') {
             window.location.href = 'index.html';
             return;
         }
@@ -513,13 +515,13 @@ let moodleToken = null;
 
 async function loadMoodleConfig() {
     try {
-        const res  = await fetch('/api/moodle-config', {
-            headers: { 'Authorization': 'Bearer ' + ownerToken }
+        const res = await fetch(`${SUPABASE_URL}/rest/v1/moodle_config?id=eq.1&select=moodle_url,moodle_token`, {
+            headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${ownerToken}` }
         });
-        const data = await res.json();
-        if (data.configured) {
-            moodleURL   = data.moodle_url.replace(/\/$/, '');
-            moodleToken = data.moodle_token;
+        const rows = await res.json();
+        if (rows && rows[0] && rows[0].moodle_url && rows[0].moodle_token) {
+            moodleURL   = rows[0].moodle_url.replace(/\/$/, '');
+            moodleToken = rows[0].moodle_token;
             document.getElementById('configBanner').classList.add('hidden');
         }
     } catch (_) {}
