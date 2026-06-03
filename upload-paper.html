@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Upload Question Paper — Pitthugram</title>
+  <link rel="icon" type="image/png" href="./favicon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/@phosphor-icons/web" defer></script>
+  <link rel="stylesheet" href="./pitthugram.css">
+  <style>
+    .upload-page { max-width: 760px; margin: 2.5rem auto; padding: 0 1rem 4rem; }
+    .page-title { font-size: 1.5rem; font-weight: 700; color: var(--text-primary); margin-bottom: 0.25rem; }
+    .page-sub   { color: var(--text-secondary); font-size: 0.93rem; margin-bottom: 2rem; }
+
+    /* Drop zone */
+    .drop-zone {
+      border: 2px dashed var(--border-light);
+      border-radius: var(--radius-lg);
+      background: var(--bg-elevated);
+      padding: 3rem 2rem;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color 0.3s, background 0.3s;
+      position: relative;
+    }
+    .drop-zone.drag-over,
+    .drop-zone:hover { border-color: var(--primary); background: var(--bg-card); }
+    .drop-zone input[type="file"] { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
+    .drop-icon { font-size: 2.8rem; color: var(--primary); margin-bottom: 0.75rem; display: block; }
+    .drop-title { font-size: 1.05rem; font-weight: 600; color: var(--text-primary); margin-bottom: 0.35rem; }
+    .drop-hint  { font-size: 0.85rem; color: var(--text-secondary); }
+    .drop-hint span { color: var(--primary); font-weight: 500; }
+
+    /* File list */
+    .file-list { margin-top: 1.25rem; display: flex; flex-direction: column; gap: 0.6rem; }
+    .file-item {
+      display: flex; align-items: center; gap: 0.75rem;
+      background: var(--bg-elevated); border: 1.5px solid var(--border-light);
+      border-radius: var(--radius-md); padding: 0.7rem 1rem;
+    }
+    .file-item i { font-size: 1.3rem; color: var(--primary); flex-shrink: 0; }
+    .file-name { flex: 1; font-size: 0.9rem; color: var(--text-primary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .file-size { font-size: 0.8rem; color: var(--text-secondary); flex-shrink: 0; }
+    .file-remove { background: none; border: none; color: var(--text-secondary); cursor: pointer; padding: 0.2rem; border-radius: var(--radius-sm); transition: color 0.2s; }
+    .file-remove:hover { color: var(--danger); }
+
+    /* Form card */
+    .form-card {
+      background: var(--bg-elevated); border: 1.5px solid var(--border-light);
+      border-radius: var(--radius-lg); padding: 1.5rem; margin-top: 1.5rem;
+    }
+    .form-card h3 { font-size: 0.95rem; font-weight: 600; color: var(--text-primary); margin-bottom: 1rem; }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+    @media (max-width: 560px) { .form-row { grid-template-columns: 1fr; } }
+    .form-group { display: flex; flex-direction: column; gap: 0.4rem; }
+    .form-group label { font-size: 0.83rem; font-weight: 500; color: var(--text-secondary); }
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+      padding: 0.7rem 0.875rem;
+      background: var(--bg-input, #1a1a1a);
+      border: 1.5px solid var(--border-light);
+      border-radius: var(--radius-md);
+      color: var(--text-primary);
+      font-family: inherit; font-size: 0.9rem;
+      transition: border-color 0.3s, box-shadow 0.3s;
+      outline: none;
+      resize: vertical;
+    }
+    .form-group input:focus,
+    .form-group select:focus,
+    .form-group textarea:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(244,0,9,0.12);
+    }
+
+    /* Progress */
+    .progress-wrap { margin-top: 1.5rem; display: none; }
+    .progress-label { font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 0.5rem; display: flex; justify-content: space-between; }
+    .progress-bar { height: 6px; background: var(--bg-card); border-radius: 99px; overflow: hidden; }
+    .progress-fill { height: 100%; background: var(--primary); border-radius: 99px; transition: width 0.4s ease; width: 0%; }
+
+    /* Status card */
+    .status-card {
+      display: none; margin-top: 1.5rem;
+      border-radius: var(--radius-lg); padding: 1.25rem 1.5rem;
+      border: 1.5px solid var(--border-light);
+    }
+    .status-card.success { border-color: var(--success); background: rgba(34,197,94,0.07); }
+    .status-card.error   { border-color: var(--danger);  background: rgba(244,0,9,0.07); }
+    .status-card .status-title { font-weight: 600; font-size: 0.95rem; display: flex; align-items: center; gap: 0.5rem; }
+    .status-card.success .status-title { color: var(--success); }
+    .status-card.error   .status-title { color: var(--danger); }
+    .status-meta { font-size: 0.83rem; color: var(--text-secondary); margin-top: 0.4rem; }
+
+    /* Submit row */
+    .submit-row { display: flex; justify-content: flex-end; gap: 0.75rem; margin-top: 1.5rem; }
+
+    /* Confidence badge */
+    .conf-badge {
+      display: inline-flex; align-items: center; gap: 0.35rem;
+      font-size: 0.8rem; font-weight: 600; padding: 0.25rem 0.65rem;
+      border-radius: 99px;
+    }
+    .conf-badge.high   { background: rgba(34,197,94,0.15); color: #22c55e; }
+    .conf-badge.medium { background: rgba(234,179,8,0.15);  color: #eab308; }
+    .conf-badge.low    { background: rgba(244,0,9,0.15);    color: var(--danger); }
+  </style>
+</head>
+<body>
+
+<!-- Auth gate -->
+<div id="authGate" style="display:none; position:fixed; inset:0; background:var(--bg-base); z-index:999; align-items:center; justify-content:center;">
+  <div style="text-align:center;">
+    <img src="./logo.png" alt="Pitthugram" style="height:48px; margin-bottom:1.5rem;">
+    <p style="color:var(--text-secondary); margin-bottom:1.25rem;">You must be logged in to access this page.</p>
+    <a href="./index.html" class="btn btn-primary"><i class="ph ph-sign-in"></i> Go to Login</a>
+  </div>
+</div>
+
+<!-- Navbar -->
+<header class="navbar">
+  <div class="container nav-inner">
+    <a href="./quiz-builder.html" class="logo">
+      <img src="./logo.png" alt="Pitthugram">
+    </a>
+    <div class="nav-actions">
+      <a href="./quiz-builder.html" class="btn btn-outline btn-sm">
+        <i class="ph ph-house"></i> Dashboard
+      </a>
+      <button class="btn btn-outline btn-sm" onclick="logout()">
+        <i class="ph ph-sign-out"></i> Logout
+      </button>
+    </div>
+  </div>
+</header>
+
+<!-- Main content -->
+<main id="uploadContent" style="display:none;">
+  <div class="upload-page">
+    <p class="page-title"><i class="ph ph-upload-simple"></i> Upload Question Paper</p>
+    <p class="page-sub">Upload scanned images or PDFs. Our system will extract MCQs automatically.</p>
+
+    <!-- Drop zone -->
+    <div class="drop-zone" id="dropZone">
+      <input type="file" id="fileInput" accept=".pdf,.png,.jpg,.jpeg,.webp" multiple>
+      <i class="ph ph-cloud-arrow-up drop-icon"></i>
+      <p class="drop-title">Drop files here or <span>browse</span></p>
+      <p class="drop-hint">Supports PDF, PNG, JPG &nbsp;·&nbsp; Max 10 MB per file &nbsp;·&nbsp; Up to 5 files</p>
+    </div>
+
+    <!-- File list -->
+    <div class="file-list" id="fileList"></div>
+
+    <!-- Metadata form -->
+    <div class="form-card" id="metaForm" style="display:none;">
+      <h3><i class="ph ph-note-pencil"></i> Paper Details</h3>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Subject *</label>
+          <input type="text" id="subject" placeholder="e.g. Mathematics">
+        </div>
+        <div class="form-group">
+          <label>Class *</label>
+          <select id="classLevel">
+            <option value="">Select class</option>
+            <option>Class 6</option><option>Class 7</option><option>Class 8</option>
+            <option>Class 9</option><option>Class 10</option><option>Class 11</option>
+            <option>Class 12</option><option>JEE</option><option>NEET</option><option>Other</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Unit / Chapter</label>
+          <input type="text" id="unit" placeholder="e.g. Chapter 3 — Algebra">
+        </div>
+        <div class="form-group">
+          <label>Topic</label>
+          <input type="text" id="topic" placeholder="e.g. Quadratic Equations">
+        </div>
+      </div>
+      <div class="form-group" style="margin-top:1rem;">
+        <label>Notes for reviewer (optional)</label>
+        <textarea id="notes" rows="2" placeholder="Any special instructions for the reviewer..."></textarea>
+      </div>
+    </div>
+
+    <!-- Progress -->
+    <div class="progress-wrap" id="progressWrap">
+      <div class="progress-label">
+        <span id="progressText">Uploading...</span>
+        <span id="progressPct">0%</span>
+      </div>
+      <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+    </div>
+
+    <!-- Status -->
+    <div class="status-card" id="statusCard">
+      <div class="status-title" id="statusTitle"></div>
+      <div class="status-meta" id="statusMeta"></div>
+    </div>
+
+    <!-- Submit -->
+    <div class="submit-row" id="submitRow" style="display:none;">
+      <button class="btn btn-outline btn-sm" onclick="clearAll()">
+        <i class="ph ph-x"></i> Clear
+      </button>
+      <button class="btn btn-primary" id="submitBtn" onclick="submitJob()">
+        <i class="ph ph-paper-plane-tilt"></i> Submit for Processing
+      </button>
+    </div>
+  </div>
+</main>
+
+<script>
+  const SUPABASE_URL = 'https://qnqcysdeolnooxxcafwz.supabase.co';
+  const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFucWN5c2Rlb2xub294eGNhZnd6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI4NDY0MzAsImV4cCI6MjA4ODQyMjQzMH0.tbm7J9FyQqwJB-KVSMwX13bfFEFsUqBknBDTFSMRuXE';
+  const N8N_WEBHOOK  = 'YOUR_N8N_WEBHOOK_URL';
+
+  let currentUser = null;
+  let selectedFiles = [];
+
+  // ── Auth ────────────────────────────────────────────────
+  function checkAuth() {
+    const token = localStorage.getItem('pg_access_token');
+    const user  = localStorage.getItem('pg_user');
+    if (!token || !user) {
+      document.getElementById('authGate').style.display = 'flex';
+      document.getElementById('uploadContent').style.display = 'none';
+      return false;
+    }
+    currentUser = JSON.parse(user);
+    document.getElementById('authGate').style.display = 'none';
+    document.getElementById('uploadContent').style.display = 'block';
+    return true;
+  }
+
+  function logout() {
+    ['pg_access_token','pg_refresh_token','pg_user','pg_role'].forEach(k => localStorage.removeItem(k));
+    window.location.href = './index.html';
+  }
+
+  // ── File handling ───────────────────────────────────────
+  const dropZone  = document.getElementById('dropZone');
+  const fileInput = document.getElementById('fileInput');
+
+  dropZone.addEventListener('dragover',  e => { e.preventDefault(); dropZone.classList.add('drag-over'); });
+  dropZone.addEventListener('dragleave', ()  => dropZone.classList.remove('drag-over'));
+  dropZone.addEventListener('drop', e => {
+    e.preventDefault(); dropZone.classList.remove('drag-over');
+    addFiles([...e.dataTransfer.files]);
+  });
+  fileInput.addEventListener('change', () => addFiles([...fileInput.files]));
+
+  function addFiles(files) {
+    const allowed = ['application/pdf','image/png','image/jpeg','image/webp'];
+    files.forEach(f => {
+      if (!allowed.includes(f.type))   { showStatus('error', 'Unsupported file type', f.name + ' is not supported.'); return; }
+      if (f.size > 10 * 1024 * 1024)  { showStatus('error', 'File too large', f.name + ' exceeds 10 MB.'); return; }
+      if (selectedFiles.length >= 5)   { showStatus('error', 'Too many files', 'Maximum 5 files per submission.'); return; }
+      if (selectedFiles.find(x => x.name === f.name && x.size === f.size)) return;
+      selectedFiles.push(f);
+    });
+    renderFileList();
+  }
+
+  function renderFileList() {
+    const list = document.getElementById('fileList');
+    list.innerHTML = '';
+    selectedFiles.forEach((f, i) => {
+      const icon = f.type === 'application/pdf' ? 'ph-file-pdf' : 'ph-image';
+      const size = f.size > 1024*1024 ? (f.size/1024/1024).toFixed(1)+' MB' : (f.size/1024).toFixed(0)+' KB';
+      const el = document.createElement('div');
+      el.className = 'file-item';
+      el.innerHTML = `
+        <i class="ph ${icon}"></i>
+        <span class="file-name">${f.name}</span>
+        <span class="file-size">${size}</span>
+        <button class="file-remove" onclick="removeFile(${i})" title="Remove"><i class="ph ph-x"></i></button>`;
+      list.appendChild(el);
+    });
+    const hasFiles = selectedFiles.length > 0;
+    document.getElementById('metaForm').style.display  = hasFiles ? 'block' : 'none';
+    document.getElementById('submitRow').style.display = hasFiles ? 'flex'  : 'none';
+    if (!hasFiles) document.getElementById('statusCard').style.display = 'none';
+  }
+
+  function removeFile(i) { selectedFiles.splice(i, 1); renderFileList(); }
+
+  function clearAll() {
+    selectedFiles = [];
+    fileInput.value = '';
+    ['subject','unit','topic','notes'].forEach(id => document.getElementById(id).value = '');
+    document.getElementById('classLevel').value = '';
+    document.getElementById('statusCard').style.display  = 'none';
+    document.getElementById('progressWrap').style.display = 'none';
+    renderFileList();
+  }
+
+  // ── Upload & submit ─────────────────────────────────────
+  async function submitJob() {
+    if (!selectedFiles.length) return;
+    const subject = document.getElementById('subject').value.trim();
+    const cls     = document.getElementById('classLevel').value;
+    if (!subject || !cls) { showStatus('error', 'Required fields missing', 'Please fill in Subject and Class before submitting.'); return; }
+
+    setLoading(true);
+    showProgress(10, 'Uploading files...');
+
+    try {
+      const token   = localStorage.getItem('pg_access_token');
+      const jobId   = 'job_' + Date.now() + '_' + Math.random().toString(36).slice(2,7);
+      const filePaths = [];
+
+      for (let i = 0; i < selectedFiles.length; i++) {
+        const f    = selectedFiles[i];
+        const path = `${currentUser.id}/${jobId}/${f.name}`;
+        showProgress(10 + Math.round((i / selectedFiles.length) * 60), `Uploading ${f.name}...`);
+
+        const res = await fetch(`${SUPABASE_URL}/storage/v1/object/mcq-raw/${path}`, {
+          method: 'POST',
+          headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': f.type },
+          body: f
+        });
+        if (!res.ok) throw new Error(`Upload failed for ${f.name}: ${res.statusText}`);
+        filePaths.push(path);
+      }
+
+      showProgress(75, 'Creating job...');
+
+      // Create job record in Supabase
+      const jobPayload = {
+        id: jobId,
+        teacher_id:   currentUser.id,
+        institute_id: currentUser.institute_id,
+        subject:      subject,
+        class:        cls,
+        unit:         document.getElementById('unit').value.trim(),
+        topic:        document.getElementById('topic').value.trim(),
+        notes:        document.getElementById('notes').value.trim(),
+        file_paths:   filePaths,
+        status:       'CREATED',
+        created_at:   new Date().toISOString()
+      };
+
+      const dbRes = await fetch(`${SUPABASE_URL}/rest/v1/mcq_upload_jobs`, {
+        method: 'POST',
+        headers: {
+          'Authorization': 'Bearer ' + token,
+          'apikey': SUPABASE_KEY,
+          'Content-Type': 'application/json',
+          'Prefer': 'return=minimal'
+        },
+        body: JSON.stringify(jobPayload)
+      });
+      if (!dbRes.ok && dbRes.status !== 201) throw new Error('Failed to create job record.');
+
+      showProgress(90, 'Triggering processing...');
+
+      // Notify n8n
+      if (N8N_WEBHOOK && N8N_WEBHOOK !== 'YOUR_N8N_WEBHOOK_URL') {
+        await fetch(N8N_WEBHOOK, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ job_id: jobId, file_paths: filePaths, ...jobPayload })
+        }).catch(() => {}); // non-blocking
+      }
+
+      showProgress(100, 'Done!');
+      showStatus('success',
+        '<i class="ph ph-check-circle"></i> Submitted successfully',
+        `Job ID: ${jobId} · ${filePaths.length} file(s) queued · Status: CREATED → Processing will begin shortly.`
+      );
+      selectedFiles = [];
+      fileInput.value = '';
+      setTimeout(() => renderFileList(), 800);
+
+    } catch (err) {
+      showStatus('error', '<i class="ph ph-warning-circle"></i> Submission failed', err.message);
+    } finally {
+      setLoading(false);
+      setTimeout(() => { document.getElementById('progressWrap').style.display = 'none'; }, 1500);
+    }
+  }
+
+  // ── UI helpers ──────────────────────────────────────────
+  function setLoading(on) {
+    const btn = document.getElementById('submitBtn');
+    btn.disabled = on;
+    btn.innerHTML = on
+      ? '<i class="ph ph-spinner-gap" style="animation:spin 0.8s linear infinite"></i> Processing...'
+      : '<i class="ph ph-paper-plane-tilt"></i> Submit for Processing';
+  }
+
+  function showProgress(pct, label) {
+    const wrap = document.getElementById('progressWrap');
+    wrap.style.display = 'block';
+    document.getElementById('progressText').textContent = label;
+    document.getElementById('progressPct').textContent  = pct + '%';
+    document.getElementById('progressFill').style.width = pct + '%';
+  }
+
+  function showStatus(type, title, meta) {
+    const card = document.getElementById('statusCard');
+    card.className = 'status-card ' + type;
+    card.style.display = 'block';
+    document.getElementById('statusTitle').innerHTML = title;
+    document.getElementById('statusMeta').textContent  = meta;
+    card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+
+  // ── Init ────────────────────────────────────────────────
+  checkAuth();
+</script>
+</body>
+</html>
