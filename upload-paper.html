@@ -160,11 +160,16 @@
       <div class="form-row">
         <div class="form-group">
           <label>Subject *</label>
-          <input type="text" id="subject" placeholder="e.g. Mathematics">
+          <select id="subject" onchange="updateChapters()">
+            <option value="">Select subject</option>
+            <option>Physics</option><option>Chemistry</option><option>Mathematics</option>
+            <option>Biology</option><option>English</option><option>Hindi</option>
+            <option>Social Studies</option><option>Science</option><option>Other</option>
+          </select>
         </div>
         <div class="form-group">
           <label>Class *</label>
-          <select id="classLevel">
+          <select id="classLevel" onchange="updateChapters()">
             <option value="">Select class</option>
             <option>Class 6</option><option>Class 7</option><option>Class 8</option>
             <option>Class 9</option><option>Class 10</option><option>Class 11</option>
@@ -172,12 +177,16 @@
           </select>
         </div>
         <div class="form-group">
-          <label>Unit / Chapter</label>
-          <input type="text" id="unit" placeholder="e.g. Chapter 3 — Algebra">
+          <label>Chapter *</label>
+          <select id="unit">
+            <option value="">Select chapter</option>
+          </select>
         </div>
         <div class="form-group">
           <label>Topic</label>
-          <input type="text" id="topic" placeholder="e.g. Quadratic Equations">
+          <select id="topic">
+            <option value="">Select topic (optional)</option>
+          </select>
         </div>
       </div>
       <div class="form-group" style="margin-top:1rem;">
@@ -220,6 +229,53 @@
 
   let currentUser = null;
   let selectedFiles = [];
+
+  // Chapter & topic data by subject & class
+  const curriculumData = {
+    'Physics': {
+      'Class 11': ['Mechanics', 'Thermodynamics', 'Waves & Oscillations', 'Electrostatics', 'Magnetism'],
+      'Class 12': ['Electric Current', 'Optics', 'Modern Physics', 'Semiconductors', 'Communication'],
+      'JEE': ['Mechanics', 'Heat & Thermodynamics', 'Waves', 'Electrostatics', 'Magnetism', 'Current Electricity', 'Optics', 'Modern Physics'],
+      'NEET': ['Motion & Force', 'Work & Energy', 'Rotational Motion', 'Gravitation', 'Oscillations', 'Waves', 'Electrostatics', 'Magnetism', 'Optics', 'Modern Physics']
+    },
+    'Chemistry': {
+      'Class 11': ['Basic Concepts', 'Atomic Structure', 'Chemical Bonding', 'Thermodynamics', 'Equilibrium', 'Redox Reactions'],
+      'Class 12': ['Solutions', 'Electrochemistry', 'Chemical Kinetics', 'Coordination Compounds', 'Organic Chemistry', 'Polymers'],
+      'JEE': ['Atomic Structure', 'Periodic Table', 'Bonding', 'Thermodynamics', 'Equilibrium', 'Redox', 'Solutions', 'Electrochemistry', 'Kinetics', 'General Organic Chemistry', 'Hydrocarbons', 'Alcohols & Ethers'],
+      'NEET': ['Atomic Structure', 'Chemical Bonding', 'States of Matter', 'Thermodynamics', 'Equilibrium', 'Redox Reactions', 'Hydrogen', 'S-Block Elements', 'P-Block Elements', 'D-Block Elements', 'Coordination Compounds', 'Organic Chemistry', 'Biomolecules']
+    },
+    'Mathematics': {
+      'Class 11': ['Sets & Relations', 'Functions', 'Trigonometry', 'Linear Equations', 'Inequalities', 'Sequences & Series'],
+      'Class 12': ['Relations & Functions', 'Inverse Trigonometry', 'Matrices', 'Determinants', 'Continuity & Differentiability', 'Derivatives', 'Integrals', 'Differential Equations', 'Vectors', '3D Geometry'],
+      'JEE': ['Sets', 'Relations', 'Inequalities', 'Quadratic Equations', 'Sequences & Series', 'Trigonometry', 'Complex Numbers', 'Logarithms', 'Limits', 'Derivatives', 'Integrals', 'Differential Equations', 'Vectors', '3D Geometry', 'Straight Lines', 'Circles', 'Conic Sections', 'Permutations & Combinations', 'Probability'],
+      'NEET': ['Sets & Logic', 'Relations & Functions', 'Trigonometry', 'Quadratic Equations', 'Sequences & Series', 'Straight Lines', 'Circles', 'Conic Sections', 'Statistics', 'Probability', 'Mathematical Reasoning']
+    },
+    'Biology': {
+      'Class 11': ['Cell Structure', 'Cell Division', 'Plant Physiology', 'Animal Physiology', 'Diversity of Life'],
+      'Class 12': ['Genetics', 'Evolution', 'Ecology', 'Biotechnology', 'Human Reproduction', 'Human Health'],
+      'NEET': ['Diversity', 'Structural Organization', 'Cell Biology', 'Genetics', 'Molecular Biology', 'Plant Anatomy', 'Plant Physiology', 'Human Anatomy', 'Human Physiology', 'Reproduction', 'Development', 'Ecology', 'Evolution', 'Biotechnology', 'Human Health']
+    }
+  };
+
+  function updateChapters() {
+    const subject = document.getElementById('subject').value;
+    const cls = document.getElementById('classLevel').value;
+    const chapterSelect = document.getElementById('unit');
+    const topicSelect = document.getElementById('topic');
+
+    chapterSelect.innerHTML = '<option value="">Select chapter</option>';
+    topicSelect.innerHTML = '<option value="">Select topic (optional)</option>';
+
+    if (subject && cls && curriculumData[subject]?.[cls]) {
+      const chapters = curriculumData[subject][cls];
+      chapters.forEach(ch => {
+        const opt = document.createElement('option');
+        opt.value = ch;
+        opt.textContent = ch;
+        chapterSelect.appendChild(opt);
+      });
+    }
+  }
 
   // ── Auth ────────────────────────────────────────────────
   function checkAuth() {
@@ -291,8 +347,11 @@
   function clearAll() {
     selectedFiles = [];
     fileInput.value = '';
-    ['subject','unit','topic','notes'].forEach(id => document.getElementById(id).value = '');
-    document.getElementById('classLevel').value = '';
+    ['subject','unit','topic','notes','classLevel'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.value = '';
+    });
+    updateChapters();
     document.getElementById('statusCard').style.display  = 'none';
     document.getElementById('progressWrap').style.display = 'none';
     renderFileList();
@@ -301,9 +360,10 @@
   // ── Upload & submit ─────────────────────────────────────
   async function submitJob() {
     if (!selectedFiles.length) return;
-    const subject = document.getElementById('subject').value.trim();
+    const subject = document.getElementById('subject').value;
     const cls     = document.getElementById('classLevel').value;
-    if (!subject || !cls) { showStatus('error', 'Required fields missing', 'Please fill in Subject and Class before submitting.'); return; }
+    const unit    = document.getElementById('unit').value;
+    if (!subject || !cls || !unit) { showStatus('error', 'Required fields missing', 'Please select Subject, Class, and Chapter before submitting.'); return; }
 
     setLoading(true);
     showProgress(10, 'Uploading files...');
