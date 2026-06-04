@@ -260,6 +260,7 @@ async function selectJob(jobId) {
 
   const qIds = questions.map(q=>`"${q.id}"`).join(',');
   const options = await sbGet(`options?question_id=in.(${qIds})`);
+  const diagrams = await sbGet(`mcq_diagrams?question_id=in.(${qIds})`);
 
   // Build mcqData
   mcqData = questions.map(q => ({
@@ -267,7 +268,8 @@ async function selectJob(jobId) {
     options: ['A','B','C','D'].reduce((acc,l)=>{
       const o = options.find(op=>op.question_id===q.id&&op.option_label===l);
       acc[l] = o?.option_text||''; return acc;
-    }, {})
+    }, {}),
+    diagrams: diagrams.filter(d=>d.question_id===q.id) || []
   }));
 
   renderReview(job, set);
@@ -282,6 +284,7 @@ function renderReview(job, set) {
       <h2><i class="ph ph-note-pencil" style="color:var(--primary);"></i> Job Details
         <span style="font-size:.8rem;font-weight:400;color:var(--text-secondary);margin-left:.75rem;">${job.id}</span>
       </h2>
+      ${mcqData.some(q=>q.diagrams && q.diagrams.length>0) ? `<p style="font-size:.8rem;color:#3b82f6;margin-bottom:1rem;"><i class="ph ph-image"></i> This job includes ${mcqData.reduce((sum,q)=>sum+(q.diagrams?.length||0),0)} diagram(s) extracted from the scanned paper.</p>` : ''}
       <div class="meta-grid">
         <div class="meta-field">
           <label>Category</label>
@@ -347,6 +350,17 @@ function renderMCQCards() {
           <input class="option-input" placeholder="Option ${l}..." value="${escHtml(q.options[l]||'')}" onchange="mcqData[${i}].options['${l}']=this.value">
         </div>`).join('')}
       </div>
+      ${q.diagrams && q.diagrams.length > 0 ? `
+      <div style="margin-top:1rem;padding-top:1rem;border-top:1.5px solid var(--border-light);">
+        <p style="font-size:.78rem;font-weight:700;color:var(--text-secondary);margin-bottom:.75rem;"><i class="ph ph-image"></i> Diagrams (${q.diagrams.length})</p>
+        <div style="display:grid;gap:.75rem;">
+          ${q.diagrams.map((d,di)=>`
+          <div style="border:1px solid var(--border-light);border-radius:var(--radius-md);overflow:hidden;">
+            <img src="data:image/png;base64,${d.image_b64.substring(0,100)}..." style="width:100%;max-height:200px;object-fit:contain;background:var(--bg-input);" alt="Diagram ${di+1}" title="Click to expand">
+            <div style="padding:.5rem;font-size:.75rem;color:var(--text-secondary);">Diagram ${di+1} â€¢ ${(d.image_b64.length/1000).toFixed(1)}KB</div>
+          </div>`).join('')}
+        </div>
+      </div>` : '' }
     </div>`).join('');
 }
 
@@ -388,12 +402,39 @@ async function approveAll(jobId, setId, instituteId) {
       });
     });
 
+    // 0. Upload diagrams to Supabase Storage
+    for (const q of mcqData) {
+      if (q.diagrams && q.diagrams.length > 0) {
+        for (let di = 0; di < q.diagrams.length; di++) {
+          const d = q.diagrams[di];
+          if (d.image_b64 && !d.image_url) {
+            const fname = `${setId}/${q.id||'new'}_diagram_${di}.png`;
+            try {
+              const binData = Uint8Array.from(atob(d.image_b64), c => c.charCodeAt(0));
+              const r = await fetch(`${SUPA_B_URL}/storage/v1/object/mcq-diagrams/${fname}`, {
+                method:'POST', headers:{ apikey:SUPA_B_KEY, Authorization:`Bearer ${SUPA_B_KEY}` },
+                body: binData
+              });
+              if (r.ok) {
+                d.image_url = `${SUPA_B_URL}/storage/v1/object/public/mcq-diagrams/${fname}`;
+              }
+            } catch(e) { console.warn('Diagram upload failed:', e); }
+          }
+        }
+      }
+    }
+
     // 1. Update existing questions + options
     for (const q of mcqData) {
       if (q.id) {
-        await sbPatch(`questions?id=eq.${q.id}`, {
+        const qUpdate = {
           question_text: q.question_text, correct_option: q.correct_option, status:'approved'
-        });
+        };
+        // Link first diagram's URL to the question if available
+        if (q.diagrams && q.diagrams.length > 0 && q.diagrams[0].image_url) {
+          qUpdate.image_url = q.diagrams[0].image_url;
+        }
+        await sbPatch(`questions?id=eq.${q.id}`, qUpdate);
         // update options
         for (const [l, t] of Object.entries(q.options)) {
           await fetch(`${SUPA_B_URL}/rest/v1/options?question_id=eq.${q.id}&option_label=eq.${l}`, {
