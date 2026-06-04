@@ -214,8 +214,8 @@
 </main>
 
 <script>
-  const SUPABASE_URL = 'https://qnqcysdeolnooxxcafwz.supabase.co';
-  const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFucWN5c2Rlb2xub294eGNhZnd6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI4NDY0MzAsImV4cCI6MjA4ODQyMjQzMH0.tbm7J9FyQqwJB-KVSMwX13bfFEFsUqBknBDTFSMRuXE';
+  const SUPABASE_URL = 'https://zqrswemxmhjaylsuulyu.supabase.co';
+  const SUPABASE_KEY = 'sb_publishable_8Y62WSnJwGidHS591ofDiw_gbzmTGAQ';
   const N8N_WEBHOOK  = 'https://container001.pitthugram.com/webhook/mcq-process';
 
   let currentUser = null;
@@ -320,7 +320,7 @@
 
         const res = await fetch(`${SUPABASE_URL}/storage/v1/object/mcq-raw/${path}`, {
           method: 'POST',
-          headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': f.type },
+          headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY, 'Content-Type': f.type },
           body: f
         });
         if (!res.ok) throw new Error(`Upload failed for ${f.name}: ${res.statusText}`);
@@ -347,7 +347,7 @@
       const dbRes = await fetch(`${SUPABASE_URL}/rest/v1/mcq_upload_jobs`, {
         method: 'POST',
         headers: {
-          'Authorization': 'Bearer ' + token,
+          'Authorization': 'Bearer ' + SUPABASE_KEY,
           'apikey': SUPABASE_KEY,
           'Content-Type': 'application/json',
           'Prefer': 'return=minimal'
@@ -359,7 +359,7 @@
       showProgress(90, 'Triggering processing...');
 
       // Notify n8n
-      if (N8N_WEBHOOK && N8N_WEBHOOK !== 'https://container001.pitthugram.com/webhook/mcq-process') {
+      if (N8N_WEBHOOK && N8N_WEBHOOK !== 'YOUR_N8N_WEBHOOK_URL') {
         await fetch(N8N_WEBHOOK, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
