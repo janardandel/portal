@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Review MCQs â€” Pitthugram</title>
+  <link rel="icon" type="image/png" href="./favicon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/@phosphor-icons/web" defer></script>
+  <link rel="stylesheet" href="./pitthugram.css">
+  <style>
+    .review-layout { display:grid; grid-template-columns:280px 1fr; min-height:calc(100vh - 72px); }
+    @media(max-width:800px){ .review-layout{grid-template-columns:1fr;} }
+
+    /* Job list panel */
+    .job-panel { background:var(--bg-elevated); border-right:1.5px solid var(--border-light); padding:1.25rem 1rem; overflow-y:auto; max-height:calc(100vh - 72px); position:sticky; top:72px; }
+    .job-panel-title { font-size:0.78rem; font-weight:700; color:var(--text-secondary); text-transform:uppercase; letter-spacing:.06em; margin-bottom:.75rem; display:flex; align-items:center; justify-content:space-between; }
+    .job-card { background:var(--bg-card,#1a1a1a); border:1.5px solid var(--border-light); border-radius:var(--radius-md); padding:.75rem 1rem; margin-bottom:.5rem; cursor:pointer; transition:border-color .2s,background .2s; }
+    .job-card:hover { border-color:var(--primary); background:var(--bg-elevated); }
+    .job-card.active { border-color:var(--primary); background:rgba(244,0,9,.07); }
+    .job-card-subject { font-size:.9rem; font-weight:600; color:var(--text-primary); margin-bottom:.2rem; }
+    .job-card-meta { font-size:.77rem; color:var(--text-secondary); }
+    .status-badge { display:inline-flex; align-items:center; gap:.3rem; font-size:.72rem; font-weight:700; padding:.18rem .55rem; border-radius:99px; }
+    .status-badge.draft     { background:rgba(234,179,8,.15);  color:#eab308; }
+    .status-badge.processing{ background:rgba(59,130,246,.15); color:#3b82f6; }
+    .status-badge.approved  { background:rgba(34,197,94,.15);  color:#22c55e; }
+    .status-badge.failed    { background:rgba(244,0,9,.15);    color:var(--primary); }
+    .spinner { animation:spin .8s linear infinite; display:inline-block; }
+    @keyframes spin{to{transform:rotate(360deg)}}
+
+    /* Main review panel */
+    .review-main { padding:1.75rem 2rem 4rem; overflow-y:auto; }
+    @media(max-width:600px){ .review-main{padding:1rem 1rem 4rem;} }
+
+    .empty-review { display:flex; flex-direction:column; align-items:center; justify-content:center; height:60vh; gap:.75rem; color:var(--text-secondary); }
+    .empty-review i { font-size:3rem; color:var(--border-light); }
+
+    /* Meta bar */
+    .meta-bar { background:var(--bg-elevated); border:1.5px solid var(--border-light); border-radius:var(--radius-lg); padding:1.25rem 1.5rem; margin-bottom:1.5rem; }
+    .meta-bar h2 { font-size:1.1rem; font-weight:700; color:var(--text-primary); margin-bottom:1rem; }
+    .meta-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(180px,1fr)); gap:.75rem; }
+    .meta-field { display:flex; flex-direction:column; gap:.3rem; }
+    .meta-field label { font-size:.75rem; font-weight:600; color:var(--text-secondary); text-transform:uppercase; letter-spacing:.04em; }
+    .meta-field select, .meta-field input { padding:.6rem .875rem; background:var(--bg-input,#1a1a1a); border:1.5px solid var(--border-light); border-radius:var(--radius-md); color:var(--text-primary); font-family:inherit; font-size:.88rem; outline:none; transition:border-color .2s,box-shadow .2s; }
+    .meta-field select:focus, .meta-field input:focus { border-color:var(--primary); box-shadow:0 0 0 3px rgba(244,0,9,.12); }
+
+    /* MCQ cards */
+    .mcq-list { display:flex; flex-direction:column; gap:1rem; }
+    .mcq-card { background:var(--bg-elevated); border:1.5px solid var(--border-light); border-radius:var(--radius-lg); padding:1.25rem 1.5rem; transition:border-color .2s; }
+    .mcq-card:focus-within { border-color:rgba(244,0,9,.4); }
+    .mcq-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:.85rem; gap:.5rem; }
+    .mcq-num { font-size:.78rem; font-weight:700; color:var(--text-secondary); background:var(--bg-card,#1a1a1a); padding:.2rem .6rem; border-radius:99px; }
+    .mcq-delete { background:none; border:none; color:var(--text-secondary); cursor:pointer; padding:.3rem; border-radius:var(--radius-sm); transition:color .2s; }
+    .mcq-delete:hover { color:var(--primary); }
+    .mcq-q { width:100%; padding:.65rem .875rem; background:var(--bg-input,#1a1a1a); border:1.5px solid var(--border-light); border-radius:var(--radius-md); color:var(--text-primary); font-family:inherit; font-size:.9rem; resize:vertical; outline:none; min-height:60px; transition:border-color .2s,box-shadow .2s; }
+    .mcq-q:focus { border-color:var(--primary); box-shadow:0 0 0 3px rgba(244,0,9,.12); }
+    .options-grid { display:grid; grid-template-columns:1fr 1fr; gap:.6rem; margin-top:.75rem; }
+    @media(max-width:500px){ .options-grid{grid-template-columns:1fr;} }
+    .option-row { display:flex; align-items:center; gap:.5rem; }
+    .option-radio { appearance:none; width:18px; height:18px; border:2px solid var(--border-light); border-radius:50%; cursor:pointer; flex-shrink:0; transition:border-color .2s,background .2s; }
+    .option-radio:checked { border-color:var(--primary); background:var(--primary); box-shadow:inset 0 0 0 3px var(--bg-elevated); }
+    .option-label { font-size:.78rem; font-weight:700; color:var(--text-secondary); width:18px; flex-shrink:0; }
+    .option-input { flex:1; padding:.55rem .75rem; background:var(--bg-input,#1a1a1a); border:1.5px solid var(--border-light); border-radius:var(--radius-md); color:var(--text-primary); font-family:inherit; font-size:.88rem; outline:none; transition:border-color .2s; }
+    .option-input:focus { border-color:var(--primary); }
+    .option-row:has(.option-radio:checked) .option-input { border-color:rgba(34,197,94,.5); background:rgba(34,197,94,.05); }
+
+    /* Approve bar */
+    .approve-bar { position:sticky; bottom:0; background:var(--bg-elevated); border-top:1.5px solid var(--border-light); padding:1rem 2rem; display:flex; align-items:center; justify-content:space-between; gap:1rem; flex-wrap:wrap; margin-top:2rem; border-radius:var(--radius-lg) var(--radius-lg) 0 0; }
+    .approve-info { font-size:.85rem; color:var(--text-secondary); }
+    .approve-info strong { color:var(--text-primary); }
+    .btn-approve { background:var(--primary); border:none; color:#fff; font-family:inherit; font-size:.9rem; font-weight:700; padding:.75rem 2rem; border-radius:var(--radius-md); cursor:pointer; display:flex; align-items:center; gap:.5rem; transition:background .2s,opacity .2s; }
+    .btn-approve:hover { background:#c8000a; }
+    .btn-approve:disabled { opacity:.5; cursor:not-allowed; }
+
+    /* Toast */
+    .toast { position:fixed; bottom:2rem; right:2rem; z-index:9999; padding:.85rem 1.25rem; border-radius:var(--radius-md); font-size:.875rem; font-weight:600; display:flex; align-items:center; gap:.5rem; box-shadow:0 8px 24px rgba(0,0,0,.4); transform:translateY(8px); opacity:0; transition:all .3s; pointer-events:none; }
+    .toast.show { transform:translateY(0); opacity:1; }
+    .toast.success { background:#166534; color:#bbf7d0; border:1px solid #22c55e; }
+    .toast.error   { background:#7f1d1d; color:#fecaca; border:1px solid var(--primary); }
+
+    /* Processing state */
+    .processing-banner { background:rgba(59,130,246,.1); border:1.5px solid rgba(59,130,246,.3); border-radius:var(--radius-lg); padding:1.5rem; text-align:center; margin-bottom:1.5rem; }
+    .processing-banner p { color:#93c5fd; font-size:.9rem; margin-top:.5rem; }
+  </style>
+</head>
+<body>
+
+<!-- Auth gate -->
+<div id="authGate" style="display:none;position:fixed;inset:0;background:var(--bg-base);z-index:999;align-items:center;justify-content:center;">
+  <div style="text-align:center;">
+    <img src="./logo.png" alt="Pitthugram" style="height:48px;margin-bottom:1.5rem;">
+    <p style="color:var(--text-secondary);margin-bottom:1.25rem;">You must be logged in to access this page.</p>
+    <a href="./index.html" class="btn btn-primary"><i class="ph ph-sign-in"></i> Go to Login</a>
+  </div>
+</div>
+
+<!-- Navbar -->
+<header class="navbar">
+  <div class="container nav-inner">
+    <a href="./quiz-builder.html" class="logo"><img src="./logo.png" alt="Pitthugram"></a>
+    <div class="nav-actions">
+      <a href="./upload-paper.html" class="btn btn-outline btn-sm"><i class="ph ph-upload-simple"></i> Upload</a>
+      <a href="./quiz-builder.html" class="btn btn-outline btn-sm"><i class="ph ph-house"></i> Dashboard</a>
+      <button class="btn btn-outline btn-sm" onclick="logout()"><i class="ph ph-sign-out"></i> Logout</button>
+    </div>
+  </div>
+</header>
+
+<div id="mainContent" style="display:none;">
+  <div class="review-layout">
+
+    <!-- Job list -->
+    <aside class="job-panel">
+      <div class="job-panel-title">
+        <span>Pending Review</span>
+        <button onclick="loadJobs()" style="background:none;border:none;color:var(--text-secondary);cursor:pointer;padding:.2rem;" title="Refresh"><i class="ph ph-arrows-clockwise"></i></button>
+      </div>
+      <div id="jobList"><p style="color:var(--text-secondary);font-size:.85rem;">Loading...</p></div>
+    </aside>
+
+    <!-- Review panel -->
+    <main class="review-main" id="reviewPanel">
+      <div class="empty-review" id="emptyState">
+        <i class="ph ph-file-magnifying-glass"></i>
+        <p style="font-weight:600;color:var(--text-primary);">Select a job to review</p>
+        <p style="font-size:.85rem;">Processed MCQs will appear here for your review and approval.</p>
+      </div>
+      <div id="reviewContent" style="display:none;"></div>
+    </main>
+
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+const SUPA_B_URL = 'https://zqrswemxmhjaylsuulyu.supabase.co';
+const SUPA_B_KEY = 'sb_publishable_8Y62WSnJwGidHS591ofDiw_gbzmTGAQ';
+const SUPA_A_URL = 'https://qnqcysdeolnooxxcafwz.supabase.co';
+const SUPA_A_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFucWN5c2Rlb2xub294eGNhZnd6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI4NDY0MzAsImV4cCI6MjA4ODQyMjQzMH0.tbm7J9FyQqwJB-KVSMwX13bfFEFsUqBknBDTFSMRuXE';
+
+let currentUser = null, currentJob = null, mcqData = [], pollTimer = null;
+
+// â”€â”€ Auth â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+function checkAuth() {
+  const token = localStorage.getItem('pg_access_token');
+  const user  = localStorage.getItem('pg_user');
+  if (!token || !user) { document.getElementById('authGate').style.display='flex'; return false; }
+  currentUser = JSON.parse(user);
+  currentUser.role = localStorage.getItem('pg_role') || 'teacher';
+  document.getElementById('authGate').style.display='none';
+  document.getElementById('mainContent').style.display='block';
+  return true;
+}
+function logout() {
+  ['pg_access_token','pg_refresh_token','pg_user','pg_role'].forEach(k=>localStorage.removeItem(k));
+  window.location.href='./index.html';
+}
+
+// â”€â”€ Supabase B helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+async function sbGet(path) {
+  const r = await fetch(`${SUPA_B_URL}/rest/v1/${path}`, {
+    headers:{ apikey:SUPA_B_KEY, Authorization:`Bearer ${SUPA_B_KEY}`,
+              'Content-Type':'application/json', 'User-Agent':'node-fetch/1.0' }
+  });
+  return r.json();
+}
+async function sbPatch(path, body) {
+  return fetch(`${SUPA_B_URL}/rest/v1/${path}`, {
+    method:'PATCH',
+    headers:{ apikey:SUPA_B_KEY, Authorization:`Bearer ${SUPA_B_KEY}`,
+              'Content-Type':'application/json', 'User-Agent':'node-fetch/1.0' },
+    body: JSON.stringify(body)
+  });
+}
+async function sbPost(url, key, path, body) {
+  return fetch(`${url}/rest/v1/${path}`, {
+    method:'POST',
+    headers:{ apikey:key, Authorization:`Bearer ${key}`,
+              'Content-Type':'application/json', Prefer:'return=representation',
+              'User-Agent':'node-fetch/1.0' },
+    body: JSON.stringify(body)
+  });
+}
+
+// â”€â”€ Load job list â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+async function loadJobs() {
+  const el = document.getElementById('jobList');
+  el.innerHTML = '<p style="color:var(--text-secondary);font-size:.85rem;"><i class="ph ph-spinner-gap spinner"></i> Loading...</p>';
+  const jobs = await sbGet("mcq_upload_jobs?order=created_at.desc&limit=30&select=id,subject,class,status,created_at,ocr_confidence");
+  if (!jobs.length) { el.innerHTML='<p style="color:var(--text-secondary);font-size:.85rem;">No jobs yet. Upload a paper to get started.</p>'; return; }
+  el.innerHTML = jobs.map(j => `
+    <div class="job-card ${currentJob?.id===j.id?'active':''}" onclick="selectJob('${j.id}')">
+      <div class="job-card-subject">${j.subject||'â€”'} ${j.class?'Â· '+j.class:''}</div>
+      <div class="job-card-meta" style="display:flex;align-items:center;gap:.5rem;margin-top:.3rem;">
+        ${statusBadge(j.status)}
+        <span>${new Date(j.created_at).toLocaleDateString('en-IN')}</span>
+      </div>
+    </div>`).join('');
+  // auto-poll if any processing jobs
+  const hasProcessing = jobs.some(j=>['QUEUED','OCR_PROCESSING','OCR_DONE','LLM_PROCESSING'].includes(j.status));
+  if (hasProcessing) { clearTimeout(pollTimer); pollTimer=setTimeout(loadJobs,8000); }
+}
+
+function statusBadge(s) {
+  const map = {
+    CREATED:'draft',QUEUED:'processing',OCR_PROCESSING:'processing',
+    OCR_DONE:'processing',LLM_PROCESSING:'processing',
+    DRAFT_READY:'draft',IN_REVIEW:'draft',APPROVED:'approved',FAILED:'failed'
+  };
+  const label = { CREATED:'Created',QUEUED:'Queued',OCR_PROCESSING:'OCR...',
+    OCR_DONE:'OCR Done',LLM_PROCESSING:'AI...',DRAFT_READY:'Ready',
+    IN_REVIEW:'In Review',APPROVED:'Approved',FAILED:'Failed' };
+  const cls = map[s]||'draft';
+  const spin = ['QUEUED','OCR_PROCESSING','LLM_PROCESSING'].includes(s);
+  return `<span class="status-badge ${cls}">${spin?'<i class="ph ph-spinner-gap spinner"></i>':''} ${label[s]||s}</span>`;
+}
+
+// â”€â”€ Select a job â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+async function selectJob(jobId) {
+  currentJob = { id: jobId };
+  document.getElementById('emptyState').style.display='none';
+  document.getElementById('reviewContent').style.display='block';
+  document.getElementById('reviewContent').innerHTML = '<p style="color:var(--text-secondary);padding:2rem;text-align:center;"><i class="ph ph-spinner-gap spinner"></i> Loading MCQs...</p>';
+  loadJobs(); // refresh badge
+
+  const [jobs, sets] = await Promise.all([
+    sbGet(`mcq_upload_jobs?id=eq.${jobId}`),
+    sbGet(`mcq_sets?job_id=eq.${jobId}`)
+  ]);
+  const job = jobs[0]; if(!job) return;
+  currentJob = job;
+  const set = sets[0];
+
+  if (['QUEUED','OCR_PROCESSING','OCR_DONE','LLM_PROCESSING'].includes(job.status)) {
+    document.getElementById('reviewContent').innerHTML = `
+      <div class="processing-banner">
+        <i class="ph ph-spinner-gap spinner" style="font-size:2rem;color:#3b82f6;"></i>
+        <p>This job is still being processed (${job.status}). Auto-refreshing every 8 seconds...</p>
+      </div>`;
+    pollTimer = setTimeout(()=>selectJob(jobId), 8000);
+    return;
+  }
+
+  if (job.status === 'FAILED') {
+    document.getElementById('reviewContent').innerHTML = `
+      <div class="processing-banner" style="background:rgba(244,0,9,.08);border-color:rgba(244,0,9,.3);">
+        <i class="ph ph-warning-circle" style="font-size:2rem;color:var(--primary);"></i>
+        <p style="color:#fca5a5;">Processing failed: ${job.error_message||'OCR confidence too low'}</p>
+      </div>`;
+    return;
+  }
+
+  if (!set) { document.getElementById('reviewContent').innerHTML='<p style="color:var(--text-secondary);padding:2rem;">No MCQ set found for this job.</p>'; return; }
+
+  const questions = await sbGet(`questions?set_id=eq.${set.id}&order=created_at.asc`);
+  if (!questions.length) { document.getElementById('reviewContent').innerHTML='<p style="color:var(--text-secondary);padding:2rem;">No questions extracted. The OCR text may have been unreadable.</p>'; return; }
+
+  const qIds = questions.map(q=>`"${q.id}"`).join(',');
+  const options = await sbGet(`options?question_id=in.(${qIds})`);
+
+  // Build mcqData
+  mcqData = questions.map(q => ({
+    id: q.id, question_text: q.question_text, correct_option: q.correct_option||'A', status: q.status,
+    options: ['A','B','C','D'].reduce((acc,l)=>{
+      const o = options.find(op=>op.question_id===q.id&&op.option_label===l);
+      acc[l] = o?.option_text||''; return acc;
+    }, {})
+  }));
+
+  renderReview(job, set);
+}
+
+// â”€â”€ Render review â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+function renderReview(job, set) {
+  const isOwner = currentUser.role === 'owner';
+  document.getElementById('reviewContent').innerHTML = `
+    <!-- Meta bar -->
+    <div class="meta-bar">
+      <h2><i class="ph ph-note-pencil" style="color:var(--primary);"></i> Job Details
+        <span style="font-size:.8rem;font-weight:400;color:var(--text-secondary);margin-left:.75rem;">${job.id}</span>
+      </h2>
+      <div class="meta-grid">
+        <div class="meta-field">
+          <label>Category</label>
+          <select id="m-category">
+            <option value="">Select</option>
+            ${['IIT','NEET','Class 6','Class 7','Class 8','Class 9','Class 10','Class 11','Class 12','Other'].map(c=>`<option ${set.category===c?'selected':''}>${c}</option>`).join('')}
+          </select>
+        </div>
+        <div class="meta-field">
+          <label>Subject</label>
+          <input id="m-subject" value="${job.subject||''}" placeholder="e.g. Physics">
+        </div>
+        <div class="meta-field">
+          <label>Chapter / Unit</label>
+          <input id="m-unit" value="${set.unit||job.unit||''}" placeholder="e.g. Chapter 3">
+        </div>
+        <div class="meta-field">
+          <label>Topic</label>
+          <input id="m-topic" value="${set.topic||job.topic||''}" placeholder="e.g. Quadratic Equations">
+        </div>
+        ${isOwner?`<div class="meta-field">
+          <label>Difficulty</label>
+          <select id="m-difficulty">
+            <option value="easy">Easy</option><option value="medium" selected>Medium</option><option value="hard">Hard</option>
+          </select>
+        </div>`:''}
+      </div>
+      ${isOwner?`<p style="margin-top:.85rem;font-size:.8rem;color:var(--primary);"><i class="ph ph-star"></i> As owner, approving will also publish to the <strong>Central MCQ Bank</strong>.</p>`:''}
+    </div>
+
+    <!-- MCQ cards -->
+    <div class="mcq-list" id="mcqList">${renderMCQCards()}</div>
+
+    <!-- Add MCQ manually -->
+    <button onclick="addMCQ()" style="margin-top:1rem;width:100%;padding:.7rem;background:none;border:1.5px dashed var(--border-light);border-radius:var(--radius-md);color:var(--text-secondary);cursor:pointer;font-family:inherit;font-size:.88rem;transition:border-color .2s;" onmouseover="this.style.borderColor='var(--primary)'" onmouseout="this.style.borderColor='var(--border-light)'">
+      <i class="ph ph-plus"></i> Add MCQ manually
+    </button>
+
+    <!-- Approve bar -->
+    <div class="approve-bar">
+      <div class="approve-info">
+        <strong id="mcqCount">${mcqData.length}</strong> MCQs Â· OCR confidence: <strong>${Math.round((job.ocr_confidence||0)*100)}%</strong>
+      </div>
+      <button class="btn-approve" id="approveBtn" onclick="approveAll('${job.id}','${set.id}','${set.institute_id||''}')">
+        <i class="ph ph-check-circle"></i> Approve & Save
+      </button>
+    </div>`;
+}
+
+function renderMCQCards() {
+  return mcqData.map((q,i)=>`
+    <div class="mcq-card" id="mcq-${i}">
+      <div class="mcq-header">
+        <span class="mcq-num">Q${i+1}</span>
+        <button class="mcq-delete" onclick="deleteMCQ(${i})" title="Delete this MCQ"><i class="ph ph-trash"></i></button>
+      </div>
+      <textarea class="mcq-q" placeholder="Question text..." onchange="mcqData[${i}].question_text=this.value">${escHtml(q.question_text)}</textarea>
+      <div class="options-grid">
+        ${['A','B','C','D'].map(l=>`
+        <div class="option-row">
+          <input type="radio" class="option-radio" name="ans-${i}" value="${l}" ${q.correct_option===l?'checked':''} onchange="mcqData[${i}].correct_option='${l}'" title="Mark as correct answer">
+          <span class="option-label">${l}</span>
+          <input class="option-input" placeholder="Option ${l}..." value="${escHtml(q.options[l]||'')}" onchange="mcqData[${i}].options['${l}']=this.value">
+        </div>`).join('')}
+      </div>
+    </div>`).join('');
+}
+
+function escHtml(s){ return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+function deleteMCQ(i) {
+  mcqData.splice(i,1);
+  document.getElementById('mcqList').innerHTML = renderMCQCards();
+  document.getElementById('mcqCount').textContent = mcqData.length;
+}
+
+function addMCQ() {
+  mcqData.push({ id:null, question_text:'', correct_option:'A', options:{A:'',B:'',C:'',D:''} });
+  document.getElementById('mcqList').innerHTML = renderMCQCards();
+  document.getElementById('mcqCount').textContent = mcqData.length;
+  document.getElementById('mcq-'+(mcqData.length-1)).scrollIntoView({behavior:'smooth',block:'center'});
+}
+
+// â”€â”€ Approve â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+async function approveAll(jobId, setId, instituteId) {
+  const btn = document.getElementById('approveBtn');
+  btn.disabled = true; btn.innerHTML = '<i class="ph ph-spinner-gap spinner"></i> Saving...';
+
+  const category = document.getElementById('m-category')?.value || '';
+  const subject  = document.getElementById('m-subject')?.value  || '';
+  const unit     = document.getElementById('m-unit')?.value     || '';
+  const topic    = document.getElementById('m-topic')?.value    || '';
+  const difficulty = document.getElementById('m-difficulty')?.value || 'medium';
+  const isOwner = currentUser.role === 'owner';
+
+  try {
+    // sync question text edits from DOM
+    mcqData.forEach((q,i)=>{
+      const ta = document.querySelector(`#mcq-${i} .mcq-q`);
+      if(ta) q.question_text = ta.value;
+      ['A','B','C','D'].forEach(l=>{
+        const inp = document.querySelector(`#mcq-${i} .option-row:nth-child(${['A','B','C','D'].indexOf(l)+1}) .option-input`);
+        if(inp) q.options[l] = inp.value;
+      });
+    });
+
+    // 1. Update existing questions + options
+    for (const q of mcqData) {
+      if (q.id) {
+        await sbPatch(`questions?id=eq.${q.id}`, {
+          question_text: q.question_text, correct_option: q.correct_option, status:'approved'
+        });
+        // update options
+        for (const [l, t] of Object.entries(q.options)) {
+          await fetch(`${SUPA_B_URL}/rest/v1/options?question_id=eq.${q.id}&option_label=eq.${l}`, {
+            method:'PATCH',
+            headers:{ apikey:SUPA_B_KEY, Authorization:`Bearer ${SUPA_B_KEY}`,
+                      'Content-Type':'application/json', 'User-Agent':'node-fetch/1.0' },
+            body: JSON.stringify({ option_text: t })
+          });
+        }
+      } else {
+        // new manually added MCQ
+        const qr = await sbPost(SUPA_B_URL, SUPA_B_KEY, 'questions', {
+          institute_id: instituteId, set_id: setId,
+          question_text: q.question_text, correct_option: q.correct_option,
+          status:'approved', source:'manual', confidence_score:1.0
+        });
+        const saved = await qr.json();
+        const qId = (Array.isArray(saved)?saved[0]:saved)?.id;
+        if (qId) {
+          const opts = Object.entries(q.options).map(([l,t])=>({question_id:qId,option_label:l,option_text:t}));
+          await sbPost(SUPA_B_URL, SUPA_B_KEY, 'options', opts);
+        }
+      }
+    }
+
+    // 2. Update mcq_set metadata
+    await sbPatch(`mcq_sets?id=eq.${setId}`, { category, subject, unit, topic, status:'approved' });
+
+    // 3. Update job status
+    await sbPatch(`mcq_upload_jobs?id=eq.${jobId}`, { status:'APPROVED' });
+
+    // 4. If owner â†’ also publish to Central MCQ Bank (Supabase A)
+    if (isOwner) {
+      const centralMCQs = mcqData.map(q=>({
+        subject, category, unit, topic, difficulty,
+        question_text: q.question_text,
+        options: q.options,
+        answer: q.correct_option,
+        contributed_by: currentUser.id
+      }));
+      await fetch(`${SUPA_A_URL}/rest/v1/mcq_bank`, {
+        method:'POST',
+        headers:{ apikey:SUPA_A_KEY, Authorization:`Bearer ${SUPA_A_KEY}`,
+                  'Content-Type':'application/json', 'User-Agent':'node-fetch/1.0' },
+        body: JSON.stringify(centralMCQs)
+      });
+    }
+
+    showToast('success', `âœ… ${mcqData.length} MCQs approved${isOwner?' and published to central bank':''}`);
+    currentJob = null;
+    document.getElementById('reviewContent').style.display='none';
+    document.getElementById('emptyState').style.display='flex';
+    loadJobs();
+
+  } catch(e) {
+    showToast('error', 'âŒ Save failed: ' + e.message);
+    btn.disabled=false; btn.innerHTML='<i class="ph ph-check-circle"></i> Approve & Save';
+  }
+}
+
+// â”€â”€ Toast â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+function showToast(type, msg) {
+  const t = document.getElementById('toast');
+  t.className = `toast ${type} show`; t.textContent = msg;
+  setTimeout(()=>t.classList.remove('show'), 4000);
+}
+
+// â”€â”€ Init â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+if (checkAuth()) loadJobs();
+</script>
+</body>
+</html>
