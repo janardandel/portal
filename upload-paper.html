@@ -375,15 +375,23 @@
 
       for (let i = 0; i < selectedFiles.length; i++) {
         const f    = selectedFiles[i];
-        const path = `${currentUser.id}/${jobId}/${f.name}`;
+        const path = `${currentUser.institute_id}/${jobId}/${f.name}`;
         showProgress(10 + Math.round((i / selectedFiles.length) * 60), `Uploading ${f.name}...`);
 
         const res = await fetch(`${SUPABASE_URL}/storage/v1/object/mcq-raw/${path}`, {
           method: 'POST',
-          headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY, 'Content-Type': f.type },
+          headers: {
+            'apikey': SUPABASE_KEY,
+            'Authorization': 'Bearer ' + SUPABASE_KEY,
+            'Content-Type': f.type,
+            'User-Agent': 'node-fetch/1.0'
+          },
           body: f
         });
-        if (!res.ok) throw new Error(`Upload failed for ${f.name}: ${res.statusText}`);
+        if (!res.ok) {
+          const errText = await res.text();
+          throw new Error(`Upload failed for ${f.name}: ${res.status} ${res.statusText} — ${errText.substring(0,200)}`);
+        }
         filePaths.push(path);
       }
 
