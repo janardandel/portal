@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Review MCQs â€” Pitthugram</title>
+  <title>Review MCQs — Pitthugram</title>
   <link rel="icon" type="image/png" href="./favicon.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -135,15 +135,25 @@
 <!-- Toast -->
 <div class="toast" id="toast"></div>
 
+<script src="https://sdk.amazonaws.com/js/aws-sdk-2.1695.0.min.js"></script>
 <script>
 const SUPA_B_URL = 'https://zqrswemxmhjaylsuulyu.supabase.co';
 const SUPA_B_KEY = 'sb_publishable_8Y62WSnJwGidHS591ofDiw_gbzmTGAQ';
 const SUPA_A_URL = 'https://qnqcysdeolnooxxcafwz.supabase.co';
 const SUPA_A_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFucWN5c2Rlb2xub294eGNhZnd6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI4NDY0MzAsImV4cCI6MjA4ODQyMjQzMH0.tbm7J9FyQqwJB-KVSMwX13bfFEFsUqBknBDTFSMRuXE';
 
-let currentUser = null, currentJob = null, mcqData = [], pollTimer = null;
+// IDrive S3 config
+const IDRIVE_S3 = {
+  endpoint: 's3.ap-northeast-1.idrivee2.com',
+  accessKeyId: 'pDk9xxOZSLDraxTcr8I5',
+  secretAccessKey: '8YTTAWJFfk6BF9W6ExITXZ57jVC0IbJN7XFvUeSi',
+  bucket: 'mcq-supabase',
+  region: 'ap-northeast-1'
+};
 
-// â”€â”€ Auth â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+let currentUser = null, currentJob = null, mcqData = [], pollTimer = null, s3Client = null;
+
+// ── Auth ─────────────────────────────────────────────────────────
 function checkAuth() {
   const token = localStorage.getItem('pg_access_token');
   const user  = localStorage.getItem('pg_user');
@@ -159,7 +169,7 @@ function logout() {
   window.location.href='./index.html';
 }
 
-// â”€â”€ Supabase B helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Supabase B helpers ───────────────────────────────────────────
 async function sbGet(path) {
   const r = await fetch(`${SUPA_B_URL}/rest/v1/${path}`, {
     headers:{ apikey:SUPA_B_KEY, Authorization:`Bearer ${SUPA_B_KEY}`,
@@ -185,7 +195,7 @@ async function sbPost(url, key, path, body) {
   });
 }
 
-// â”€â”€ Load job list â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Load job list ────────────────────────────────────────────────
 async function loadJobs() {
   const el = document.getElementById('jobList');
   el.innerHTML = '<p style="color:var(--text-secondary);font-size:.85rem;"><i class="ph ph-spinner-gap spinner"></i> Loading...</p>';
@@ -193,7 +203,7 @@ async function loadJobs() {
   if (!jobs.length) { el.innerHTML='<p style="color:var(--text-secondary);font-size:.85rem;">No jobs yet. Upload a paper to get started.</p>'; return; }
   el.innerHTML = jobs.map(j => `
     <div class="job-card ${currentJob?.id===j.id?'active':''}" onclick="selectJob('${j.id}')">
-      <div class="job-card-subject">${j.subject||'â€”'} ${j.class?'Â· '+j.class:''}</div>
+      <div class="job-card-subject">${j.subject||'—'} ${j.class?'· '+j.class:''}</div>
       <div class="job-card-meta" style="display:flex;align-items:center;gap:.5rem;margin-top:.3rem;">
         ${statusBadge(j.status)}
         <span>${new Date(j.created_at).toLocaleDateString('en-IN')}</span>
@@ -218,7 +228,7 @@ function statusBadge(s) {
   return `<span class="status-badge ${cls}">${spin?'<i class="ph ph-spinner-gap spinner"></i>':''} ${label[s]||s}</span>`;
 }
 
-// â”€â”€ Select a job â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Select a job ─────────────────────────────────────────────────
 async function selectJob(jobId) {
   currentJob = { id: jobId };
   document.getElementById('emptyState').style.display='none';
@@ -275,7 +285,7 @@ async function selectJob(jobId) {
   renderReview(job, set);
 }
 
-// â”€â”€ Render review â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Render review ────────────────────────────────────────────────
 function renderReview(job, set) {
   const isOwner = currentUser.role === 'owner';
   document.getElementById('reviewContent').innerHTML = `
@@ -326,7 +336,7 @@ function renderReview(job, set) {
     <!-- Approve bar -->
     <div class="approve-bar">
       <div class="approve-info">
-        <strong id="mcqCount">${mcqData.length}</strong> MCQs Â· OCR confidence: <strong>${Math.round((job.ocr_confidence||0)*100)}%</strong>
+        <strong id="mcqCount">${mcqData.length}</strong> MCQs · OCR confidence: <strong>${Math.round((job.ocr_confidence||0)*100)}%</strong>
       </div>
       <button class="btn-approve" id="approveBtn" onclick="approveAll('${job.id}','${set.id}','${set.institute_id||''}')">
         <i class="ph ph-check-circle"></i> Approve & Save
@@ -357,7 +367,7 @@ function renderMCQCards() {
           ${q.diagrams.map((d,di)=>`
           <div style="border:1px solid var(--border-light);border-radius:var(--radius-md);overflow:hidden;">
             <img src="data:image/png;base64,${d.image_b64.substring(0,100)}..." style="width:100%;max-height:200px;object-fit:contain;background:var(--bg-input);" alt="Diagram ${di+1}" title="Click to expand">
-            <div style="padding:.5rem;font-size:.75rem;color:var(--text-secondary);">Diagram ${di+1} â€¢ ${(d.image_b64.length/1000).toFixed(1)}KB</div>
+            <div style="padding:.5rem;font-size:.75rem;color:var(--text-secondary);">Diagram ${di+1} • ${(d.image_b64.length/1000).toFixed(1)}KB</div>
           </div>`).join('')}
         </div>
       </div>` : '' }
@@ -379,7 +389,42 @@ function addMCQ() {
   document.getElementById('mcq-'+(mcqData.length-1)).scrollIntoView({behavior:'smooth',block:'center'});
 }
 
-// â”€â”€ Approve â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── IDrive S3 cleanup ────────────────────────────────────────────
+function initS3() {
+  if (s3Client) return;
+  AWS.config.update({
+    accessKeyId: IDRIVE_S3.accessKeyId,
+    secretAccessKey: IDRIVE_S3.secretAccessKey,
+    region: IDRIVE_S3.region,
+    s3ForcePathStyle: true
+  });
+  s3Client = new AWS.S3({
+    endpoint: new AWS.Endpoint(`https://${IDRIVE_S3.endpoint}`),
+    signatureVersion: 'v4'
+  });
+}
+
+async function deleteFilesFromIDrive(filePaths) {
+  if (!filePaths || filePaths.length === 0) return;
+  initS3();
+  for (const path of filePaths) {
+    try {
+      await new Promise((resolve, reject) => {
+        s3Client.deleteObject({
+          Bucket: IDRIVE_S3.bucket,
+          Key: path
+        }, (err) => {
+          if (err) reject(err);
+          else resolve();
+        });
+      });
+    } catch (e) {
+      console.warn(`Failed to delete ${path}:`, e.message);
+    }
+  }
+}
+
+// ── Approve ──────────────────────────────────────────────────────
 async function approveAll(jobId, setId, instituteId) {
   const btn = document.getElementById('approveBtn');
   btn.disabled = true; btn.innerHTML = '<i class="ph ph-spinner-gap spinner"></i> Saving...';
@@ -466,7 +511,12 @@ async function approveAll(jobId, setId, instituteId) {
     // 3. Update job status
     await sbPatch(`mcq_upload_jobs?id=eq.${jobId}`, { status:'APPROVED' });
 
-    // 4. If owner â†’ also publish to Central MCQ Bank (Supabase A)
+    // 4. Delete files from IDrive S3 (cleanup after approval)
+    if (currentJob.file_paths && Array.isArray(currentJob.file_paths)) {
+      await deleteFilesFromIDrive(currentJob.file_paths);
+    }
+
+    // 5. If owner → also publish to Central MCQ Bank (Supabase A)
     if (isOwner) {
       const centralMCQs = mcqData.map(q=>({
         subject, category, unit, topic, difficulty,
@@ -483,26 +533,26 @@ async function approveAll(jobId, setId, instituteId) {
       });
     }
 
-    showToast('success', `âœ… ${mcqData.length} MCQs approved${isOwner?' and published to central bank':''}`);
+    showToast('success', `✅ ${mcqData.length} MCQs approved${isOwner?' and published to central bank':''}`);
     currentJob = null;
     document.getElementById('reviewContent').style.display='none';
     document.getElementById('emptyState').style.display='flex';
     loadJobs();
 
   } catch(e) {
-    showToast('error', 'âŒ Save failed: ' + e.message);
+    showToast('error', '❌ Save failed: ' + e.message);
     btn.disabled=false; btn.innerHTML='<i class="ph ph-check-circle"></i> Approve & Save';
   }
 }
 
-// â”€â”€ Toast â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Toast ────────────────────────────────────────────────────────
 function showToast(type, msg) {
   const t = document.getElementById('toast');
   t.className = `toast ${type} show`; t.textContent = msg;
   setTimeout(()=>t.classList.remove('show'), 4000);
 }
 
-// â”€â”€ Init â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Init ─────────────────────────────────────────────────────────
 if (checkAuth()) loadJobs();
 </script>
 </body>
