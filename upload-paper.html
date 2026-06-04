@@ -223,8 +223,7 @@
 </main>
 
 <script>
-  const SUPABASE_URL = 'https://zqrswemxmhjaylsuulyu.supabase.co';
-  const SUPABASE_KEY = 'sb_publishable_8Y62WSnJwGidHS591ofDiw_gbzmTGAQ';
+  const OCR_VM_URL   = 'http://192.168.1.52:8765';
   const N8N_WEBHOOK  = 'https://container001.pitthugram.com/webhook/mcq-process';
 
   let currentUser = null;
@@ -369,76 +368,43 @@
     showProgress(10, 'Uploading files...');
 
     try {
-      const token   = localStorage.getItem('pg_access_token');
-      const jobId   = 'job_' + Date.now() + '_' + Math.random().toString(36).slice(2,7);
-      const filePaths = [];
+      const jobId = 'job_' + Date.now() + '_' + Math.random().toString(36).slice(2,7);
 
       for (let i = 0; i < selectedFiles.length; i++) {
-        const f    = selectedFiles[i];
-        const path = `${currentUser.institute_id}/${jobId}/${f.name}`;
+        const f = selectedFiles[i];
         showProgress(10 + Math.round((i / selectedFiles.length) * 60), `Uploading ${f.name}...`);
 
-        const res = await fetch(`${SUPABASE_URL}/storage/v1/object/mcq-raw/${path}`, {
+        const formData = new FormData();
+        formData.append('file', f);
+
+        const uploadRes = await fetch(`${OCR_VM_URL}/upload`, {
           method: 'POST',
-          headers: {
-            'apikey': SUPABASE_KEY,
-            'Authorization': 'Bearer ' + SUPABASE_KEY,
-            'Content-Type': f.type,
-            'User-Agent': 'node-fetch/1.0'
-          },
-          body: f
+          body: formData
         });
-        if (!res.ok) {
-          const errText = await res.text();
-          throw new Error(`Upload failed for ${f.name}: ${res.status} ${res.statusText} — ${errText.substring(0,200)}`);
+        if (!uploadRes.ok) {
+          const errText = await uploadRes.text();
+          throw new Error(`Upload to OCR VM failed for ${f.name}: ${uploadRes.status} — ${errText.substring(0,200)}`);
         }
-        filePaths.push(path);
+        const uploaded = await uploadRes.json();
+        console.log(`Uploaded to OCR VM: ${uploaded.job_id}`);
       }
 
-      showProgress(75, 'Creating job...');
+      showProgress(75, 'Starting OCR & AI processing...');
 
-      // Create job record in Supabase
-      const jobPayload = {
-        id: jobId,
-        teacher_id:   currentUser.id,
-        institute_id: currentUser.institute_id,
-        subject:      subject,
-        class:        cls,
-        unit:         document.getElementById('unit').value.trim(),
-        topic:        document.getElementById('topic').value.trim(),
-        notes:        document.getElementById('notes').value.trim(),
-        file_paths:   filePaths,
-        status:       'CREATED',
-        created_at:   new Date().toISOString()
-      };
-
-      const dbRes = await fetch(`${SUPABASE_URL}/rest/v1/mcq_upload_jobs`, {
-        method: 'POST',
-        headers: {
-          'Authorization': 'Bearer ' + SUPABASE_KEY,
-          'apikey': SUPABASE_KEY,
-          'Content-Type': 'application/json',
-          'Prefer': 'return=minimal'
-        },
-        body: JSON.stringify(jobPayload)
-      });
-      if (!dbRes.ok && dbRes.status !== 201) throw new Error('Failed to create job record.');
-
-      showProgress(90, 'Triggering processing...');
-
-      // Notify n8n
-      if (N8N_WEBHOOK && N8N_WEBHOOK !== 'YOUR_N8N_WEBHOOK_URL') {
-        await fetch(N8N_WEBHOOK, {
+      // Trigger OCR processing on local VM
+      for (const f of selectedFiles) {
+        const formData = new FormData();
+        formData.append('file', f);
+        await fetch(`${OCR_VM_URL}/process`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ job_id: jobId, file_paths: filePaths, ...jobPayload })
-        }).catch(() => {}); // non-blocking
+          body: formData
+        }).catch(e => console.warn('OCR process trigger:', e));
       }
 
       showProgress(100, 'Done!');
       showStatus('success',
-        '<i class="ph ph-check-circle"></i> Submitted successfully',
-        `Job ID: ${jobId} · ${filePaths.length} file(s) queued · Status: CREATED → Processing will begin shortly.`
+        '<i class="ph ph-check-circle"></i> Uploaded to OCR VM',
+        `Job ID: ${jobId} · ${selectedFiles.length} file(s) processing locally · Check Review page in 2-3 minutes.`
       );
       selectedFiles = [];
       fileInput.value = '';
