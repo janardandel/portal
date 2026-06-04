@@ -397,6 +397,7 @@
       initS3();
       const jobId = 'job_' + Date.now() + '_' + Math.random().toString(36).slice(2,7);
       const filePaths = [];
+      const fileUrls  = [];
 
       for (let i = 0; i < selectedFiles.length; i++) {
         const f    = selectedFiles[i];
@@ -415,6 +416,11 @@
           });
         });
         filePaths.push(path);
+        // Short-lived presigned GET URL so n8n can download from the private bucket without credentials
+        const signedUrl = s3Client.getSignedUrl('getObject', {
+          Bucket: IDRIVE_S3.bucket, Key: path, Expires: 3600
+        });
+        fileUrls.push(signedUrl);
       }
 
       showProgress(85, 'Starting processing...');
@@ -438,7 +444,7 @@
       const hookRes = await fetch(N8N_WEBHOOK, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ job_id: jobId, file_paths: filePaths, ...jobPayload })
+        body: JSON.stringify({ job_id: jobId, file_paths: filePaths, file_urls: fileUrls, ...jobPayload })
       });
       if (!hookRes.ok) {
         throw new Error(`Could not start processing: ${hookRes.status}. Files were uploaded; please retry.`);
