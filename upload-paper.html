@@ -216,7 +216,7 @@
 <script>
   const SUPABASE_URL = 'https://qnqcysdeolnooxxcafwz.supabase.co';
   const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFucWN5c2Rlb2xub294eGNhZnd6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI4NDY0MzAsImV4cCI6MjA4ODQyMjQzMH0.tbm7J9FyQqwJB-KVSMwX13bfFEFsUqBknBDTFSMRuXE';
-  const N8N_WEBHOOK  = 'YOUR_N8N_WEBHOOK_URL';
+  const N8N_WEBHOOK  = 'https://container001.pitthugram.com/webhook/mcq-process';
 
   let currentUser = null;
   let selectedFiles = [];
@@ -359,7 +359,7 @@
       showProgress(90, 'Triggering processing...');
 
       // Notify n8n
-      if (N8N_WEBHOOK && N8N_WEBHOOK !== 'YOUR_N8N_WEBHOOK_URL') {
+      if (N8N_WEBHOOK && N8N_WEBHOOK !== 'https://container001.pitthugram.com/webhook/mcq-process') {
         await fetch(N8N_WEBHOOK, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
