@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -222,13 +222,23 @@
   </div>
 </main>
 
+<script src="https://sdk.amazonaws.com/js/aws-sdk-2.1695.0.min.js"></script>
 <script>
-  const SUPABASE_URL = 'https://zqrswemxmhjaylsuulyu.supabase.co';
-  const SUPABASE_KEY = 'sb_publishable_8Y62WSnJwGidHS591ofDiw_gbzmTGAQ';
+  // IDrive S3 config
+  const IDRIVE_S3 = {
+    endpoint: 's3.ap-northeast-1.idrivee2.com',
+    accessKeyId: 'pDk9xxOZSLDraxTcr8I5',
+    secretAccessKey: '8YTTAWJFfk6BF9W6ExITXZ57jVC0IbJN7XFvUeSi',
+    bucket: 'mcq-supabase',
+    region: 'ap-northeast-1'
+  };
+
+  // n8n webhook — creates the job record server-side and runs the OCR/AI pipeline
   const N8N_WEBHOOK  = 'https://container001.pitthugram.com/webhook/mcq-process';
 
   let currentUser = null;
   let selectedFiles = [];
+  let s3Client = null;
 
   // Chapter & topic data by subject & class
   const curriculumData = {
@@ -357,6 +367,21 @@
     renderFileList();
   }
 
+  // ── S3 client init ──────────────────────────────────────
+  function initS3() {
+    if (s3Client) return;
+    AWS.config.update({
+      accessKeyId: IDRIVE_S3.accessKeyId,
+      secretAccessKey: IDRIVE_S3.secretAccessKey,
+      region: IDRIVE_S3.region,
+      s3ForcePathStyle: true
+    });
+    s3Client = new AWS.S3({
+      endpoint: new AWS.Endpoint(`https://${IDRIVE_S3.endpoint}`),
+      signatureVersion: 'v4'
+    });
+  }
+
   // ── Upload & submit ─────────────────────────────────────
   async function submitJob() {
     if (!selectedFiles.length) return;
@@ -366,9 +391,10 @@
     if (!subject || !cls || !unit) { showStatus('error', 'Required fields missing', 'Please select Subject, Class, and Chapter before submitting.'); return; }
 
     setLoading(true);
-    showProgress(10, 'Uploading files...');
+    showProgress(10, 'Initializing upload...');
 
     try {
+      initS3();
       const jobId = 'job_' + Date.now() + '_' + Math.random().toString(36).slice(2,7);
       const filePaths = [];
 
@@ -377,24 +403,21 @@
         const path = `${currentUser.institute_id}/${jobId}/${f.name}`;
         showProgress(10 + Math.round((i / selectedFiles.length) * 60), `Uploading ${f.name}...`);
 
-        const res = await fetch(`${SUPABASE_URL}/storage/v1/object/mcq-raw/${path}`, {
-          method: 'POST',
-          headers: {
-            'apikey': SUPABASE_KEY,
-            'Authorization': 'Bearer ' + SUPABASE_KEY,
-            'Content-Type': f.type,
-            'User-Agent': 'node-fetch/1.0'
-          },
-          body: f
+        await new Promise((resolve, reject) => {
+          s3Client.putObject({
+            Bucket: IDRIVE_S3.bucket,
+            Key: path,
+            Body: f,
+            ContentType: f.type
+          }, (err) => {
+            if (err) reject(new Error(`Upload failed for ${f.name}: ${err.message}`));
+            else resolve();
+          });
         });
-        if (!res.ok) {
-          const errText = await res.text();
-          throw new Error(`Upload failed for ${f.name}: ${res.status} — ${errText.substring(0,200)}`);
-        }
         filePaths.push(path);
       }
 
-      showProgress(75, 'Creating job...');
+      showProgress(85, 'Starting processing...');
 
       const jobPayload = {
         id: jobId,
@@ -406,36 +429,25 @@
         topic:        document.getElementById('topic').value.trim(),
         notes:        document.getElementById('notes').value.trim(),
         file_paths:   filePaths,
-        status:       'CREATED',
+        status:       'QUEUED',
         created_at:   new Date().toISOString()
       };
 
-      const dbRes = await fetch(`${SUPABASE_URL}/rest/v1/mcq_upload_jobs`, {
+      // n8n creates the job record (server-side, with its own DB key) and runs the pipeline.
+      // The browser never holds any privileged Supabase key.
+      const hookRes = await fetch(N8N_WEBHOOK, {
         method: 'POST',
-        headers: {
-          'Authorization': 'Bearer ' + SUPABASE_KEY,
-          'apikey': SUPABASE_KEY,
-          'Content-Type': 'application/json',
-          'Prefer': 'return=minimal'
-        },
-        body: JSON.stringify(jobPayload)
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ job_id: jobId, file_paths: filePaths, ...jobPayload })
       });
-      if (!dbRes.ok && dbRes.status !== 201) throw new Error('Failed to create job record.');
-
-      showProgress(90, 'Triggering processing...');
-
-      if (N8N_WEBHOOK && N8N_WEBHOOK !== 'YOUR_N8N_WEBHOOK_URL') {
-        await fetch(N8N_WEBHOOK, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ job_id: jobId, file_paths: filePaths, ...jobPayload })
-        }).catch(() => {});
+      if (!hookRes.ok) {
+        throw new Error(`Could not start processing: ${hookRes.status}. Files were uploaded; please retry.`);
       }
 
       showProgress(100, 'Done!');
       showStatus('success',
         '<i class="ph ph-check-circle"></i> Submitted successfully',
-        `Job ID: ${jobId} · ${filePaths.length} file(s) processing · Check Review page in 2-3 minutes.`
+        `Job ID: ${jobId} · ${filePaths.length} file(s) uploaded to IDrive S3 · Processing started.`
       );
       selectedFiles = [];
       fileInput.value = '';
