@@ -228,6 +228,10 @@
   const N8N_PRESIGN  = 'https://container001.pitthugram.com/webhook/mcq-presign';
   const N8N_WEBHOOK  = 'https://container001.pitthugram.com/webhook/mcq-process';
 
+  // Supabase B — publishable (anon) key only, read-only lookups. Safe to ship in the browser.
+  const SUPA_B_URL = 'https://zqrswemxmhjaylsuulyu.supabase.co';
+  const SUPA_B_PUB = 'sb_publishable_8Y62WSnJwGidHS591ofDiw_gbzmTGAQ';
+
   let currentUser = null;
   let selectedFiles = [];
 
@@ -367,11 +371,22 @@
     if (!subject || !cls || !unit) { showStatus('error', 'Required fields missing', 'Please select Subject, Class, and Chapter before submitting.'); return; }
 
     setLoading(true);
-    showProgress(10, 'Preparing upload...');
+    showProgress(5, 'Preparing upload...');
 
     try {
+      // Resolve the institute for this teacher (login token is Supabase A; institute lives in Supabase B)
+      let instituteId = currentUser.institute_id;
+      if (!instituteId) {
+        const tRes = await fetch(`${SUPA_B_URL}/rest/v1/teachers?id=eq.${currentUser.id}&select=institute_id`, {
+          headers: { apikey: SUPA_B_PUB, Authorization: 'Bearer ' + SUPA_B_PUB }
+        });
+        const tRows = await tRes.json();
+        instituteId = tRows && tRows[0] && tRows[0].institute_id;
+      }
+      if (!instituteId) throw new Error('Your account is not linked to an institute yet. Contact your administrator.');
+
       const jobId = 'job_' + Date.now() + '_' + Math.random().toString(36).slice(2,7);
-      const filePaths = selectedFiles.map(f => `${currentUser.institute_id}/${jobId}/${f.name}`);
+      const filePaths = selectedFiles.map(f => `${instituteId}/${jobId}/${f.name}`);
       const fileUrls  = [];
 
       // 1. Ask n8n for short-lived presigned upload/download URLs (no credentials in browser)
@@ -402,7 +417,7 @@
       const jobPayload = {
         id: jobId,
         teacher_id:   currentUser.id,
-        institute_id: currentUser.institute_id,
+        institute_id: instituteId,
         subject:      subject,
         class:        cls,
         unit:         document.getElementById('unit').value.trim(),
