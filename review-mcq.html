@@ -135,23 +135,16 @@
 <!-- Toast -->
 <div class="toast" id="toast"></div>
 
-<script src="https://sdk.amazonaws.com/js/aws-sdk-2.1695.0.min.js"></script>
 <script>
 const SUPA_B_URL = 'https://zqrswemxmhjaylsuulyu.supabase.co';
 const SUPA_B_KEY = 'sb_publishable_8Y62WSnJwGidHS591ofDiw_gbzmTGAQ';
 const SUPA_A_URL = 'https://qnqcysdeolnooxxcafwz.supabase.co';
 const SUPA_A_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFucWN5c2Rlb2xub294eGNhZnd6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI4NDY0MzAsImV4cCI6MjA4ODQyMjQzMH0.tbm7J9FyQqwJB-KVSMwX13bfFEFsUqBknBDTFSMRuXE';
 
-// IDrive S3 config
-const IDRIVE_S3 = {
-  endpoint: 's3.ap-northeast-1.idrivee2.com',
-  accessKeyId: 'pDk9xxOZSLDraxTcr8I5',
-  secretAccessKey: '8YTTAWJFfk6BF9W6ExITXZ57jVC0IbJN7XFvUeSi',
-  bucket: 'mcq-supabase',
-  region: 'ap-northeast-1'
-};
+// n8n presign endpoint — returns short-lived IDrive URLs. No storage keys in the browser.
+const N8N_PRESIGN = 'https://container001.pitthugram.com/webhook/mcq-presign';
 
-let currentUser = null, currentJob = null, mcqData = [], pollTimer = null, s3Client = null;
+let currentUser = null, currentJob = null, mcqData = [], pollTimer = null;
 
 // ── Auth ─────────────────────────────────────────────────────────
 function checkAuth() {
@@ -389,38 +382,24 @@ function addMCQ() {
   document.getElementById('mcq-'+(mcqData.length-1)).scrollIntoView({behavior:'smooth',block:'center'});
 }
 
-// ── IDrive S3 cleanup ────────────────────────────────────────────
-function initS3() {
-  if (s3Client) return;
-  AWS.config.update({
-    accessKeyId: IDRIVE_S3.accessKeyId,
-    secretAccessKey: IDRIVE_S3.secretAccessKey,
-    region: IDRIVE_S3.region,
-    s3ForcePathStyle: true
-  });
-  s3Client = new AWS.S3({
-    endpoint: new AWS.Endpoint(`https://${IDRIVE_S3.endpoint}`),
-    signatureVersion: 'v4'
-  });
-}
-
+// ── IDrive cleanup via n8n presign (no storage keys in browser) ──
 async function deleteFilesFromIDrive(filePaths) {
   if (!filePaths || filePaths.length === 0) return;
-  initS3();
-  for (const path of filePaths) {
-    try {
-      await new Promise((resolve, reject) => {
-        s3Client.deleteObject({
-          Bucket: IDRIVE_S3.bucket,
-          Key: path
-        }, (err) => {
-          if (err) reject(err);
-          else resolve();
-        });
-      });
-    } catch (e) {
-      console.warn(`Failed to delete ${path}:`, e.message);
+  try {
+    const res = await fetch(N8N_PRESIGN, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ keys: filePaths, expires: 600 })
+    });
+    if (!res.ok) { console.warn('presign for delete failed:', res.status); return; }
+    const { signed } = await res.json();
+    for (const s of (signed || [])) {
+      try {
+        await fetch(s.deleteUrl, { method: 'DELETE' });
+      } catch (e) { console.warn(`Failed to delete ${s.key}:`, e.message); }
     }
+  } catch (e) {
+    console.warn('IDrive cleanup skipped:', e.message);
   }
 }
 
