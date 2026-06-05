@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -241,6 +241,7 @@
                         <li><a href="#" onclick="showDashboard(event)"><i class="ph ph-house"></i> Dashboard</a></li>
                         <li><a href="#" onclick="openBatchModal(event)"><i class="ph ph-plus-circle"></i> New Quiz</a></li>
                         <li><a href="#" onclick="showMyQuizzes(event)"><i class="ph ph-bookmark"></i> My Quizzes</a></li>
+                        <li><a href="./create-mcq.html"><i class="ph ph-pencil-simple-line"></i> Create MCQ</a></li>
                         <li><a href="./upload-paper.html"><i class="ph ph-upload-simple"></i> Upload Paper</a></li>
                         <li><a href="./review-mcq.html"><i class="ph ph-check-square"></i> Review MCQs</a></li>
                     </ul>
@@ -626,9 +627,11 @@
 </div>
 
 <script>
-const SUPABASE_URL = 'https://qnqcysdeolnooxxcafwz.supabase.co';
-const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFucWN5c2Rlb2xub294eGNhZnd6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYzNTc0NjUsImV4cCI6MjA5MTkzMzQ2NX0.hOuPKv1zqQup7JfEpe-SJWT9Duz0RUwcCPwJb0zE_0Q';
-const N8N_WEBHOOK  = 'YOUR_N8N_WEBHOOK_URL'; // Replace when n8n is ready
+const SUPABASE_URL  = 'https://qnqcysdeolnooxxcafwz.supabase.co';
+const SUPABASE_KEY  = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFucWN5c2Rlb2xub294eGNhZnd6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYzNTc0NjUsImV4cCI6MjA5MTkzMzQ2NX0.hOuPKv1zqQup7JfEpe-SJWT9Duz0RUwcCPwJb0zE_0Q';
+const SUPA_B_URL    = 'https://zqrswemxmhjaylsuulyu.supabase.co';
+const SUPA_B_PUB    = 'sb_publishable_8Y62WSnJwGidHS591ofDiw_gbzmTGAQ';
+const N8N_WEBHOOK   = 'YOUR_N8N_WEBHOOK_URL'; // Replace when n8n Moodle webhook is ready
 
 let allQuestions       = [];
 let selected           = new Set();
@@ -668,7 +671,7 @@ function logout() {
     window.location.href = './index.html';
 }
 
-// ── Fetch questions ───────────────────────────────────
+// ── Fetch questions (Supabase A central + Supabase B institute, merged) ──
 async function fetchQuestions() {
     const cls        = activeClass;
     const subject    = activeSubject;
@@ -679,30 +682,45 @@ async function fetchQuestions() {
     const CLASS_DB_MAP = { '6': '9' };
     const dbCls = CLASS_DB_MAP[cls] || cls;
 
-    let url = SUPABASE_URL + '/rest/v1/questions?is_active=eq.true&select=*&order=class,subject,chapter,difficulty_level';
-    if (dbCls)      url += '&class=eq.'            + encodeURIComponent(dbCls);
-    if (subject)    url += '&subject=eq.'          + encodeURIComponent(subject);
-    if (chapter)    url += '&chapter=eq.'          + encodeURIComponent(chapter);
-    if (difficulty) url += '&difficulty_level=eq.' + encodeURIComponent(difficulty);
+    let urlA = SUPABASE_URL + '/rest/v1/questions?is_active=eq.true&select=*&order=class,subject,chapter,difficulty_level';
+    if (dbCls)      urlA += '&class=eq.'            + encodeURIComponent(dbCls);
+    if (subject)    urlA += '&subject=eq.'          + encodeURIComponent(subject);
+    if (chapter)    urlA += '&chapter=eq.'          + encodeURIComponent(chapter);
+    if (difficulty) urlA += '&difficulty_level=eq.' + encodeURIComponent(difficulty);
 
-    const headers = { 'apikey': SUPABASE_KEY };
-    if (token) headers['Authorization'] = 'Bearer ' + token;
+    let urlB = SUPA_B_URL + '/rest/v1/questions?is_active=eq.true&select=*&order=class,subject,chapter,difficulty_level';
+    if (dbCls)      urlB += '&class=eq.'            + encodeURIComponent(dbCls);
+    if (subject)    urlB += '&subject=eq.'          + encodeURIComponent(subject);
+    if (chapter)    urlB += '&chapter=eq.'          + encodeURIComponent(chapter);
+    if (difficulty) urlB += '&difficulty_level=eq.' + encodeURIComponent(difficulty);
 
-    let res = await fetch(url, { headers });
-    if (!res.ok && token) {
-        res = await fetch(url, { headers: { 'apikey': SUPABASE_KEY } });
-    }
-    if (!res.ok) {
-        let errMsg = `Failed to load questions (${res.status})`;
-        try {
-            const errData = await res.json();
-            if (errData.error_description) errMsg = errData.error_description;
-            else if (errData.msg) errMsg = errData.msg;
-            else if (errData.error) errMsg = errData.error;
-        } catch (_) {}
+    const headersA = { 'apikey': SUPABASE_KEY };
+    if (token) headersA['Authorization'] = 'Bearer ' + token;
+
+    const [resA, resB] = await Promise.allSettled([
+        fetch(urlA, { headers: headersA }),
+        fetch(urlB, { headers: { 'apikey': SUPA_B_PUB } })
+    ]);
+
+    let questionsA = [], questionsB = [];
+
+    if (resA.status === 'fulfilled' && resA.value.ok) {
+        questionsA = await resA.value.json();
+    } else if (resA.status === 'fulfilled') {
+        let errMsg = `Failed to load questions (${resA.value.status})`;
+        try { const d = await resA.value.json(); errMsg = d.error_description || d.msg || d.error || errMsg; } catch (_) {}
         throw new Error(errMsg);
+    } else {
+        throw new Error(resA.reason?.message || 'Network error loading questions');
     }
-    return res.json();
+
+    if (resB.status === 'fulfilled' && resB.value.ok) {
+        try { questionsB = await resB.value.json(); } catch (_) { questionsB = []; }
+    }
+
+    questionsA.forEach(q => q._source = 'central');
+    questionsB.forEach(q => q._source = 'institute');
+    return [...questionsA, ...questionsB];
 }
 
 
@@ -989,13 +1007,16 @@ document.querySelectorAll('.batch-btn').forEach(btn => {
             const CLASS_DB_MAP = { '6': '9' };
             const dbCls = CLASS_DB_MAP[selectedBatch] || selectedBatch;
 
-            // Always fetch ALL subjects + chapters for this class (no subject filter)
-            const res = await fetch(
-                SUPABASE_URL + '/rest/v1/questions?select=subject,chapter&class=eq.' + encodeURIComponent(dbCls) + '&limit=10000',
-                { headers: { 'apikey': SUPABASE_KEY } }
-            );
-            if (!res.ok) throw new Error('Failed to load subjects (HTTP ' + res.status + ')');
-            const allRows = await res.json();
+            // Fetch subjects + chapters from both Supabases for this class
+            const [resA, resB] = await Promise.allSettled([
+                fetch(SUPABASE_URL + '/rest/v1/questions?select=subject,chapter&class=eq.' + encodeURIComponent(dbCls) + '&limit=10000', { headers: { 'apikey': SUPABASE_KEY } }),
+                fetch(SUPA_B_URL   + '/rest/v1/questions?select=subject,chapter&class=eq.' + encodeURIComponent(dbCls) + '&limit=10000', { headers: { 'apikey': SUPA_B_PUB  } })
+            ]);
+            if (resA.status !== 'fulfilled' || !resA.value.ok) throw new Error('Failed to load subjects (HTTP ' + (resA.value?.status || 'network') + ')');
+            let rowsA = await resA.value.json();
+            let rowsB = [];
+            if (resB.status === 'fulfilled' && resB.value.ok) { try { rowsB = await resB.value.json(); } catch(_){} }
+            const allRows = [...rowsA, ...rowsB];
 
             // Populate subject dropdown with all subjects for this class
             const subjects = [...new Set(allRows.map(q => q.subject).filter(Boolean))].sort();
@@ -1053,13 +1074,15 @@ async function loadFilterBar(cls, preSubject) {
         const CLASS_DB_MAP = { '6': '9' };
         const dbCls = CLASS_DB_MAP[cls] || cls;
 
-        const res = await fetch(
-            SUPABASE_URL + '/rest/v1/questions?select=subject,chapter&class=eq.' + encodeURIComponent(dbCls) + '&limit=10000',
-            { headers: { 'apikey': SUPABASE_KEY } }
-        );
-        if (!res.ok) throw new Error('HTTP ' + res.status);
-
-        _filterAllRows = await res.json();
+        const [resA, resB] = await Promise.allSettled([
+            fetch(SUPABASE_URL + '/rest/v1/questions?select=subject,chapter&class=eq.' + encodeURIComponent(dbCls) + '&limit=10000', { headers: { 'apikey': SUPABASE_KEY } }),
+            fetch(SUPA_B_URL   + '/rest/v1/questions?select=subject,chapter&class=eq.' + encodeURIComponent(dbCls) + '&limit=10000', { headers: { 'apikey': SUPA_B_PUB  } })
+        ]);
+        if (resA.status !== 'fulfilled' || !resA.value.ok) throw new Error('HTTP ' + (resA.value?.status || 'network'));
+        let rowsA = await resA.value.json();
+        let rowsB = [];
+        if (resB.status === 'fulfilled' && resB.value.ok) { try { rowsB = await resB.value.json(); } catch(_){} }
+        _filterAllRows = [...rowsA, ...rowsB];
 
         const subjects = [...new Set(_filterAllRows.map(q => q.subject).filter(Boolean))].sort();
         selSub.innerHTML = '<option value="">All Subjects</option>';
@@ -1140,27 +1163,28 @@ function clearSubjectFilter() {
 // ── Sidebar stats ─────────────────────────────────────
 async function loadSidebarStats() {
     try {
-        const res = await fetch(
-            SUPABASE_URL + '/rest/v1/questions?is_active=eq.true&select=id',
-            { headers: { 'apikey': SUPABASE_KEY } }
-        );
-        if (!res.ok) return;
-        const data = await res.json();
-        document.getElementById('sbTotalCount').textContent = data.length;
-
-        // Load subject counts
+        const [resA, resB] = await Promise.allSettled([
+            fetch(SUPABASE_URL + '/rest/v1/questions?is_active=eq.true&select=id', { headers: { 'apikey': SUPABASE_KEY } }),
+            fetch(SUPA_B_URL   + '/rest/v1/questions?is_active=eq.true&select=id', { headers: { 'apikey': SUPA_B_PUB  } })
+        ]);
+        let total = 0;
+        if (resA.status === 'fulfilled' && resA.value.ok) { const d = await resA.value.json(); total += d.length; }
+        if (resB.status === 'fulfilled' && resB.value.ok) { const d = await resB.value.json(); total += d.length; }
+        document.getElementById('sbTotalCount').textContent = total;
         await loadSubjectCounts();
     } catch (_) {}
 }
 
 async function loadSubjectCounts() {
     try {
-        const res = await fetch(
-            SUPABASE_URL + '/rest/v1/questions?is_active=eq.true&select=class,subject',
-            { headers: { 'apikey': SUPABASE_KEY } }
-        );
-        if (!res.ok) return;
-        const questions = await res.json();
+        const [resA, resB] = await Promise.allSettled([
+            fetch(SUPABASE_URL + '/rest/v1/questions?is_active=eq.true&select=class,subject', { headers: { 'apikey': SUPABASE_KEY } }),
+            fetch(SUPA_B_URL   + '/rest/v1/questions?is_active=eq.true&select=class,subject', { headers: { 'apikey': SUPA_B_PUB  } })
+        ]);
+        let rowsA = [], rowsB = [];
+        if (resA.status === 'fulfilled' && resA.value.ok) rowsA = await resA.value.json();
+        if (resB.status === 'fulfilled' && resB.value.ok) { try { rowsB = await resB.value.json(); } catch(_){} }
+        const questions = [...rowsA, ...rowsB];
 
         const counts = {};
         questions.forEach(q => {
@@ -1713,3 +1737,4 @@ init();
 </script>
 </body>
 </html>
+
