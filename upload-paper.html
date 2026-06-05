@@ -222,23 +222,14 @@
   </div>
 </main>
 
-<script src="https://sdk.amazonaws.com/js/aws-sdk-2.1695.0.min.js"></script>
 <script>
-  // IDrive S3 config
-  const IDRIVE_S3 = {
-    endpoint: 's3.ap-northeast-1.idrivee2.com',
-    accessKeyId: 'pDk9xxOZSLDraxTcr8I5',
-    secretAccessKey: '8YTTAWJFfk6BF9W6ExITXZ57jVC0IbJN7XFvUeSi',
-    bucket: 'mcq-supabase',
-    region: 'ap-northeast-1'
-  };
-
-  // n8n webhook — creates the job record server-side and runs the OCR/AI pipeline
+  // n8n endpoints. The browser holds NO storage credentials.
+  // Presign returns short-lived IDrive upload/download URLs; process runs the OCR/AI pipeline.
+  const N8N_PRESIGN  = 'https://container001.pitthugram.com/webhook/mcq-presign';
   const N8N_WEBHOOK  = 'https://container001.pitthugram.com/webhook/mcq-process';
 
   let currentUser = null;
   let selectedFiles = [];
-  let s3Client = null;
 
   // Chapter & topic data by subject & class
   const curriculumData = {
@@ -367,21 +358,6 @@
     renderFileList();
   }
 
-  // ── S3 client init ──────────────────────────────────────
-  function initS3() {
-    if (s3Client) return;
-    AWS.config.update({
-      accessKeyId: IDRIVE_S3.accessKeyId,
-      secretAccessKey: IDRIVE_S3.secretAccessKey,
-      region: IDRIVE_S3.region,
-      s3ForcePathStyle: true
-    });
-    s3Client = new AWS.S3({
-      endpoint: new AWS.Endpoint(`https://${IDRIVE_S3.endpoint}`),
-      signatureVersion: 'v4'
-    });
-  }
-
   // ── Upload & submit ─────────────────────────────────────
   async function submitJob() {
     if (!selectedFiles.length) return;
@@ -391,36 +367,34 @@
     if (!subject || !cls || !unit) { showStatus('error', 'Required fields missing', 'Please select Subject, Class, and Chapter before submitting.'); return; }
 
     setLoading(true);
-    showProgress(10, 'Initializing upload...');
+    showProgress(10, 'Preparing upload...');
 
     try {
-      initS3();
       const jobId = 'job_' + Date.now() + '_' + Math.random().toString(36).slice(2,7);
-      const filePaths = [];
+      const filePaths = selectedFiles.map(f => `${currentUser.institute_id}/${jobId}/${f.name}`);
       const fileUrls  = [];
 
-      for (let i = 0; i < selectedFiles.length; i++) {
-        const f    = selectedFiles[i];
-        const path = `${currentUser.institute_id}/${jobId}/${f.name}`;
-        showProgress(10 + Math.round((i / selectedFiles.length) * 60), `Uploading ${f.name}...`);
+      // 1. Ask n8n for short-lived presigned upload/download URLs (no credentials in browser)
+      const presignRes = await fetch(N8N_PRESIGN, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ keys: filePaths, expires: 3600 })
+      });
+      if (!presignRes.ok) throw new Error(`Could not get upload URLs: ${presignRes.status}`);
+      const { signed } = await presignRes.json();
+      if (!signed || signed.length !== filePaths.length) throw new Error('Upload URL response was incomplete.');
 
-        await new Promise((resolve, reject) => {
-          s3Client.putObject({
-            Bucket: IDRIVE_S3.bucket,
-            Key: path,
-            Body: f,
-            ContentType: f.type
-          }, (err) => {
-            if (err) reject(new Error(`Upload failed for ${f.name}: ${err.message}`));
-            else resolve();
-          });
+      // 2. Upload each file straight to IDrive via its presigned PUT URL
+      for (let i = 0; i < selectedFiles.length; i++) {
+        const f = selectedFiles[i];
+        showProgress(10 + Math.round((i / selectedFiles.length) * 60), `Uploading ${f.name}...`);
+        const put = await fetch(signed[i].putUrl, {
+          method: 'PUT',
+          headers: { 'Content-Type': f.type },
+          body: f
         });
-        filePaths.push(path);
-        // Short-lived presigned GET URL so n8n can download from the private bucket without credentials
-        const signedUrl = s3Client.getSignedUrl('getObject', {
-          Bucket: IDRIVE_S3.bucket, Key: path, Expires: 3600
-        });
-        fileUrls.push(signedUrl);
+        if (!put.ok) throw new Error(`Upload failed for ${f.name}: ${put.status}`);
+        fileUrls.push(signed[i].getUrl);
       }
 
       showProgress(85, 'Starting processing...');
