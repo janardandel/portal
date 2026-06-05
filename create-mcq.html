@@ -1,0 +1,564 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create MCQ — Pitthugram</title>
+    <link rel="icon" type="image/png" href="./favicon.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/@phosphor-icons/web" defer></script>
+    <link rel="stylesheet" href="./pitthugram.css">
+    <style>
+        .cm-page { padding: 1.5rem; max-width: 860px; margin: 72px auto 6rem; }
+        .cm-top { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1.5rem; flex-wrap: wrap; }
+        .cm-top h1 { font-size: 1.4rem; font-weight: 800; color: var(--text-primary); }
+        .cm-top h1 span { color: var(--primary); }
+        .cm-back { display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.45rem 0.9rem; background: transparent; border: 1.5px solid var(--border-light); border-radius: var(--radius); font-family: var(--font-body); font-size: 0.85rem; font-weight: 600; color: var(--text-muted); cursor: pointer; text-decoration: none; transition: var(--transition); }
+        .cm-back:hover { border-color: var(--text-muted); color: var(--text-primary); }
+
+        /* Steps */
+        .cm-step { background: var(--bg-surface); border: 1.5px solid var(--border); border-radius: var(--radius-lg); padding: 1.5rem; margin-bottom: 1.25rem; }
+        .cm-step-title { font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem; }
+        .cm-step-title i { color: var(--primary); font-size: 1rem; }
+
+        /* Metadata grid */
+        .meta-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.75rem; }
+        @media (max-width: 600px) { .meta-grid { grid-template-columns: 1fr; } }
+        .meta-field label { display: block; font-size: 0.78rem; font-weight: 600; color: var(--text-muted); margin-bottom: 0.35rem; text-transform: uppercase; letter-spacing: 0.05em; }
+        .meta-field input, .meta-field select { width: 100%; padding: 0.65rem 0.875rem; background: var(--bg-input); border: 1.5px solid var(--border-light); border-radius: var(--radius); font-family: var(--font-body); font-size: 0.9rem; color: var(--text-primary); transition: var(--transition); }
+        .meta-field input:focus, .meta-field select:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-glow); }
+        .meta-field select { appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24'%3E%3Cpath fill='%23888' d='M7 10l5 5 5-5z'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 0.75rem center; padding-right: 2rem; }
+        .meta-field select option { background: var(--bg-elevated); }
+
+        /* OCR textarea */
+        .ocr-textarea { width: 100%; min-height: 200px; padding: 0.875rem; background: var(--bg-input); border: 1.5px solid var(--border-light); border-radius: var(--radius); font-family: var(--font-body); font-size: 0.9rem; color: var(--text-primary); resize: vertical; transition: var(--transition); line-height: 1.6; }
+        .ocr-textarea:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-glow); }
+        .ocr-hint { font-size: 0.78rem; color: var(--text-muted); margin-top: 0.5rem; display: flex; align-items: flex-start; gap: 0.35rem; }
+
+        /* AI button */
+        .btn-ai { display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.75rem 1.5rem; background: var(--primary); border: none; border-radius: var(--radius); font-family: var(--font-body); font-size: 0.925rem; font-weight: 700; color: #fff; cursor: pointer; transition: var(--transition); margin-top: 1rem; }
+        .btn-ai:hover:not(:disabled) { background: var(--primary-dark, #c8000a); }
+        .btn-ai:disabled { opacity: 0.55; cursor: not-allowed; }
+
+        /* Question cards */
+        .questions-panel { display: none; flex-direction: column; gap: 1rem; margin-top: 0; }
+        .questions-panel.show { display: flex; }
+        .q-card { background: var(--bg-surface); border: 1.5px solid var(--border); border-radius: var(--radius-lg); padding: 1.25rem; position: relative; }
+        .q-card-num { font-size: 0.7rem; font-weight: 700; color: var(--primary); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.75rem; }
+        .q-card textarea, .q-card input[type="text"] { width: 100%; padding: 0.6rem 0.75rem; background: var(--bg-input); border: 1.5px solid var(--border-light); border-radius: var(--radius); font-family: var(--font-body); font-size: 0.875rem; color: var(--text-primary); transition: var(--transition); resize: vertical; }
+        .q-card textarea:focus, .q-card input[type="text"]:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 2px var(--primary-glow); }
+        .q-card textarea { min-height: 72px; line-height: 1.5; }
+        .q-field-label { font-size: 0.72rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.3rem; margin-top: 0.85rem; }
+        .options-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; }
+        @media (max-width: 500px) { .options-grid { grid-template-columns: 1fr; } }
+        .option-row { display: flex; align-items: center; gap: 0.5rem; }
+        .option-label { font-size: 0.8rem; font-weight: 700; color: var(--text-secondary); min-width: 20px; }
+        .option-radio { accent-color: var(--primary); width: 16px; height: 16px; flex-shrink: 0; cursor: pointer; }
+        .option-radio-label { font-size: 0.78rem; color: var(--text-muted); cursor: pointer; }
+        .diff-select { padding: 0.45rem 2rem 0.45rem 0.65rem; background: var(--bg-input); border: 1.5px solid var(--border-light); border-radius: var(--radius-sm); font-family: var(--font-body); font-size: 0.8rem; color: var(--text-primary); appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24'%3E%3Cpath fill='%23888' d='M7 10l5 5 5-5z'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 0.5rem center; }
+        .diff-select option { background: var(--bg-elevated); }
+
+        /* Image section */
+        .img-section { margin-top: 0.85rem; padding-top: 0.85rem; border-top: 1px solid var(--border-light); }
+        .img-thumbs { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.5rem; }
+        .img-thumb { position: relative; width: 80px; height: 80px; border-radius: var(--radius-sm); overflow: hidden; border: 1.5px solid var(--border); flex-shrink: 0; }
+        .img-thumb img { width: 100%; height: 100%; object-fit: cover; }
+        .img-thumb-del { position: absolute; top: 2px; right: 2px; background: rgba(0,0,0,0.65); border: none; border-radius: 50%; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; cursor: pointer; color: #fff; font-size: 10px; }
+        .btn-add-img { display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.45rem 0.85rem; background: transparent; border: 1.5px solid var(--border-light); border-radius: var(--radius); font-family: var(--font-body); font-size: 0.8rem; font-weight: 600; color: var(--text-muted); cursor: pointer; transition: var(--transition); }
+        .btn-add-img:hover:not(:disabled) { border-color: var(--primary); color: var(--primary); }
+        .btn-add-img:disabled { opacity: 0.4; cursor: not-allowed; }
+        .btn-del-q { position: absolute; top: 1rem; right: 1rem; background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 1rem; padding: 0.25rem; border-radius: var(--radius-sm); transition: var(--transition); }
+        .btn-del-q:hover { color: var(--danger, #e53e3e); background: rgba(229,62,62,0.08); }
+
+        /* Save bar */
+        .save-bar { position: sticky; bottom: 1rem; background: var(--bg-elevated); border: 1.5px solid var(--border); border-radius: var(--radius-lg); padding: 1rem 1.25rem; display: flex; align-items: center; justify-content: space-between; gap: 1rem; box-shadow: 0 8px 32px rgba(0,0,0,0.3); display: none; flex-wrap: wrap; }
+        .save-bar.show { display: flex; }
+        .save-bar-info { font-size: 0.875rem; color: var(--text-secondary); }
+        .save-bar-info strong { color: var(--text-primary); }
+        .btn-save { display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.7rem 1.5rem; background: var(--primary); border: none; border-radius: var(--radius); font-family: var(--font-body); font-size: 0.925rem; font-weight: 700; color: #fff; cursor: pointer; transition: var(--transition); }
+        .btn-save:hover:not(:disabled) { background: var(--primary-dark, #c8000a); }
+        .btn-save:disabled { opacity: 0.55; cursor: not-allowed; }
+
+        /* Toast */
+        .cm-toast { position: fixed; bottom: 1.5rem; left: 50%; transform: translateX(-50%); background: var(--bg-elevated); border: 1px solid var(--border); border-radius: var(--radius); padding: 0.75rem 1.25rem; font-size: 0.875rem; color: var(--text-primary); box-shadow: 0 8px 24px rgba(0,0,0,0.35); z-index: 9999; transition: opacity 0.3s; display: flex; align-items: center; gap: 0.5rem; opacity: 0; pointer-events: none; }
+        .cm-toast.show { opacity: 1; }
+        .cm-toast.error { border-color: var(--danger, #e53e3e); color: var(--danger, #e53e3e); }
+        .cm-toast.success { border-color: #38a169; color: #38a169; }
+
+        /* Auth gate */
+        .auth-gate { display: flex; align-items: center; justify-content: center; min-height: 60vh; }
+        .auth-card { text-align: center; padding: 2.5rem; background: var(--bg-surface); border: 1px solid var(--border); border-radius: var(--radius-lg); max-width: 360px; }
+        .auth-card i { font-size: 2.5rem; color: var(--text-muted); }
+        .auth-card h2 { margin: 0.75rem 0 0.5rem; font-size: 1.2rem; }
+        .auth-card p { color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1.25rem; }
+
+        /* uploading spinner overlay on thumb */
+        .img-thumb.uploading { display: flex; align-items: center; justify-content: center; background: var(--bg-input); }
+        .upload-spinner { width: 24px; height: 24px; border: 3px solid rgba(255,255,255,0.2); border-top-color: var(--primary); border-radius: 50%; animation: spin 0.7s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+
+<!-- Navbar -->
+<header class="navbar">
+    <div class="container nav-inner">
+        <a href="index.html" class="logo"><img src="./logo.png" alt="Pitthugram"></a>
+        <div class="nav-actions">
+            <a href="./quiz-builder.html" class="btn btn-outline btn-sm" style="padding:0.5rem 1rem;">
+                <i class="ph ph-arrow-left"></i> Quiz Builder
+            </a>
+        </div>
+    </div>
+</header>
+
+<div class="cm-page" id="cmPage">
+
+<!-- Auth gate -->
+<div class="auth-gate" id="authGate" style="display:none;">
+    <div class="auth-card">
+        <i class="ph-fill ph-lock"></i>
+        <h2>Login Required</h2>
+        <p>Please sign in to create MCQs.</p>
+        <a href="./index.html" class="btn btn-primary"><i class="ph ph-sign-in"></i> Go to Login</a>
+    </div>
+</div>
+
+<!-- Main content -->
+<div id="cmContent" style="display:none;">
+
+    <div class="cm-top">
+        <h1>Create <span>MCQ</span></h1>
+    </div>
+
+    <!-- Step 1: Metadata -->
+    <div class="cm-step">
+        <div class="cm-step-title"><i class="ph ph-tag"></i> Step 1 — Question Details</div>
+        <div class="meta-grid">
+            <div class="meta-field">
+                <label>Subject *</label>
+                <input type="text" id="metaSubject" placeholder="e.g. Physics">
+            </div>
+            <div class="meta-field">
+                <label>Class / Exam *</label>
+                <select id="metaClass">
+                    <option value="">Select</option>
+                    <option value="JEE">JEE</option>
+                    <option value="NEET">NEET</option>
+                    <option value="6">Class 6</option>
+                    <option value="7">Class 7</option>
+                    <option value="8">Class 8</option>
+                    <option value="9">Class 9</option>
+                    <option value="10">Class 10</option>
+                    <option value="11">Class 11</option>
+                    <option value="12">Class 12</option>
+                </select>
+            </div>
+            <div class="meta-field">
+                <label>Chapter *</label>
+                <input type="text" id="metaChapter" placeholder="e.g. Laws of Motion">
+            </div>
+            <div class="meta-field">
+                <label>Topic</label>
+                <input type="text" id="metaTopic" placeholder="e.g. Newton's 3rd Law">
+            </div>
+            <div class="meta-field">
+                <label>Default Difficulty</label>
+                <select id="metaDifficulty">
+                    <option value="Intermediate">Intermediate</option>
+                    <option value="Basic">Basic</option>
+                    <option value="Advanced">Advanced</option>
+                </select>
+            </div>
+            <div class="meta-field">
+                <label>Board</label>
+                <select id="metaBoard">
+                    <option value="CBSE">CBSE</option>
+                    <option value="ICSE">ICSE</option>
+                    <option value="State">State Board</option>
+                    <option value="Other">Other</option>
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <!-- Step 2: OCR text -->
+    <div class="cm-step">
+        <div class="cm-step-title"><i class="ph ph-clipboard-text"></i> Step 2 — Paste OCR Text from Google Drive</div>
+        <textarea class="ocr-textarea" id="ocrText" placeholder="Open your scanned paper in Google Drive → open with Google Docs → copy all text → paste here.
+
+The AI will extract all MCQ questions, options A-B-C-D, and the correct answer automatically."></textarea>
+        <div class="ocr-hint">
+            <i class="ph ph-info" style="flex-shrink:0;margin-top:1px;"></i>
+            <span>Tip: For best results, include the answer key at the end of the pasted text (e.g. "1-A, 2-C, 3-B…"). The AI will match them automatically.</span>
+        </div>
+        <button class="btn-ai" id="btnStructure" onclick="structureWithAI()">
+            <i class="ph ph-robot"></i> Structure with AI
+        </button>
+    </div>
+
+    <!-- Step 3: Review questions -->
+    <div class="cm-step" id="reviewStep" style="display:none;">
+        <div class="cm-step-title"><i class="ph ph-pencil-simple"></i> Step 3 — Review &amp; Edit Questions</div>
+        <p style="font-size:0.85rem;color:var(--text-muted);margin-bottom:1rem;">
+            Edit any field. For diagrams/figures: take a screenshot of the image in Google Drive, save it, then click <strong>Add Image</strong> on the relevant question.
+        </p>
+        <div class="questions-panel show" id="questionsPanel"></div>
+    </div>
+
+    <!-- Save bar -->
+    <div class="save-bar" id="saveBar">
+        <div class="save-bar-info">
+            <strong id="saveCount">0</strong> questions ready to save
+        </div>
+        <button class="btn-save" id="btnSave" onclick="saveQuestions()">
+            <i class="ph ph-floppy-disk"></i> Save to Question Bank
+        </button>
+    </div>
+
+</div><!-- /cmContent -->
+</div><!-- /cmPage -->
+
+<!-- Toast -->
+<div class="cm-toast" id="toast"><i class="ph ph-info" id="toastIcon"></i> <span id="toastMsg"></span></div>
+
+<script>
+const SUPA_A_URL  = 'https://qnqcysdeolnooxxcafwz.supabase.co';
+const SUPA_A_KEY  = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFucWN5c2Rlb2xub294eGNhZnd6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYzNTc0NjUsImV4cCI6MjA5MTkzMzQ2NX0.hOuPKv1zqQup7JfEpe-SJWT9Duz0RUwcCPwJb0zE_0Q';
+const SUPA_B_URL  = 'https://zqrswemxmhjaylsuulyu.supabase.co';
+const SUPA_B_PUB  = 'sb_publishable_8Y62WSnJwGidHS591ofDiw_gbzmTGAQ';
+const N8N_PRESIGN = 'https://container001.pitthugram.com/webhook/mcq-presign';
+const N8N_AI      = 'https://container001.pitthugram.com/webhook/mcq-ai-structure';
+const N8N_SAVE    = 'https://container001.pitthugram.com/webhook/mcq-save';
+
+let currentUser   = null;
+let teacherRecord = null;
+let questions     = [];     // array of question objects with images[]
+
+// ── Auth ──────────────────────────────────────────────────────────────────
+async function checkAuth() {
+    const token = localStorage.getItem('pg_access_token');
+    const user  = localStorage.getItem('pg_user');
+    if (!token || !user) {
+        document.getElementById('authGate').style.display  = 'flex';
+        document.getElementById('cmContent').style.display = 'none';
+        return false;
+    }
+    currentUser = JSON.parse(user);
+    document.getElementById('authGate').style.display  = 'none';
+    document.getElementById('cmContent').style.display = 'block';
+
+    await loadTeacher();
+    return true;
+}
+
+async function loadTeacher() {
+    try {
+        const r = await fetch(
+            SUPA_B_URL + '/rest/v1/teachers?email=eq.' + encodeURIComponent(currentUser.email) + '&limit=1',
+            { headers: { apikey: SUPA_B_PUB } }
+        );
+        const rows = await r.json();
+        if (rows && rows.length) teacherRecord = rows[0];
+    } catch (_) {}
+}
+
+// ── AI Structure ──────────────────────────────────────────────────────────
+async function structureWithAI() {
+    const text       = document.getElementById('ocrText').value.trim();
+    const subject    = document.getElementById('metaSubject').value.trim();
+    const cls        = document.getElementById('metaClass').value;
+    const chapter    = document.getElementById('metaChapter').value.trim();
+    const topic      = document.getElementById('metaTopic').value.trim();
+    const difficulty = document.getElementById('metaDifficulty').value;
+
+    if (!text)    return showToast('Please paste OCR text first.', 'error');
+    if (!subject) return showToast('Please enter a subject.', 'error');
+    if (!cls)     return showToast('Please select a class / exam.', 'error');
+    if (!chapter) return showToast('Please enter a chapter name.', 'error');
+
+    const btn = document.getElementById('btnStructure');
+    btn.disabled = true;
+    btn.innerHTML = '<div class="upload-spinner" style="width:18px;height:18px;border-width:2px;"></div> Analysing…';
+
+    try {
+        const res = await fetch(N8N_AI, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ text, subject, class: cls, chapter, topic, difficulty })
+        });
+        if (!res.ok) throw new Error('AI webhook returned ' + res.status);
+        const data = await res.json();
+
+        const qs = data.questions || data;
+        if (!Array.isArray(qs) || !qs.length) throw new Error('No questions found in the text. Try including more complete question text.');
+
+        questions = qs.map((q, i) => ({
+            ...q,
+            difficulty_level: q.difficulty_level || difficulty,
+            images: []
+        }));
+
+        renderQuestions();
+        document.getElementById('reviewStep').style.display = 'block';
+        document.getElementById('saveBar').classList.add('show');
+        updateSaveCount();
+        document.getElementById('reviewStep').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        showToast(`Found ${questions.length} question${questions.length > 1 ? 's' : ''}. Review and edit below.`, 'success');
+    } catch (err) {
+        showToast(err.message || 'Failed to structure questions.', 'error');
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="ph ph-robot"></i> Structure with AI';
+    }
+}
+
+// ── Render questions ──────────────────────────────────────────────────────
+function renderQuestions() {
+    const panel = document.getElementById('questionsPanel');
+    panel.innerHTML = '';
+    questions.forEach((q, idx) => panel.appendChild(buildCard(q, idx)));
+}
+
+function buildCard(q, idx) {
+    const card = document.createElement('div');
+    card.className = 'q-card';
+    card.id = `qcard-${idx}`;
+
+    card.innerHTML = `
+        <button class="btn-del-q" onclick="deleteQuestion(${idx})" title="Remove this question"><i class="ph ph-trash"></i></button>
+        <div class="q-card-num">Question ${idx + 1}</div>
+
+        <div class="q-field-label">Question Text *</div>
+        <textarea id="qt-${idx}" rows="3" onchange="questions[${idx}].question_text=this.value">${esc(q.question_text || '')}</textarea>
+
+        <div class="q-field-label">Options</div>
+        <div class="options-grid">
+            ${['a','b','c','d'].map(opt => `
+            <div class="option-row">
+                <span class="option-label">${opt.toUpperCase()}</span>
+                <input type="text" id="opt${opt}-${idx}" value="${esc(q['option_'+opt] || '')}"
+                    onchange="questions[${idx}].option_${opt}=this.value"
+                    placeholder="Option ${opt.toUpperCase()}">
+            </div>`).join('')}
+        </div>
+
+        <div class="q-field-label">Correct Answer</div>
+        <div style="display:flex;gap:1.25rem;flex-wrap:wrap;margin-top:0.3rem;">
+            ${['A','B','C','D'].map(opt => `
+            <label style="display:flex;align-items:center;gap:0.4rem;cursor:pointer;">
+                <input type="radio" class="option-radio" name="ans-${idx}" value="${opt}"
+                    ${(q.correct_answer||'').toUpperCase() === opt ? 'checked' : ''}
+                    onchange="questions[${idx}].correct_answer='${opt}'">
+                <span class="option-radio-label">${opt}</span>
+            </label>`).join('')}
+        </div>
+
+        <div class="q-field-label">Explanation (optional)</div>
+        <textarea id="exp-${idx}" rows="2" onchange="questions[${idx}].explanation=this.value"
+            placeholder="Brief explanation for the correct answer…">${esc(q.explanation || '')}</textarea>
+
+        <div style="display:flex;align-items:center;gap:0.75rem;margin-top:0.85rem;">
+            <div class="q-field-label" style="margin:0;">Difficulty</div>
+            <select class="diff-select" onchange="questions[${idx}].difficulty_level=this.value">
+                ${['Basic','Intermediate','Advanced'].map(d => `<option ${q.difficulty_level===d?'selected':''}>${d}</option>`).join('')}
+            </select>
+        </div>
+
+        <div class="img-section">
+            <div class="q-field-label" style="margin-top:0;">Images (diagrams / figures)</div>
+            <div class="img-thumbs" id="thumbs-${idx}"></div>
+            <button class="btn-add-img" id="addimg-${idx}" onclick="pickImage(${idx})" style="margin-top:0.5rem;">
+                <i class="ph ph-image-square-plus"></i> Add Image
+            </button>
+            <input type="file" id="filein-${idx}" accept="image/*" style="display:none;"
+                onchange="uploadImage(event, ${idx})">
+        </div>`;
+
+    renderThumbs(q, idx);
+    return card;
+}
+
+function esc(str) {
+    return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function deleteQuestion(idx) {
+    questions.splice(idx, 1);
+    renderQuestions();
+    updateSaveCount();
+}
+
+function updateSaveCount() {
+    document.getElementById('saveCount').textContent = questions.length;
+}
+
+// ── Images ────────────────────────────────────────────────────────────────
+function pickImage(idx) {
+    document.getElementById(`filein-${idx}`).click();
+}
+
+async function uploadImage(event, idx) {
+    const file = event.target.files[0];
+    if (!file) return;
+    event.target.value = '';
+
+    const instId  = teacherRecord ? teacherRecord.institute_id : 'unknown';
+    const ext     = file.name.split('.').pop();
+    const key     = `mcq-images/${instId}/tmp-${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+    const addBtn  = document.getElementById(`addimg-${idx}`);
+    const thumbs  = document.getElementById(`thumbs-${idx}`);
+
+    // Spinner thumb
+    addBtn.disabled = true;
+    const spinner = document.createElement('div');
+    spinner.className = 'img-thumb uploading';
+    spinner.innerHTML = '<div class="upload-spinner"></div>';
+    thumbs.appendChild(spinner);
+
+    try {
+        // Get presigned PUT URL
+        const presignRes = await fetch(N8N_PRESIGN, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ files: [{ key, contentType: file.type || 'image/png' }] })
+        });
+        if (!presignRes.ok) throw new Error('Presign failed: ' + presignRes.status);
+        const presignData = await presignRes.json();
+        const signed = (presignData.signed || presignData)[0];
+        if (!signed || !signed.putUrl) throw new Error('No PUT URL returned from presign');
+
+        // Upload to IDrive
+        const putRes = await fetch(signed.putUrl, {
+            method: 'PUT',
+            headers: { 'Content-Type': file.type || 'image/png' },
+            body: file
+        });
+        if (!putRes.ok) throw new Error('Upload to IDrive failed: ' + putRes.status);
+
+        // Store in question
+        const imgObj = { key, getUrl: signed.getUrl, file_name: file.name };
+        questions[idx].images.push(imgObj);
+        spinner.remove();
+        renderThumbs(questions[idx], idx);
+        showToast('Image uploaded.', 'success');
+    } catch (err) {
+        spinner.remove();
+        showToast('Image upload failed: ' + err.message, 'error');
+    } finally {
+        addBtn.disabled = false;
+    }
+}
+
+function renderThumbs(q, idx) {
+    const container = document.getElementById(`thumbs-${idx}`);
+    if (!container) return;
+    // Clear non-spinner thumbs
+    container.querySelectorAll('.img-thumb:not(.uploading)').forEach(el => el.remove());
+    (q.images || []).forEach((img, imgIdx) => {
+        const div = document.createElement('div');
+        div.className = 'img-thumb';
+        div.innerHTML = `<img src="${img.getUrl}" alt="figure ${imgIdx+1}" loading="lazy">
+            <button class="img-thumb-del" onclick="removeImage(${idx},${imgIdx})" title="Remove image">
+                <i class="ph ph-x"></i></button>`;
+        container.insertBefore(div, container.firstChild);
+    });
+}
+
+function removeImage(qIdx, imgIdx) {
+    questions[qIdx].images.splice(imgIdx, 1);
+    renderThumbs(questions[qIdx], qIdx);
+}
+
+// ── Save ──────────────────────────────────────────────────────────────────
+async function saveQuestions() {
+    if (!questions.length) return showToast('No questions to save.', 'error');
+
+    // Validate required fields
+    for (let i = 0; i < questions.length; i++) {
+        const q = questions[i];
+        if (!q.question_text || !q.question_text.trim()) return showToast(`Question ${i+1}: question text is required.`, 'error');
+        if (!q.option_a || !q.option_b) return showToast(`Question ${i+1}: options A and B are required.`, 'error');
+        if (!q.correct_answer) return showToast(`Question ${i+1}: please select the correct answer.`, 'error');
+    }
+
+    const btn = document.getElementById('btnSave');
+    btn.disabled = true;
+    btn.innerHTML = '<div class="upload-spinner" style="width:18px;height:18px;border-width:2px;"></div> Saving…';
+
+    const payload = {
+        teacher_id:   teacherRecord ? teacherRecord.id   : null,
+        institute_id: teacherRecord ? teacherRecord.institute_id : null,
+        subject:      document.getElementById('metaSubject').value.trim(),
+        class:        document.getElementById('metaClass').value,
+        chapter:      document.getElementById('metaChapter').value.trim(),
+        topic:        document.getElementById('metaTopic').value.trim(),
+        board:        document.getElementById('metaBoard').value,
+        questions:    questions.map(q => ({
+            question_text:  q.question_text,
+            option_a:       q.option_a || '',
+            option_b:       q.option_b || '',
+            option_c:       q.option_c || '',
+            option_d:       q.option_d || '',
+            correct_answer: q.correct_answer || 'A',
+            explanation:    q.explanation || '',
+            difficulty_level: q.difficulty_level || 'Intermediate',
+            images:         q.images || []
+        }))
+    };
+
+    try {
+        const res = await fetch(N8N_SAVE, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+        if (!res.ok) throw new Error('Save webhook returned ' + res.status);
+        const data = await res.json();
+        const saved = data.saved || questions.length;
+
+        showToast(`${saved} question${saved > 1 ? 's' : ''} saved to question bank!`, 'success');
+
+        // Reset
+        questions = [];
+        document.getElementById('questionsPanel').innerHTML = '';
+        document.getElementById('reviewStep').style.display = 'none';
+        document.getElementById('saveBar').classList.remove('show');
+        document.getElementById('ocrText').value = '';
+        updateSaveCount();
+
+        setTimeout(() => {
+            if (confirm('Questions saved! Go to Quiz Builder to create a quiz with them?')) {
+                window.location.href = 'quiz-builder.html';
+            }
+        }, 500);
+    } catch (err) {
+        showToast('Save failed: ' + err.message, 'error');
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="ph ph-floppy-disk"></i> Save to Question Bank';
+    }
+}
+
+// ── Toast ─────────────────────────────────────────────────────────────────
+let toastTimer;
+function showToast(msg, type) {
+    const el   = document.getElementById('toast');
+    const icon = document.getElementById('toastIcon');
+    const text = document.getElementById('toastMsg');
+
+    el.className = 'cm-toast show ' + (type || '');
+    icon.className = type === 'error' ? 'ph ph-warning-circle' : type === 'success' ? 'ph ph-check-circle' : 'ph ph-info';
+    text.textContent = msg;
+
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => el.classList.remove('show'), 4000);
+}
+
+// ── Init ──────────────────────────────────────────────────────────────────
+checkAuth();
+</script>
+</body>
+</html>
+
