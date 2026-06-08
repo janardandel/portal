@@ -8,6 +8,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/@phosphor-icons/web" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
     <link rel="stylesheet" href="style.css">
     <style>
         .cm-page { padding: 1.5rem; max-width: 860px; margin: 72px auto 6rem; }
@@ -41,6 +42,7 @@
         .mark-upload:hover { border-color: var(--primary); color: var(--text-primary); }
         .mark-upload i { font-size: 2rem; color: var(--primary); display: block; margin-bottom: 0.5rem; }
         .mark-upload-sub { font-size: 0.78rem; margin-top: 0.35rem; }
+        .mark-pagenav { display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap; margin-bottom: 0.7rem; padding-bottom: 0.7rem; border-bottom: 1px solid var(--border-light); }
         .mark-toolbar { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 0.6rem; }
         .mark-tool-label { font-size: 0.78rem; font-weight: 600; color: var(--text-muted); }
         .mark-spacer { flex: 1; }
@@ -204,13 +206,19 @@
         <div class="cm-step-title"><i class="ph ph-scan"></i> Step 2 â€” Upload Scan &amp; Mark Questions</div>
 
         <div id="markUploadZone" class="mark-upload" onclick="document.getElementById('scanFile').click()">
-            <i class="ph ph-image-square"></i>
-            <div><strong>Upload a scanned page</strong></div>
-            <div class="mark-upload-sub">Click to choose an image (JPG / PNG). One page at a time â€” you can add more pages after extracting.</div>
+            <i class="ph ph-file-image"></i>
+            <div><strong>Upload a scanned paper</strong></div>
+            <div class="mark-upload-sub">Click to choose a <strong>PDF</strong> or image (JPG / PNG). Multi-page PDFs are handled page by page.</div>
         </div>
-        <input type="file" id="scanFile" accept="image/*" style="display:none;" onchange="loadMarkImage(event)">
+        <input type="file" id="scanFile" accept="application/pdf,image/*" style="display:none;" onchange="loadMarkImage(event)">
 
         <div id="markArea" style="display:none;">
+            <div class="mark-pagenav" id="pdfNav" style="display:none;">
+                <button type="button" class="mark-type-btn" onclick="pdfPrev()"><i class="ph ph-caret-left"></i> Prev</button>
+                <span id="pdfPageLabel" style="font-size:0.82rem;font-weight:600;color:var(--text-secondary);">Page 1 / 1</span>
+                <button type="button" class="mark-type-btn" onclick="pdfNext()">Next <i class="ph ph-caret-right"></i></button>
+                <span style="font-size:0.75rem;color:var(--text-muted);">Mark &amp; Extract each page, then move to the next.</span>
+            </div>
             <div class="mark-toolbar">
                 <span class="mark-tool-label">Draw box as:</span>
                 <button type="button" class="mark-type-btn active" id="btnTypeQ" onclick="setMarkType('q')"><i class="ph ph-text-aa"></i> Question</button>
@@ -397,11 +405,13 @@ let markBoxes = [];       // { x,y,w,h (natural px), type:'q'|'fig', el, tagEl }
 let markType  = 'q';
 let drawing   = null;     // { startX, startY, el } during a drag
 
-function loadMarkImage(event) {
-    const file = event.target.files[0];
-    if (!file) return;
-    event.target.value = '';
-    const url = URL.createObjectURL(file);
+// PDF state (null when a plain image is loaded)
+let pdfDoc = null, pdfNumPages = 0, pdfCurrentPage = 1;
+if (window.pdfjsLib) {
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+}
+
+function showImageSrc(src) {
     const img = document.getElementById('markImg');
     img.onload = () => {
         markImg = img;
@@ -410,8 +420,58 @@ function loadMarkImage(event) {
         clearBoxes();
         attachOverlayHandlers();
     };
-    img.src = url;
+    img.src = src;
 }
+
+function loadMarkImage(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    event.target.value = '';
+    if (file.type === 'application/pdf' || /\.pdf$/i.test(file.name)) {
+        loadPdf(file);
+    } else {
+        pdfDoc = null;
+        document.getElementById('pdfNav').style.display = 'none';
+        showImageSrc(URL.createObjectURL(file));
+    }
+}
+
+async function loadPdf(file) {
+    if (!window.pdfjsLib) return showToast('PDF support failed to load â€” try refreshing.', 'error');
+    try {
+        showToast('Opening PDFâ€¦', 'info');
+        const buf = await file.arrayBuffer();
+        pdfDoc = await pdfjsLib.getDocument({ data: buf }).promise;
+        pdfNumPages = pdfDoc.numPages;
+        pdfCurrentPage = 1;
+        document.getElementById('pdfNav').style.display = pdfNumPages > 1 ? 'flex' : 'none';
+        await renderPdfPage(1);
+    } catch (err) {
+        showToast('Could not open PDF: ' + err.message, 'error');
+    }
+}
+
+async function renderPdfPage(n) {
+    const page = await pdfDoc.getPage(n);
+    // Render at a fixed target width for consistent OCR quality
+    const base = page.getViewport({ scale: 1 });
+    const targetW = 1600;
+    const viewport = page.getViewport({ scale: targetW / base.width });
+    const canvas = document.createElement('canvas');
+    canvas.width = viewport.width; canvas.height = viewport.height;
+    await page.render({ canvasContext: canvas.getContext('2d'), viewport }).promise;
+    pdfCurrentPage = n;
+    document.getElementById('pdfPageLabel').textContent = `Page ${n} / ${pdfNumPages}`;
+    showImageSrc(canvas.toDataURL('image/png'));
+}
+
+function gotoPdfPage(n) {
+    if (!pdfDoc || n < 1 || n > pdfNumPages) return;
+    clearBoxes();
+    renderPdfPage(n);
+}
+function pdfPrev() { gotoPdfPage(pdfCurrentPage - 1); }
+function pdfNext() { gotoPdfPage(pdfCurrentPage + 1); }
 
 function setMarkType(t) {
     markType = t;
@@ -427,6 +487,8 @@ function clearBoxes() {
 function resetMark() {
     clearBoxes();
     markImg = null;
+    pdfDoc = null;
+    document.getElementById('pdfNav').style.display = 'none';
     document.getElementById('markImg').src = '';
     document.getElementById('markArea').style.display = 'none';
     document.getElementById('markUploadZone').style.display = 'block';
@@ -563,7 +625,13 @@ async function extractMarked() {
         document.getElementById('saveBar').classList.add('show');
         updateSaveCount();
         showToast(`Added ${newQs.length} question${newQs.length > 1 ? 's' : ''}. Review & set answers below.`, 'success');
-        resetMark();   // ready for the next page
+        if (pdfDoc && pdfCurrentPage < pdfNumPages) {
+            const next = pdfCurrentPage + 1;
+            gotoPdfPage(next);                 // multi-page PDF: advance to next page, keep marking
+            showToast(`Moved to page ${next} / ${pdfNumPages}.`, 'info');
+        } else {
+            resetMark();   // image, or last PDF page -> ready for a new upload
+        }
         document.getElementById('reviewStep').scrollIntoView({ behavior: 'smooth', block: 'start' });
     } catch (err) {
         showToast(err.message || 'Extraction failed.', 'error');
