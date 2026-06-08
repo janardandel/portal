@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -266,7 +266,8 @@
                         <ul class="qb-subjects" id="neetSubjectList">
                             <li onclick="quickLoad('NEET','Physics')"><i class="ph ph-atom"></i> Physics <span class="subject-count">(...)</span></li>
                             <li onclick="quickLoad('NEET','Chemistry')"><i class="ph ph-flask"></i> Chemistry <span class="subject-count">(...)</span></li>
-                            <li onclick="quickLoad('NEET','Biology')"><i class="ph ph-leaf"></i> Biology <span class="subject-count">(...)</span></li>
+                            <li onclick="quickLoad('NEET','Botany')"><i class="ph ph-leaf"></i> Botany <span class="subject-count">(...)</span></li>
+                            <li onclick="quickLoad('NEET','Zoology')"><i class="ph ph-paw-print"></i> Zoology <span class="subject-count">(...)</span></li>
                         </ul>
                     </div>
                     <div class="comp-exam-group">
@@ -1208,7 +1209,7 @@ async function loadSubjectCounts() {
         });
 
         // Update NEET subjects
-        ['Physics', 'Chemistry', 'Biology'].forEach(subject => {
+        ['Physics', 'Chemistry', 'Botany', 'Zoology'].forEach(subject => {
             const count = counts[`NEET-${subject}`] || 0;
             const li = document.querySelector(`#neetSubjectList li[onclick*="NEET','${subject}'"]`);
             if (li) {
