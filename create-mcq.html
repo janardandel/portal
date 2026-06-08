@@ -157,11 +157,6 @@
         <div class="cm-step-title"><i class="ph ph-tag"></i> Step 1 â€” Question Details</div>
         <div class="meta-grid">
             <div class="meta-field">
-                <label>Subject *</label>
-                <input type="text" id="metaSubject" placeholder="e.g. Physics" list="jeeSubjects" autocomplete="off" oninput="onSubjectInput()">
-                <datalist id="jeeSubjects"></datalist>
-            </div>
-            <div class="meta-field">
                 <label>Class / Exam *</label>
                 <select id="metaClass" onchange="onClassChange()">
                     <option value="">Select</option>
@@ -175,6 +170,20 @@
                     <option value="11">Class 11</option>
                     <option value="12">Class 12</option>
                 </select>
+            </div>
+            <div class="meta-field" id="boardField" style="display:none;">
+                <label>Board *</label>
+                <select id="metaBoard">
+                    <option value="CBSE">CBSE</option>
+                    <option value="ICSE">ICSE</option>
+                    <option value="State">State Board</option>
+                    <option value="Other">Other</option>
+                </select>
+            </div>
+            <div class="meta-field">
+                <label>Subject *</label>
+                <input type="text" id="metaSubject" placeholder="e.g. Physics" list="jeeSubjects" autocomplete="off" oninput="onSubjectInput()">
+                <datalist id="jeeSubjects"></datalist>
             </div>
             <div class="meta-field">
                 <label>Chapter *</label>
@@ -191,15 +200,6 @@
                     <option value="Intermediate">Intermediate</option>
                     <option value="Basic">Basic</option>
                     <option value="Advanced">Advanced</option>
-                </select>
-            </div>
-            <div class="meta-field">
-                <label>Board</label>
-                <select id="metaBoard">
-                    <option value="CBSE">CBSE</option>
-                    <option value="ICSE">ICSE</option>
-                    <option value="State">State Board</option>
-                    <option value="Other">Other</option>
                 </select>
             </div>
         </div>
@@ -340,14 +340,41 @@ function fillDatalist(id, items) {
     document.getElementById(id).innerHTML = items.map(v => `<option value="${v.replace(/"/g, '&quot;')}"></option>`).join('');
 }
 function onClassChange() {
-    const isJEE = document.getElementById('metaClass').value === 'JEE';
+    const v = document.getElementById('metaClass').value;
+    const isJEE    = v === 'JEE';
+    const isSchool = /^(6|7|8|9|10|11|12)$/.test(v);   // Board only applies to school classes 6-12
     fillDatalist('jeeSubjects', isJEE ? Object.keys(JEE_SYLLABUS) : []);
+    document.getElementById('boardField').style.display = isSchool ? '' : 'none';
     onSubjectInput();   // refresh chapter suggestions for the (possibly new) context
+    persistMeta();
 }
 function onSubjectInput() {
     const isJEE   = document.getElementById('metaClass').value === 'JEE';
     const subject = document.getElementById('metaSubject').value.trim();
     fillDatalist('jeeChapters', (isJEE && JEE_SYLLABUS[subject]) ? JEE_SYLLABUS[subject] : []);
+}
+
+// â”€â”€ Persist Step-1 selections (remembered until changed) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+const META_IDS = ['metaClass', 'metaBoard', 'metaSubject', 'metaChapter', 'metaTopic', 'metaDifficulty'];
+const META_KEY = 'pg_mcq_meta';
+function persistMeta() {
+    const o = {};
+    META_IDS.forEach(id => { const el = document.getElementById(id); if (el) o[id] = el.value; });
+    try { localStorage.setItem(META_KEY, JSON.stringify(o)); } catch (_) {}
+}
+function restoreMeta() {
+    let o = {};
+    try { o = JSON.parse(localStorage.getItem(META_KEY) || '{}'); } catch (_) {}
+    META_IDS.forEach(id => { const el = document.getElementById(id); if (el && o[id] != null) el.value = o[id]; });
+    onClassChange();    // re-sync board visibility + JEE datalists from the restored class
+    onSubjectInput();   // and chapter suggestions from the restored subject
+}
+function setupMeta() {
+    restoreMeta();
+    META_IDS.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) { el.addEventListener('change', persistMeta); el.addEventListener('input', persistMeta); }
+    });
 }
 
 // â”€â”€ Marking canvas â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
@@ -775,6 +802,7 @@ function showToast(msg, type) {
 
 // â”€â”€ Init â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 checkAuth();
+setupMeta();
 </script>
 </body>
 </html>
