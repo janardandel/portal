@@ -305,65 +305,89 @@ async function loadTeacher() {
     } catch (_) {}
 }
 
-// â”€â”€ JEE syllabus (official subjects + chapters) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-const JEE_SYLLABUS = {
-    'Physics': [
-        'Physics and Measurement', 'Kinematics', 'Laws of Motion', 'Work, Energy and Power',
-        'Rotational Motion', 'Gravitation', 'Properties of Solids and Liquids', 'Thermodynamics',
-        'Kinetic Theory of Gases', 'Oscillations and Waves', 'Electrostatics', 'Current Electricity',
-        'Magnetic Effects of Current and Magnetism', 'Electromagnetic Induction and Alternating Current',
-        'Electromagnetic Waves', 'Optics', 'Dual Nature of Matter and Radiation', 'Atoms and Nuclei',
-        'Electronic Devices', 'Experimental Skills'
-    ],
-    'Chemistry': [
-        // Physical Chemistry
-        'Some Basic Concepts of Chemistry', 'Atomic Structure', 'Chemical Bonding and Molecular Structure',
-        'Chemical Thermodynamics', 'Solutions', 'Equilibrium', 'Redox Reactions and Electrochemistry',
-        'Chemical Kinetics', 'Surface Chemistry',
-        // Inorganic Chemistry
-        'Classification of Elements and Periodicity', 'p-Block Elements', 'd- and f-Block Elements',
-        'Coordination Compounds', 'Hydrogen', 's-Block Elements', 'Metallurgy', 'Environmental Chemistry',
-        // Organic Chemistry
-        'Purification and Characterisation of Organic Compounds', 'Basic Principles of Organic Chemistry',
-        'Hydrocarbons', 'Organic Compounds Containing Halogens', 'Organic Compounds Containing Oxygen',
-        'Organic Compounds Containing Nitrogen', 'Polymers', 'Biomolecules', 'Chemistry in Everyday Life',
-        'Practical Organic Chemistry'
-    ],
-    'Mathematics': [
-        'Sets, Relations and Functions', 'Complex Numbers and Quadratic Equations', 'Matrices and Determinants',
-        'Permutations and Combinations', 'Mathematical Induction', 'Binomial Theorem', 'Sequences and Series',
-        'Limits, Continuity and Differentiability', 'Integral Calculus', 'Differential Equations',
-        'Coordinate Geometry', 'Three-Dimensional Geometry', 'Vector Algebra', 'Statistics and Probability',
-        'Trigonometry'
-    ]
+// â”€â”€ Exam syllabi (official subjects + chapters) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+const PHYSICS_JEE_NEET = [
+    'Physics and Measurement', 'Kinematics', 'Laws of Motion', 'Work, Energy and Power',
+    'Rotational Motion', 'Gravitation', 'Properties of Solids and Liquids', 'Thermodynamics',
+    'Kinetic Theory of Gases', 'Oscillations and Waves', 'Electrostatics', 'Current Electricity',
+    'Magnetic Effects of Current and Magnetism', 'Electromagnetic Induction and Alternating Current',
+    'Electromagnetic Waves', 'Optics', 'Dual Nature of Matter and Radiation', 'Atoms and Nuclei',
+    'Electronic Devices', 'Experimental Skills'
+];
+const SYLLABUS = {
+    'JEE': {
+        'Physics': PHYSICS_JEE_NEET,
+        'Chemistry': [
+            'Some Basic Concepts of Chemistry', 'Atomic Structure', 'Chemical Bonding and Molecular Structure',
+            'Chemical Thermodynamics', 'Solutions', 'Equilibrium', 'Redox Reactions and Electrochemistry',
+            'Chemical Kinetics', 'Surface Chemistry',
+            'Classification of Elements and Periodicity', 'p-Block Elements', 'd- and f-Block Elements',
+            'Coordination Compounds', 'Hydrogen', 's-Block Elements', 'Metallurgy', 'Environmental Chemistry',
+            'Purification and Characterisation of Organic Compounds', 'Basic Principles of Organic Chemistry',
+            'Hydrocarbons', 'Organic Compounds Containing Halogens', 'Organic Compounds Containing Oxygen',
+            'Organic Compounds Containing Nitrogen', 'Polymers', 'Biomolecules', 'Chemistry in Everyday Life',
+            'Practical Organic Chemistry'
+        ],
+        'Mathematics': [
+            'Sets, Relations and Functions', 'Complex Numbers and Quadratic Equations', 'Matrices and Determinants',
+            'Permutations and Combinations', 'Mathematical Induction', 'Binomial Theorem', 'Sequences and Series',
+            'Limits, Continuity and Differentiability', 'Integral Calculus', 'Differential Equations',
+            'Coordinate Geometry', 'Three-Dimensional Geometry', 'Vector Algebra', 'Statistics and Probability',
+            'Trigonometry'
+        ]
+    },
+    'NEET': {
+        'Physics': PHYSICS_JEE_NEET,
+        'Chemistry': [
+            'Some Basic Concepts of Chemistry', 'Atomic Structure', 'Chemical Bonding and Molecular Structure',
+            'Chemical Thermodynamics', 'Solutions', 'Equilibrium', 'Redox Reactions', 'Electrochemistry',
+            'Chemical Kinetics', 'Surface Chemistry',
+            'Classification of Elements and Periodicity', 'p-Block Elements', 'd- and f-Block Elements',
+            'Coordination Compounds', 'Hydrogen', 's-Block Elements', 'Metallurgy', 'Environmental Chemistry',
+            'Basic Principles of Organic Chemistry', 'Hydrocarbons', 'Haloalkanes and Haloarenes',
+            'Alcohols, Phenols and Ethers', 'Aldehydes, Ketones and Carboxylic Acids', 'Amines',
+            'Biomolecules', 'Polymers', 'Chemistry in Everyday Life', 'Practical Organic Chemistry'
+        ],
+        'Botany': [
+            'Diversity in Living World', 'Structural Organisation in Plants', 'Cell Structure and Function',
+            'Plant Physiology', 'Reproduction in Flowering Plants', 'Genetics and Evolution',
+            'Biotechnology and Its Applications', 'Ecology and Environment'
+        ],
+        'Zoology': [
+            'Structural Organisation in Animals', 'Human Physiology', 'Human Reproduction', 'Reproductive Health',
+            'Human Health and Disease', 'Biology and Human Welfare', 'Evolution', 'Biotechnology Applications',
+            'Ecology and Environment'
+        ]
+    }
 };
 
 function escAttr(s) { return String(s || '').replace(/"/g, '&quot;'); }
 function classType() {
     const v = document.getElementById('metaClass').value;
-    return { v, isJEE: v === 'JEE', isSchool: /^(6|7|8|9|10|11|12)$/.test(v) };
+    return { v, isSchool: /^(6|7|8|9|10|11|12)$/.test(v) };
 }
-// Subject: real dropdown for JEE (clean selection), free text otherwise
+function examSyllabus() { return SYLLABUS[classType().v] || null; }
+// Subject: real dropdown when the exam has a syllabus (JEE/NEET), free text otherwise
 function renderSubjectField(value) {
-    const { isJEE } = classType();
+    const syl = examSyllabus();
     const wrap = document.getElementById('subjectWrap');
-    if (isJEE) {
+    if (syl) {
         const opts = ['<option value="">Select subject</option>']
-            .concat(Object.keys(JEE_SYLLABUS).map(s => `<option${s === value ? ' selected' : ''}>${s}</option>`)).join('');
+            .concat(Object.keys(syl).map(s => `<option${s === value ? ' selected' : ''}>${s}</option>`)).join('');
         wrap.innerHTML = `<select id="metaSubject" onchange="onSubjectChange()">${opts}</select>`;
     } else {
         wrap.innerHTML = `<input type="text" id="metaSubject" placeholder="e.g. Physics" value="${escAttr(value)}" oninput="onSubjectChange()">`;
     }
 }
-// Chapter: real dropdown when a JEE subject is chosen, free text otherwise
+// Chapter: real dropdown when a syllabus subject is chosen, free text otherwise
 function renderChapterField(value) {
-    const { isJEE } = classType();
+    const syl = examSyllabus();
     const subjEl = document.getElementById('metaSubject');
     const subject = subjEl ? subjEl.value.trim() : '';
     const wrap = document.getElementById('chapterWrap');
-    if (isJEE && JEE_SYLLABUS[subject]) {
+    if (syl && syl[subject]) {
         const opts = ['<option value="">Select chapter</option>']
-            .concat(JEE_SYLLABUS[subject].map(c => `<option${c === value ? ' selected' : ''}>${c}</option>`)).join('');
+            .concat(syl[subject].map(c => `<option${c === value ? ' selected' : ''}>${c}</option>`)).join('');
         wrap.innerHTML = `<select id="metaChapter" onchange="persistMeta()">${opts}</select>`;
     } else {
         wrap.innerHTML = `<input type="text" id="metaChapter" placeholder="e.g. Laws of Motion" value="${escAttr(value)}" oninput="persistMeta()">`;
