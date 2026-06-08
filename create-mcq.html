@@ -158,11 +158,12 @@
         <div class="meta-grid">
             <div class="meta-field">
                 <label>Subject *</label>
-                <input type="text" id="metaSubject" placeholder="e.g. Physics">
+                <input type="text" id="metaSubject" placeholder="e.g. Physics" list="jeeSubjects" autocomplete="off" oninput="onSubjectInput()">
+                <datalist id="jeeSubjects"></datalist>
             </div>
             <div class="meta-field">
                 <label>Class / Exam *</label>
-                <select id="metaClass">
+                <select id="metaClass" onchange="onClassChange()">
                     <option value="">Select</option>
                     <option value="JEE">JEE</option>
                     <option value="NEET">NEET</option>
@@ -177,7 +178,8 @@
             </div>
             <div class="meta-field">
                 <label>Chapter *</label>
-                <input type="text" id="metaChapter" placeholder="e.g. Laws of Motion">
+                <input type="text" id="metaChapter" placeholder="e.g. Laws of Motion" list="jeeChapters" autocomplete="off">
+                <datalist id="jeeChapters"></datalist>
             </div>
             <div class="meta-field">
                 <label>Topic</label>
@@ -299,6 +301,53 @@ async function loadTeacher() {
         const rows = await r.json();
         if (rows && rows.length) teacherRecord = rows[0];
     } catch (_) {}
+}
+
+// â”€â”€ JEE syllabus (official subjects + chapters) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+const JEE_SYLLABUS = {
+    'Physics': [
+        'Physics and Measurement', 'Kinematics', 'Laws of Motion', 'Work, Energy and Power',
+        'Rotational Motion', 'Gravitation', 'Properties of Solids and Liquids', 'Thermodynamics',
+        'Kinetic Theory of Gases', 'Oscillations and Waves', 'Electrostatics', 'Current Electricity',
+        'Magnetic Effects of Current and Magnetism', 'Electromagnetic Induction and Alternating Current',
+        'Electromagnetic Waves', 'Optics', 'Dual Nature of Matter and Radiation', 'Atoms and Nuclei',
+        'Electronic Devices', 'Experimental Skills'
+    ],
+    'Chemistry': [
+        // Physical Chemistry
+        'Some Basic Concepts of Chemistry', 'Atomic Structure', 'Chemical Bonding and Molecular Structure',
+        'Chemical Thermodynamics', 'Solutions', 'Equilibrium', 'Redox Reactions and Electrochemistry',
+        'Chemical Kinetics', 'Surface Chemistry',
+        // Inorganic Chemistry
+        'Classification of Elements and Periodicity', 'p-Block Elements', 'd- and f-Block Elements',
+        'Coordination Compounds', 'Hydrogen', 's-Block Elements', 'Metallurgy', 'Environmental Chemistry',
+        // Organic Chemistry
+        'Purification and Characterisation of Organic Compounds', 'Basic Principles of Organic Chemistry',
+        'Hydrocarbons', 'Organic Compounds Containing Halogens', 'Organic Compounds Containing Oxygen',
+        'Organic Compounds Containing Nitrogen', 'Polymers', 'Biomolecules', 'Chemistry in Everyday Life',
+        'Practical Organic Chemistry'
+    ],
+    'Mathematics': [
+        'Sets, Relations and Functions', 'Complex Numbers and Quadratic Equations', 'Matrices and Determinants',
+        'Permutations and Combinations', 'Mathematical Induction', 'Binomial Theorem', 'Sequences and Series',
+        'Limits, Continuity and Differentiability', 'Integral Calculus', 'Differential Equations',
+        'Coordinate Geometry', 'Three-Dimensional Geometry', 'Vector Algebra', 'Statistics and Probability',
+        'Trigonometry'
+    ]
+};
+
+function fillDatalist(id, items) {
+    document.getElementById(id).innerHTML = items.map(v => `<option value="${v.replace(/"/g, '&quot;')}"></option>`).join('');
+}
+function onClassChange() {
+    const isJEE = document.getElementById('metaClass').value === 'JEE';
+    fillDatalist('jeeSubjects', isJEE ? Object.keys(JEE_SYLLABUS) : []);
+    onSubjectInput();   // refresh chapter suggestions for the (possibly new) context
+}
+function onSubjectInput() {
+    const isJEE   = document.getElementById('metaClass').value === 'JEE';
+    const subject = document.getElementById('metaSubject').value.trim();
+    fillDatalist('jeeChapters', (isJEE && JEE_SYLLABUS[subject]) ? JEE_SYLLABUS[subject] : []);
 }
 
 // â”€â”€ Marking canvas â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
