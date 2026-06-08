@@ -1,14 +1,14 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Create MCQ — Pitthugram</title>
-    <link rel="icon" type="image/png" href="./favicon.png">
+    <title>Create MCQ â€” Pitthugram</title>
+    <link rel="icon" href="logo.png">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/@phosphor-icons/web" defer></script>
-    <link rel="stylesheet" href="./pitthugram.css">
+    <link rel="stylesheet" href="style.css">
     <style>
         .cm-page { padding: 1.5rem; max-width: 860px; margin: 72px auto 6rem; }
         .cm-top { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1.5rem; flex-wrap: wrap; }
@@ -36,6 +36,26 @@
         .ocr-textarea:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-glow); }
         .ocr-hint { font-size: 0.78rem; color: var(--text-muted); margin-top: 0.5rem; display: flex; align-items: flex-start; gap: 0.35rem; }
 
+        /* Marking canvas */
+        .mark-upload { border: 2px dashed var(--border-light); border-radius: var(--radius-lg); padding: 2rem 1rem; text-align: center; cursor: pointer; transition: var(--transition); color: var(--text-muted); }
+        .mark-upload:hover { border-color: var(--primary); color: var(--text-primary); }
+        .mark-upload i { font-size: 2rem; color: var(--primary); display: block; margin-bottom: 0.5rem; }
+        .mark-upload-sub { font-size: 0.78rem; margin-top: 0.35rem; }
+        .mark-toolbar { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 0.6rem; }
+        .mark-tool-label { font-size: 0.78rem; font-weight: 600; color: var(--text-muted); }
+        .mark-spacer { flex: 1; }
+        .mark-type-btn { display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.4rem 0.8rem; background: var(--bg-input); border: 1.5px solid var(--border-light); border-radius: var(--radius); font-family: var(--font-body); font-size: 0.8rem; font-weight: 600; color: var(--text-muted); cursor: pointer; transition: var(--transition); }
+        .mark-type-btn.active { border-color: var(--primary); color: var(--primary); background: var(--primary-glow); }
+        .mark-hint { font-size: 0.78rem; color: var(--text-muted); margin-bottom: 0.6rem; }
+        .mark-wrap { position: relative; display: inline-block; max-width: 100%; border: 1.5px solid var(--border); border-radius: var(--radius); overflow: hidden; line-height: 0; }
+        .mark-wrap img { max-width: 100%; height: auto; display: block; user-select: none; }
+        .mark-overlay { position: absolute; inset: 0; cursor: crosshair; }
+        .mark-box { position: absolute; box-sizing: border-box; border: 2px solid var(--primary); background: rgba(229,9,20,0.12); }
+        .mark-box.fig { border-color: #2b8a3e; background: rgba(43,138,62,0.14); }
+        .mark-box-tag { position: absolute; top: -1px; left: -1px; background: var(--primary); color: #fff; font-size: 0.6rem; font-weight: 700; padding: 1px 5px; border-radius: 0 0 4px 0; line-height: 1.4; }
+        .mark-box.fig .mark-box-tag { background: #2b8a3e; }
+        .mark-box-del { position: absolute; top: -9px; right: -9px; width: 18px; height: 18px; border-radius: 50%; background: #111; color: #fff; border: none; font-size: 10px; cursor: pointer; display: flex; align-items: center; justify-content: center; line-height: 1; }
+
         /* AI button */
         .btn-ai { display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.75rem 1.5rem; background: var(--primary); border: none; border-radius: var(--radius); font-family: var(--font-body); font-size: 0.925rem; font-weight: 700; color: #fff; cursor: pointer; transition: var(--transition); margin-top: 1rem; }
         .btn-ai:hover:not(:disabled) { background: var(--primary-dark, #c8000a); }
@@ -45,10 +65,6 @@
         .questions-panel { display: none; flex-direction: column; gap: 1rem; margin-top: 0; }
         .questions-panel.show { display: flex; }
         .q-card { background: var(--bg-surface); border: 1.5px solid var(--border); border-radius: var(--radius-lg); padding: 1.25rem; position: relative; }
-        .q-type-badge{display:inline-block;font-size:0.7rem;font-weight:600;padding:0.15rem 0.5rem;border-radius:20px;margin-left:0.6rem;vertical-align:middle;}
-        .badge-mcq{background:#e8f4fd;color:#1a6fa8;}
-        .badge-fib{background:#fff3cd;color:#856404;}
-        .q-card-fib{border-left:3px solid #ffc107;}
         .q-card-num { font-size: 0.7rem; font-weight: 700; color: var(--primary); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.75rem; }
         .q-card textarea, .q-card input[type="text"] { width: 100%; padding: 0.6rem 0.75rem; background: var(--bg-input); border: 1.5px solid var(--border-light); border-radius: var(--radius); font-family: var(--font-body); font-size: 0.875rem; color: var(--text-primary); transition: var(--transition); resize: vertical; }
         .q-card textarea:focus, .q-card input[type="text"]:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 2px var(--primary-glow); }
@@ -108,9 +124,9 @@
 <!-- Navbar -->
 <header class="navbar">
     <div class="container nav-inner">
-        <a href="index.html" class="logo"><img src="./logo.png" alt="Pitthugram"></a>
+        <a href="index.html" class="logo"><img src="logo.png" alt="Pitthugram"></a>
         <div class="nav-actions">
-            <a href="./quiz-builder.html" class="btn btn-outline btn-sm" style="padding:0.5rem 1rem;">
+            <a href="quiz-builder.html" class="btn btn-outline btn-sm" style="padding:0.5rem 1rem;">
                 <i class="ph ph-arrow-left"></i> Quiz Builder
             </a>
         </div>
@@ -125,7 +141,7 @@
         <i class="ph-fill ph-lock"></i>
         <h2>Login Required</h2>
         <p>Please sign in to create MCQs.</p>
-        <a href="./index.html" class="btn btn-primary"><i class="ph ph-sign-in"></i> Go to Login</a>
+        <a href="index.html" class="btn btn-primary"><i class="ph ph-sign-in"></i> Go to Login</a>
     </div>
 </div>
 
@@ -138,7 +154,7 @@
 
     <!-- Step 1: Metadata -->
     <div class="cm-step">
-        <div class="cm-step-title"><i class="ph ph-tag"></i> Step 1 — Question Details</div>
+        <div class="cm-step-title"><i class="ph ph-tag"></i> Step 1 â€” Question Details</div>
         <div class="meta-grid">
             <div class="meta-field">
                 <label>Subject *</label>
@@ -187,26 +203,43 @@
         </div>
     </div>
 
-    <!-- Step 2: OCR text -->
+    <!-- Step 2: Upload scan + mark -->
     <div class="cm-step">
-        <div class="cm-step-title"><i class="ph ph-clipboard-text"></i> Step 2 — Paste OCR Text from Google Drive</div>
-        <textarea class="ocr-textarea" id="ocrText" placeholder="Open your scanned paper in Google Drive → open with Google Docs → copy all text → paste here.
+        <div class="cm-step-title"><i class="ph ph-scan"></i> Step 2 â€” Upload Scan &amp; Mark Questions</div>
 
-The AI will extract all MCQ questions, options A-B-C-D, and the correct answer automatically."></textarea>
-        <div class="ocr-hint">
-            <i class="ph ph-info" style="flex-shrink:0;margin-top:1px;"></i>
-            <span>Tip: For best results, include the answer key at the end of the pasted text (e.g. "1-A, 2-C, 3-B…"). The AI will match them automatically.</span>
+        <div id="markUploadZone" class="mark-upload" onclick="document.getElementById('scanFile').click()">
+            <i class="ph ph-image-square"></i>
+            <div><strong>Upload a scanned page</strong></div>
+            <div class="mark-upload-sub">Click to choose an image (JPG / PNG). One page at a time â€” you can add more pages after extracting.</div>
         </div>
-        <button class="btn-ai" id="btnStructure" onclick="structureWithAI()">
-            <i class="ph ph-robot"></i> Structure with AI
-        </button>
+        <input type="file" id="scanFile" accept="image/*" style="display:none;" onchange="loadMarkImage(event)">
+
+        <div id="markArea" style="display:none;">
+            <div class="mark-toolbar">
+                <span class="mark-tool-label">Draw box as:</span>
+                <button type="button" class="mark-type-btn active" id="btnTypeQ" onclick="setMarkType('q')"><i class="ph ph-text-aa"></i> Question</button>
+                <button type="button" class="mark-type-btn" id="btnTypeFig" onclick="setMarkType('fig')"><i class="ph ph-image"></i> Figure</button>
+                <span class="mark-spacer"></span>
+                <button type="button" class="btn-add-img" onclick="resetMark()"><i class="ph ph-x"></i> Clear page</button>
+            </div>
+            <div class="mark-hint">
+                Drag to draw a box around <strong>each question</strong> (incl. its options). For diagrams, switch to <strong>Figure</strong> and box them â€” each figure auto-links to the question above it.
+            </div>
+            <div class="mark-wrap" id="markWrap">
+                <img id="markImg" alt="scan" draggable="false">
+                <div class="mark-overlay" id="markOverlay"></div>
+            </div>
+            <button class="btn-ai" id="btnExtract" onclick="extractMarked()">
+                <i class="ph ph-magic-wand"></i> Extract Questions from This Page
+            </button>
+        </div>
     </div>
 
     <!-- Step 3: Review questions -->
     <div class="cm-step" id="reviewStep" style="display:none;">
-        <div class="cm-step-title"><i class="ph ph-pencil-simple"></i> Step 3 — Review &amp; Edit Questions</div>
+        <div class="cm-step-title"><i class="ph ph-pencil-simple"></i> Step 3 â€” Review &amp; Edit Questions</div>
         <p style="font-size:0.85rem;color:var(--text-muted);margin-bottom:1rem;">
-            Edit any field. For diagrams/figures: take a screenshot of the image in Google Drive, save it, then click <strong>Add Image</strong> on the relevant question.
+            Review each extracted question, fix any OCR slips, and <strong>select the correct answer</strong>. Figures you boxed are already attached â€” use <strong>Add Image</strong> only if you need to add one manually.
         </p>
         <div class="questions-panel show" id="questionsPanel"></div>
     </div>
@@ -232,15 +265,15 @@ const SUPA_A_URL  = 'https://qnqcysdeolnooxxcafwz.supabase.co';
 const SUPA_A_KEY  = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFucWN5c2Rlb2xub294eGNhZnd6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYzNTc0NjUsImV4cCI6MjA5MTkzMzQ2NX0.hOuPKv1zqQup7JfEpe-SJWT9Duz0RUwcCPwJb0zE_0Q';
 const SUPA_B_URL  = 'https://zqrswemxmhjaylsuulyu.supabase.co';
 const SUPA_B_PUB  = 'sb_publishable_8Y62WSnJwGidHS591ofDiw_gbzmTGAQ';
-const N8N_PRESIGN = 'https://container001.pitthugram.com/webhook/mcq-presign';
-const N8N_AI      = 'https://container001.pitthugram.com/webhook/mcq-ai-structure';
-const N8N_SAVE    = 'https://container001.pitthugram.com/webhook/mcq-save';
+const N8N_PRESIGN = 'https://container02.pitthugram.com/webhook/mcq-presign';
+const N8N_OCR     = 'https://container02.pitthugram.com/webhook/mcq-ocr';
+const N8N_SAVE    = 'https://container02.pitthugram.com/webhook/mcq-save';
 
 let currentUser   = null;
 let teacherRecord = null;
 let questions     = [];     // array of question objects with images[]
 
-// ── Auth ──────────────────────────────────────────────────────────────────
+// â”€â”€ Auth â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 async function checkAuth() {
     const token = localStorage.getItem('pg_access_token');
     const user  = localStorage.getItem('pg_user');
@@ -268,57 +301,189 @@ async function loadTeacher() {
     } catch (_) {}
 }
 
-// ── AI Structure ──────────────────────────────────────────────────────────
-async function structureWithAI() {
-    const text       = document.getElementById('ocrText').value.trim();
-    const subject    = document.getElementById('metaSubject').value.trim();
-    const cls        = document.getElementById('metaClass').value;
-    const chapter    = document.getElementById('metaChapter').value.trim();
-    const topic      = document.getElementById('metaTopic').value.trim();
+// â”€â”€ Marking canvas â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+let markImg   = null;     // HTMLImageElement of the loaded scan
+let markBoxes = [];       // { x,y,w,h (natural px), type:'q'|'fig', el, tagEl }
+let markType  = 'q';
+let drawing   = null;     // { startX, startY, el } during a drag
+
+function loadMarkImage(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    event.target.value = '';
+    const url = URL.createObjectURL(file);
+    const img = document.getElementById('markImg');
+    img.onload = () => {
+        markImg = img;
+        document.getElementById('markArea').style.display = 'block';
+        document.getElementById('markUploadZone').style.display = 'none';
+        clearBoxes();
+        attachOverlayHandlers();
+    };
+    img.src = url;
+}
+
+function setMarkType(t) {
+    markType = t;
+    document.getElementById('btnTypeQ').classList.toggle('active', t === 'q');
+    document.getElementById('btnTypeFig').classList.toggle('active', t === 'fig');
+}
+
+function clearBoxes() {
+    markBoxes.forEach(b => b.el.remove());
+    markBoxes = [];
+}
+
+function resetMark() {
+    clearBoxes();
+    markImg = null;
+    document.getElementById('markImg').src = '';
+    document.getElementById('markArea').style.display = 'none';
+    document.getElementById('markUploadZone').style.display = 'block';
+}
+
+function scaleFactor() {
+    const img = document.getElementById('markImg');
+    return img.naturalWidth / img.clientWidth;   // natural px per displayed px
+}
+
+function attachOverlayHandlers() {
+    const ov = document.getElementById('markOverlay');
+    ov.onmousedown = (e) => {
+        if (e.target.classList.contains('mark-box-del')) return;
+        const rect = ov.getBoundingClientRect();
+        const sx = e.clientX - rect.left, sy = e.clientY - rect.top;
+        const el = document.createElement('div');
+        el.className = 'mark-box' + (markType === 'fig' ? ' fig' : '');
+        el.style.left = sx + 'px'; el.style.top = sy + 'px'; el.style.width = '0px'; el.style.height = '0px';
+        ov.appendChild(el);
+        drawing = { startX: sx, startY: sy, el };
+        e.preventDefault();
+    };
+    ov.onmousemove = (e) => {
+        if (!drawing) return;
+        const rect = ov.getBoundingClientRect();
+        const cx = Math.max(0, Math.min(e.clientX - rect.left, rect.width));
+        const cy = Math.max(0, Math.min(e.clientY - rect.top, rect.height));
+        const x = Math.min(cx, drawing.startX), y = Math.min(cy, drawing.startY);
+        const w = Math.abs(cx - drawing.startX), h = Math.abs(cy - drawing.startY);
+        drawing.el.style.left = x + 'px'; drawing.el.style.top = y + 'px';
+        drawing.el.style.width = w + 'px'; drawing.el.style.height = h + 'px';
+    };
+    ov.onmouseup = () => {
+        if (!drawing) return;
+        const el = drawing.el;
+        const w = parseFloat(el.style.width), h = parseFloat(el.style.height);
+        if (w < 12 || h < 12) { el.remove(); drawing = null; return; }   // ignore tiny
+        const s = scaleFactor();
+        const box = {
+            x: parseFloat(el.style.left) * s, y: parseFloat(el.style.top) * s,
+            w: w * s, h: h * s, type: markType, el
+        };
+        const tag = document.createElement('span');
+        tag.className = 'mark-box-tag';
+        tag.textContent = markType === 'fig' ? 'FIG' : 'Q';
+        el.appendChild(tag);
+        const del = document.createElement('button');
+        del.className = 'mark-box-del'; del.innerHTML = '&times;';
+        del.onclick = (ev) => { ev.stopPropagation(); box.el.remove(); markBoxes = markBoxes.filter(b => b !== box); };
+        el.appendChild(del);
+        box.tagEl = tag;
+        markBoxes.push(box);
+        drawing = null;
+    };
+}
+
+function cropBox(box) {
+    const c = document.createElement('canvas');
+    c.width = Math.round(box.w); c.height = Math.round(box.h);
+    c.getContext('2d').drawImage(markImg, box.x, box.y, box.w, box.h, 0, 0, c.width, c.height);
+    return c;
+}
+const canvasToB64 = (c) => c.toDataURL('image/png').replace(/^data:image\/png;base64,/, '');
+const canvasToBlob = (c) => new Promise(res => c.toBlob(res, 'image/png'));
+
+async function ocrQuestion(box) {
+    const res = await fetch(N8N_OCR, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ qid: (crypto.randomUUID ? crypto.randomUUID() : 'q'+Date.now()+Math.random()), image_b64: canvasToB64(cropBox(box)) })
+    });
+    if (!res.ok) throw new Error('OCR failed (' + res.status + ')');
+    return res.json();
+}
+
+async function uploadFigure(box, uuid, n) {
+    const instId = teacherRecord ? teacherRecord.institute_id : 'unknown';
+    const key = `mcq-images/${instId}/${uuid}-fig${n}.png`;
+    const presignRes = await fetch(N8N_PRESIGN, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ keys: [key], expires: 3600 })
+    });
+    const pd = await presignRes.json();
+    const signed = (pd.signed || pd)[0];
+    if (!signed || !signed.putUrl) throw new Error('Presign failed for figure');
+    const blob = await canvasToBlob(cropBox(box));
+    const put = await fetch(signed.putUrl, { method: 'PUT', headers: { 'Content-Type': 'image/png' }, body: blob });
+    if (!put.ok) throw new Error('Figure upload failed (' + put.status + ')');
+    return { key, getUrl: signed.getUrl, file_name: `${uuid}-fig${n}.png` };
+}
+
+async function extractMarked() {
+    const subject = document.getElementById('metaSubject').value.trim();
+    const cls     = document.getElementById('metaClass').value;
+    const chapter = document.getElementById('metaChapter').value.trim();
+    if (!subject) return showToast('Please enter a subject (Step 1).', 'error');
+    if (!cls)     return showToast('Please select a class / exam (Step 1).', 'error');
+    if (!chapter) return showToast('Please enter a chapter (Step 1).', 'error');
+
+    const qBoxes   = markBoxes.filter(b => b.type === 'q').sort((a, b) => a.y - b.y);
+    const figBoxes = markBoxes.filter(b => b.type === 'fig');
+    if (!qBoxes.length) return showToast('Draw at least one Question box first.', 'error');
+
     const difficulty = document.getElementById('metaDifficulty').value;
-
-    if (!text)    return showToast('Please paste OCR text first.', 'error');
-    if (!subject) return showToast('Please enter a subject.', 'error');
-    if (!cls)     return showToast('Please select a class / exam.', 'error');
-    if (!chapter) return showToast('Please enter a chapter name.', 'error');
-
-    const btn = document.getElementById('btnStructure');
+    const btn = document.getElementById('btnExtract');
     btn.disabled = true;
-    btn.innerHTML = '<div class="upload-spinner" style="width:18px;height:18px;border-width:2px;"></div> Analysing…';
+    const setBtn = (t) => btn.innerHTML = '<div class="upload-spinner" style="width:18px;height:18px;border-width:2px;"></div> ' + t;
 
     try {
-        const res = await fetch(N8N_AI, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ text, subject, class: cls, chapter, topic, difficulty })
-        });
-        if (!res.ok) throw new Error('AI webhook returned ' + res.status);
-        const data = await res.json();
+        const newQs = [];
+        for (let i = 0; i < qBoxes.length; i++) {
+            setBtn(`Reading question ${i + 1} of ${qBoxes.length}â€¦`);
+            const r = await ocrQuestion(qBoxes[i]);
+            newQs.push({
+                uuid: r.qid, question_type: 'MCQ',
+                question_text: r.question_text || '', option_a: r.option_a || '', option_b: r.option_b || '',
+                option_c: r.option_c || '', option_d: r.option_d || '', correct_answer: '',
+                explanation: '', difficulty_level: difficulty, images: []
+            });
+        }
+        // attach figures to nearest question box above
+        for (let f = 0; f < figBoxes.length; f++) {
+            const fb = figBoxes[f];
+            let target = 0, bestY = -Infinity;
+            qBoxes.forEach((qb, idx) => { if (qb.y <= fb.y && qb.y > bestY) { bestY = qb.y; target = idx; } });
+            setBtn(`Uploading figure ${f + 1} of ${figBoxes.length}â€¦`);
+            const img = await uploadFigure(fb, newQs[target].uuid, newQs[target].images.length + 1);
+            newQs[target].images.push(img);
+        }
 
-        const qs = data.questions || data;
-        if (!Array.isArray(qs) || !qs.length) throw new Error('No questions found in the text. Try including more complete question text.');
-
-        questions = qs.map((q, i) => ({
-            ...q,
-            difficulty_level: q.difficulty_level || difficulty,
-            images: []
-        }));
-
+        questions = questions.concat(newQs);
         renderQuestions();
         document.getElementById('reviewStep').style.display = 'block';
         document.getElementById('saveBar').classList.add('show');
         updateSaveCount();
+        showToast(`Added ${newQs.length} question${newQs.length > 1 ? 's' : ''}. Review & set answers below.`, 'success');
+        resetMark();   // ready for the next page
         document.getElementById('reviewStep').scrollIntoView({ behavior: 'smooth', block: 'start' });
-        const mcqC=questions.filter(q=>q.question_type!=='FIB').length,fibC=questions.filter(q=>q.question_type==='FIB').length; showToast(`Found ${questions.length} question${questions.length>1?'s':''}. ${mcqC} MCQ + ${fibC} Fill in the Blank.`, 'success');
     } catch (err) {
-        showToast(err.message || 'Failed to structure questions.', 'error');
+        showToast(err.message || 'Extraction failed.', 'error');
     } finally {
         btn.disabled = false;
-        btn.innerHTML = '<i class="ph ph-robot"></i> Structure with AI';
+        btn.innerHTML = '<i class="ph ph-magic-wand"></i> Extract Questions from This Page';
     }
 }
 
-// ── Render questions ──────────────────────────────────────────────────────
+// â”€â”€ Render questions â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function renderQuestions() {
     const panel = document.getElementById('questionsPanel');
     panel.innerHTML = '';
@@ -332,7 +497,7 @@ function buildCard(q, idx) {
 
     card.innerHTML = `
         <button class="btn-del-q" onclick="deleteQuestion(${idx})" title="Remove this question"><i class="ph ph-trash"></i></button>
-        <div class="q-card-num">Question ${idx + 1} <span class="${isFIB ? 'badge-fib' : 'badge-mcq'} q-type-badge">${isFIB ? 'Fill in the Blank' : 'MCQ'}</span></div>
+        <div class="q-card-num">Question ${idx + 1}</div>
 
         <div class="q-field-label">Question Text *</div>
         <textarea id="qt-${idx}" rows="3" onchange="questions[${idx}].question_text=this.value">${esc(q.question_text || '')}</textarea>
@@ -361,7 +526,7 @@ function buildCard(q, idx) {
 
         <div class="q-field-label">Explanation (optional)</div>
         <textarea id="exp-${idx}" rows="2" onchange="questions[${idx}].explanation=this.value"
-            placeholder="Brief explanation for the correct answer…">${esc(q.explanation || '')}</textarea>
+            placeholder="Brief explanation for the correct answerâ€¦">${esc(q.explanation || '')}</textarea>
 
         <div style="display:flex;align-items:center;gap:0.75rem;margin-top:0.85rem;">
             <div class="q-field-label" style="margin:0;">Difficulty</div>
@@ -381,18 +546,6 @@ function buildCard(q, idx) {
         </div>`;
 
     renderThumbs(q, idx);
-    if (isFIB) {
-        // Hide MCQ options, show FIB answer input
-        const optLabel = card.querySelector('.q-field-label:nth-of-type(2)');
-        const optGrid  = card.querySelector('.options-grid');
-        const ansLabel = card.querySelector('.q-field-label:nth-of-type(3)');
-        const ansRadio = card.querySelector('[style*="display:flex;gap:1.25rem"]');
-        [optLabel, optGrid, ansLabel, ansRadio].forEach(el => { if (el) el.style.display = 'none'; });
-        const fibBlock = document.createElement('div');
-        fibBlock.innerHTML = <div class="q-field-label">Correct Answer <span style="color:var(--accent);font-size:0.78rem;">(numerical / text)</span></div><input type="text" id="fib-ans-" value="" onchange="questions[].correct_answer=this.value" placeholder="e.g. 24 or 3.14" style="width:100%;padding:0.55rem 0.75rem;border:1.5px solid var(--border);border-radius:8px;font-size:0.95rem;box-sizing:border-box;margin-bottom:0.5rem;">;
-        const expLabel = [...card.querySelectorAll('.q-field-label')].find(el => el.textContent.includes('Explanation'));
-        if (expLabel) card.insertBefore(fibBlock, expLabel);
-    }
     return card;
 }
 
@@ -410,7 +563,7 @@ function updateSaveCount() {
     document.getElementById('saveCount').textContent = questions.length;
 }
 
-// ── Images ────────────────────────────────────────────────────────────────
+// â”€â”€ Images â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function pickImage(idx) {
     document.getElementById(`filein-${idx}`).click();
 }
@@ -487,7 +640,7 @@ function removeImage(qIdx, imgIdx) {
     renderThumbs(questions[qIdx], qIdx);
 }
 
-// ── Save ──────────────────────────────────────────────────────────────────
+// â”€â”€ Save â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 async function saveQuestions() {
     if (!questions.length) return showToast('No questions to save.', 'error');
 
@@ -501,7 +654,7 @@ async function saveQuestions() {
 
     const btn = document.getElementById('btnSave');
     btn.disabled = true;
-    btn.innerHTML = '<div class="upload-spinner" style="width:18px;height:18px;border-width:2px;"></div> Saving…';
+    btn.innerHTML = '<div class="upload-spinner" style="width:18px;height:18px;border-width:2px;"></div> Savingâ€¦';
 
     const payload = {
         teacher_id:   teacherRecord ? teacherRecord.id   : null,
@@ -541,7 +694,6 @@ async function saveQuestions() {
         document.getElementById('questionsPanel').innerHTML = '';
         document.getElementById('reviewStep').style.display = 'none';
         document.getElementById('saveBar').classList.remove('show');
-        document.getElementById('ocrText').value = '';
         updateSaveCount();
 
         setTimeout(() => {
@@ -557,7 +709,7 @@ async function saveQuestions() {
     }
 }
 
-// ── Toast ─────────────────────────────────────────────────────────────────
+// â”€â”€ Toast â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 let toastTimer;
 function showToast(msg, type) {
     const el   = document.getElementById('toast');
@@ -572,9 +724,8 @@ function showToast(msg, type) {
     toastTimer = setTimeout(() => el.classList.remove('show'), 4000);
 }
 
-// ── Init ──────────────────────────────────────────────────────────────────
+// â”€â”€ Init â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 checkAuth();
 </script>
 </body>
 </html>
-
