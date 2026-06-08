@@ -173,7 +173,7 @@
             </div>
             <div class="meta-field" id="boardField" style="display:none;">
                 <label>Board *</label>
-                <select id="metaBoard">
+                <select id="metaBoard" onchange="persistMeta()">
                     <option value="CBSE">CBSE</option>
                     <option value="ICSE">ICSE</option>
                     <option value="State">State Board</option>
@@ -182,21 +182,15 @@
             </div>
             <div class="meta-field">
                 <label>Subject *</label>
-                <input type="text" id="metaSubject" placeholder="e.g. Physics" list="jeeSubjects" autocomplete="off" oninput="onSubjectInput()">
-                <datalist id="jeeSubjects"></datalist>
+                <div id="subjectWrap"></div>
             </div>
             <div class="meta-field">
                 <label>Chapter *</label>
-                <input type="text" id="metaChapter" placeholder="e.g. Laws of Motion" list="jeeChapters" autocomplete="off">
-                <datalist id="jeeChapters"></datalist>
-            </div>
-            <div class="meta-field">
-                <label>Topic</label>
-                <input type="text" id="metaTopic" placeholder="e.g. Newton's 3rd Law">
+                <div id="chapterWrap"></div>
             </div>
             <div class="meta-field">
                 <label>Default Difficulty</label>
-                <select id="metaDifficulty">
+                <select id="metaDifficulty" onchange="persistMeta()">
                     <option value="Intermediate">Intermediate</option>
                     <option value="Basic">Basic</option>
                     <option value="Advanced">Advanced</option>
@@ -336,26 +330,50 @@ const JEE_SYLLABUS = {
     ]
 };
 
-function fillDatalist(id, items) {
-    document.getElementById(id).innerHTML = items.map(v => `<option value="${v.replace(/"/g, '&quot;')}"></option>`).join('');
+function escAttr(s) { return String(s || '').replace(/"/g, '&quot;'); }
+function classType() {
+    const v = document.getElementById('metaClass').value;
+    return { v, isJEE: v === 'JEE', isSchool: /^(6|7|8|9|10|11|12)$/.test(v) };
+}
+// Subject: real dropdown for JEE (clean selection), free text otherwise
+function renderSubjectField(value) {
+    const { isJEE } = classType();
+    const wrap = document.getElementById('subjectWrap');
+    if (isJEE) {
+        const opts = ['<option value="">Select subject</option>']
+            .concat(Object.keys(JEE_SYLLABUS).map(s => `<option${s === value ? ' selected' : ''}>${s}</option>`)).join('');
+        wrap.innerHTML = `<select id="metaSubject" onchange="onSubjectChange()">${opts}</select>`;
+    } else {
+        wrap.innerHTML = `<input type="text" id="metaSubject" placeholder="e.g. Physics" value="${escAttr(value)}" oninput="onSubjectChange()">`;
+    }
+}
+// Chapter: real dropdown when a JEE subject is chosen, free text otherwise
+function renderChapterField(value) {
+    const { isJEE } = classType();
+    const subjEl = document.getElementById('metaSubject');
+    const subject = subjEl ? subjEl.value.trim() : '';
+    const wrap = document.getElementById('chapterWrap');
+    if (isJEE && JEE_SYLLABUS[subject]) {
+        const opts = ['<option value="">Select chapter</option>']
+            .concat(JEE_SYLLABUS[subject].map(c => `<option${c === value ? ' selected' : ''}>${c}</option>`)).join('');
+        wrap.innerHTML = `<select id="metaChapter" onchange="persistMeta()">${opts}</select>`;
+    } else {
+        wrap.innerHTML = `<input type="text" id="metaChapter" placeholder="e.g. Laws of Motion" value="${escAttr(value)}" oninput="persistMeta()">`;
+    }
 }
 function onClassChange() {
-    const v = document.getElementById('metaClass').value;
-    const isJEE    = v === 'JEE';
-    const isSchool = /^(6|7|8|9|10|11|12)$/.test(v);   // Board only applies to school classes 6-12
-    fillDatalist('jeeSubjects', isJEE ? Object.keys(JEE_SYLLABUS) : []);
-    document.getElementById('boardField').style.display = isSchool ? '' : 'none';
-    onSubjectInput();   // refresh chapter suggestions for the (possibly new) context
+    document.getElementById('boardField').style.display = classType().isSchool ? '' : 'none';
+    renderSubjectField('');   // new class -> fresh subject
+    renderChapterField('');
     persistMeta();
 }
-function onSubjectInput() {
-    const isJEE   = document.getElementById('metaClass').value === 'JEE';
-    const subject = document.getElementById('metaSubject').value.trim();
-    fillDatalist('jeeChapters', (isJEE && JEE_SYLLABUS[subject]) ? JEE_SYLLABUS[subject] : []);
+function onSubjectChange() {
+    renderChapterField('');   // chapter list depends on subject
+    persistMeta();
 }
 
 // â”€â”€ Persist Step-1 selections (remembered until changed) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-const META_IDS = ['metaClass', 'metaBoard', 'metaSubject', 'metaChapter', 'metaTopic', 'metaDifficulty'];
+const META_IDS = ['metaClass', 'metaBoard', 'metaSubject', 'metaChapter', 'metaDifficulty'];
 const META_KEY = 'pg_mcq_meta';
 function persistMeta() {
     const o = {};
@@ -365,16 +383,12 @@ function persistMeta() {
 function restoreMeta() {
     let o = {};
     try { o = JSON.parse(localStorage.getItem(META_KEY) || '{}'); } catch (_) {}
-    META_IDS.forEach(id => { const el = document.getElementById(id); if (el && o[id] != null) el.value = o[id]; });
-    onClassChange();    // re-sync board visibility + JEE datalists from the restored class
-    onSubjectInput();   // and chapter suggestions from the restored subject
-}
-function setupMeta() {
-    restoreMeta();
-    META_IDS.forEach(id => {
-        const el = document.getElementById(id);
-        if (el) { el.addEventListener('change', persistMeta); el.addEventListener('input', persistMeta); }
-    });
+    if (o.metaClass != null)      document.getElementById('metaClass').value = o.metaClass;
+    if (o.metaDifficulty != null) document.getElementById('metaDifficulty').value = o.metaDifficulty;
+    document.getElementById('boardField').style.display = classType().isSchool ? '' : 'none';
+    if (o.metaBoard != null)      document.getElementById('metaBoard').value = o.metaBoard;
+    renderSubjectField(o.metaSubject || '');
+    renderChapterField(o.metaChapter || '');
 }
 
 // â”€â”€ Marking canvas â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
@@ -738,7 +752,7 @@ async function saveQuestions() {
         subject:      document.getElementById('metaSubject').value.trim(),
         class:        document.getElementById('metaClass').value,
         chapter:      document.getElementById('metaChapter').value.trim(),
-        topic:        document.getElementById('metaTopic').value.trim(),
+        topic:        '',
         board:        document.getElementById('metaBoard').value,
         questions:    questions.map(q => ({
             question_text:  q.question_text,
@@ -802,7 +816,7 @@ function showToast(msg, type) {
 
 // â”€â”€ Init â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 checkAuth();
-setupMeta();
+restoreMeta();
 </script>
 </body>
 </html>
