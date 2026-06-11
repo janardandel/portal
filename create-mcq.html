@@ -153,7 +153,16 @@
         <div class="meta-grid">
             <div class="meta-field">
                 <label>Subject *</label>
-                <input type="text" id="metaSubject" placeholder="e.g. Physics">
+                <select id="metaSubject" onchange="updateChapterList('metaChapter','chapterList')">
+                    <option value="">Select</option>
+                    <option value="Biology">Biology</option>
+                    <option value="Chemistry">Chemistry</option>
+                    <option value="English">English</option>
+                    <option value="Mathematics">Mathematics</option>
+                    <option value="Maths">Maths</option>
+                    <option value="Physics">Physics</option>
+                    <option value="Science">Science</option>
+                </select>
             </div>
             <div class="meta-field">
                 <label>Class / Exam *</label>
@@ -172,11 +181,13 @@
             </div>
             <div class="meta-field">
                 <label>Chapter *</label>
-                <input type="text" id="metaChapter" placeholder="e.g. Laws of Motion">
+                <input type="text" id="metaChapter" list="chapterList" placeholder="Select or type chapter…" autocomplete="off">
+                <datalist id="chapterList"></datalist>
             </div>
             <div class="meta-field">
                 <label>Topic</label>
-                <input type="text" id="metaTopic" placeholder="e.g. Newton's 3rd Law">
+                <input type="text" id="metaTopic" list="topicList" placeholder="Select or type topic…" autocomplete="off">
+                <datalist id="topicList"></datalist>
             </div>
             <div class="meta-field">
                 <label>Default Difficulty</label>
@@ -191,6 +202,7 @@
                 <select id="metaBoard">
                     <option value="CBSE">CBSE</option>
                     <option value="ICSE">ICSE</option>
+                    <option value="JEE Main">JEE Main</option>
                     <option value="State">State Board</option>
                     <option value="Other">Other</option>
                 </select>
@@ -460,9 +472,16 @@ function buildCard(q, idx) {
             <div class="override-grid">
                 <div class="override-field">
                     <label>Subject</label>
-                    <input type="text" id="ov-subject-${idx}" value="${esc(q.override_subject)}"
-                        onchange="questions[${idx}].override_subject=this.value"
-                        placeholder="${esc(document.getElementById('metaSubject').value || 'e.g. Physics')}">
+                    <select id="ov-subject-${idx}" onchange="questions[${idx}].override_subject=this.value;updateChapterList('ov-chapter-${idx}','ov-chlist-${idx}',this.value)">
+                        <option value="">— same as default —</option>
+                        <option value="Biology" ${q.override_subject==='Biology'?'selected':''}>Biology</option>
+                        <option value="Chemistry" ${q.override_subject==='Chemistry'?'selected':''}>Chemistry</option>
+                        <option value="English" ${q.override_subject==='English'?'selected':''}>English</option>
+                        <option value="Mathematics" ${q.override_subject==='Mathematics'?'selected':''}>Mathematics</option>
+                        <option value="Maths" ${q.override_subject==='Maths'?'selected':''}>Maths</option>
+                        <option value="Physics" ${q.override_subject==='Physics'?'selected':''}>Physics</option>
+                        <option value="Science" ${q.override_subject==='Science'?'selected':''}>Science</option>
+                    </select>
                 </div>
                 <div class="override-field">
                     <label>Class / Exam</label>
@@ -481,15 +500,16 @@ function buildCard(q, idx) {
                 </div>
                 <div class="override-field">
                     <label>Chapter</label>
-                    <input type="text" id="ov-chapter-${idx}" value="${esc(q.override_chapter)}"
+                    <input type="text" id="ov-chapter-${idx}" list="ov-chlist-${idx}" value="${esc(q.override_chapter)}"
                         onchange="questions[${idx}].override_chapter=this.value"
-                        placeholder="${esc(document.getElementById('metaChapter').value || 'e.g. Laws of Motion')}">
+                        placeholder="Select or type chapter…" autocomplete="off">
+                    <datalist id="ov-chlist-${idx}"></datalist>
                 </div>
                 <div class="override-field">
                     <label>Topic</label>
                     <input type="text" id="ov-topic-${idx}" value="${esc(q.override_topic)}"
                         onchange="questions[${idx}].override_topic=this.value"
-                        placeholder="${esc(document.getElementById('metaTopic').value || 'e.g. Newton\'s 3rd Law')}">
+                        placeholder="Select or type topic…" autocomplete="off">
                 </div>
             </div>
         </div>`;
@@ -683,6 +703,30 @@ function showToast(msg, type) {
     text.textContent = msg;
     clearTimeout(toastTimer);
     toastTimer = setTimeout(() => el.classList.remove('show'), 4000);
+}
+
+// ── Chapter data (from Supabase questions table) ──────────────────────────
+const SUBJECT_CHAPTERS = {
+    'Physics':     ['AC Circuits','Atomic Physics','Capacitors','Circular Motion','Complex Circuits','Complex Mechanics','Current Electricity','Electromagnetic Induction','Electromagnetic Spectrum','Electrostatics','Fluid Mechanics','Geometrical Optics','Gravitation','Heat and Thermodynamics','Kinematics','Laws of Motion','Magnetic Effects','Modern Physics','Motion in Straight Line','Nuclear Physics','Optics','Oscillations','Quantum Mechanics','Quantum Physics','Ray Optics','Rotational Mechanics','Rotational Motion','Simple Harmonic Motion','Thermal Physics','Thermodynamics','Units and Measurements','Wave Motion','Wave Optics','Waves','Waves and Sound','Work Energy Power','Work, Energy and Power'],
+    'Chemistry':   ['Acids and Bases','Advanced Organic','Advanced Thermodynamics','Aldehydes and Ketones','Atomic Structure','Biomolecules','Chemical Bonding','Chemical Equilibrium','Chemical Kinetics','Chemical Reactions','Complex Equilibrium','Coordination Chemistry','Coordination Compounds','d-Block Elements','Electrochemistry','Equilibrium','Hydrocarbons','Hydrogen','Isomerism','Metallurgy','Organic Chemistry','Organic Chemistry - Basics','Organic Chemistry - Nomenclature','Organic Mechanisms','Organic Synthesis','p-Block Elements','Periodic Table','Redox Reactions','s-Block Elements','Solutions','States of Matter','Thermodynamics'],
+    'Biology':     ['Advanced Genetics','Biotechnology','Cell Biology','Cell Division','Circulatory System','Classification','Developmental Biology','Digestive System','Ecological Genetics','Ecology','Evolution','Genetics','Hormones','Human Physiology','Immunity','Molecular Biology','Nervous System','Photosynthesis','Plant Hormones','Plant Kingdom','Plant Metabolism','Plant Physiology','Plant Reproduction','Reproduction','Respiration'],
+    'Mathematics': ['Area Under Curves','Binomial Theorem','Circles','Complex Numbers','Coordinate Geometry','Derivatives','Determinants','Differential Equations','Functions','Hyperbola','Integrals','Integration','Limits','Limits and Derivatives','Mathematical Reasoning','Matrices','Parabola','Percentages','Permutation and Combination','Probability','Quadratic Equations','Sequences and Series','Sets and Relations','Statistics','Straight Lines','Three Dimensional Geometry','Trigonometry','Vector Algebra'],
+    'Maths':       ['Area Under Curves','Binomial Theorem','Circles','Complex Numbers','Coordinate Geometry','Derivatives','Determinants','Differential Equations','Functions','Hyperbola','Integrals','Integration','Limits','Limits and Derivatives','Mathematical Reasoning','Matrices','Parabola','Percentages','Permutation and Combination','Probability','Quadratic Equations','Sequences and Series','Sets and Relations','Statistics','Straight Lines','Three Dimensional Geometry','Trigonometry','Vector Algebra'],
+    'Science':     ['Chapter 1 - Number Systems','Chapter 2 - Is Matter Around Us Pure','Chapter 2 - Polynomials','Chapter 3 - Coordinate Geometry','Chapter 4 - Linear Equations in Two Variables','Chapter 4 - Structure of the Atom','Chapter 5 - Introduction to Euclid\'s Geometry','Chapter 5 - The Fundamental Unit of Life','Chapter 7 - Triangles','Chapter 8 - Quadrilaterals','Chapter 9 - Circles','Chapter 9 - Force and Laws of Motion','Chapter 10 - Gravitation','Chapter 10 - Heron\'s Formula','Chapter 11 - Surface Areas and Volumes','Chapter 12 - Statistics','Chemical Reactions','Solar System'],
+    'English':     ['Appendix 2 - Introduction to Mathematical Modelling','Chapter 1 - The Fun They Had']
+};
+
+function updateChapterList(inputId, datalistId, subjectOverride) {
+    const subject   = subjectOverride !== undefined ? subjectOverride : document.getElementById('metaSubject').value;
+    const datalist  = document.getElementById(datalistId);
+    if (!datalist) return;
+    datalist.innerHTML = '';
+    const chapters = SUBJECT_CHAPTERS[subject] || [];
+    chapters.forEach(ch => {
+        const opt = document.createElement('option');
+        opt.value = ch;
+        datalist.appendChild(opt);
+    });
 }
 
 // ── Init ──────────────────────────────────────────────────────────────────
