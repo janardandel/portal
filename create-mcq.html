@@ -153,7 +153,7 @@
         <div class="meta-grid">
             <div class="meta-field">
                 <label>Subject *</label>
-                <select id="metaSubject" onchange="updateChapterList('metaChapter','chapterList')">
+                <select id="metaSubject" onchange="updateChapterList('metaChapter')">
                     <option value="">Select</option>
                     <option value="Biology">Biology</option>
                     <option value="Chemistry">Chemistry</option>
@@ -181,13 +181,13 @@
             </div>
             <div class="meta-field">
                 <label>Chapter *</label>
-                <input type="text" id="metaChapter" list="chapterList" placeholder="Select or type chapter…" autocomplete="off">
-                <datalist id="chapterList"></datalist>
+                <select id="metaChapter">
+                    <option value="">Select subject first</option>
+                </select>
             </div>
             <div class="meta-field">
                 <label>Topic</label>
-                <input type="text" id="metaTopic" list="topicList" placeholder="Select or type topic…" autocomplete="off">
-                <datalist id="topicList"></datalist>
+                <input type="text" id="metaTopic" placeholder="e.g. Newton's 3rd Law">
             </div>
             <div class="meta-field">
                 <label>Default Difficulty</label>
@@ -472,7 +472,7 @@ function buildCard(q, idx) {
             <div class="override-grid">
                 <div class="override-field">
                     <label>Subject</label>
-                    <select id="ov-subject-${idx}" onchange="questions[${idx}].override_subject=this.value;updateChapterList('ov-chapter-${idx}','ov-chlist-${idx}',this.value)">
+                    <select id="ov-subject-${idx}" onchange="questions[${idx}].override_subject=this.value;updateChapterList('ov-chapter-${idx}',this.value)">
                         <option value="">— same as default —</option>
                         <option value="Biology" ${q.override_subject==='Biology'?'selected':''}>Biology</option>
                         <option value="Chemistry" ${q.override_subject==='Chemistry'?'selected':''}>Chemistry</option>
@@ -500,10 +500,9 @@ function buildCard(q, idx) {
                 </div>
                 <div class="override-field">
                     <label>Chapter</label>
-                    <input type="text" id="ov-chapter-${idx}" list="ov-chlist-${idx}" value="${esc(q.override_chapter)}"
-                        onchange="questions[${idx}].override_chapter=this.value"
-                        placeholder="Select or type chapter…" autocomplete="off">
-                    <datalist id="ov-chlist-${idx}"></datalist>
+                    <select id="ov-chapter-${idx}" onchange="questions[${idx}].override_chapter=this.value">
+                        <option value="">— same as default —</option>
+                    </select>
                 </div>
                 <div class="override-field">
                     <label>Topic</label>
@@ -716,19 +715,26 @@ const SUBJECT_CHAPTERS = {
     'English':     ['Appendix 2 - Introduction to Mathematical Modelling','Chapter 1 - The Fun They Had']
 };
 
-function updateChapterList(inputId, datalistId, subjectOverride) {
-    const subject  = subjectOverride !== undefined ? subjectOverride : document.getElementById('metaSubject').value;
-    const datalist = document.getElementById(datalistId);
-    if (!datalist) return;
-    datalist.innerHTML = '';
+function updateChapterList(selectId, subjectOverride) {
+    const subject = subjectOverride !== undefined ? subjectOverride : document.getElementById('metaSubject').value;
+    const sel     = document.getElementById(selectId);
+    if (!sel) return;
+    const current  = sel.value;
     const chapters = SUBJECT_CHAPTERS[subject] || [];
+    // Build new options
+    const isOverride = selectId !== 'metaChapter';
+    sel.innerHTML = isOverride
+        ? '<option value="">— same as default —</option>'
+        : '<option value="">Select chapter</option>';
     chapters.forEach(ch => {
         const opt = document.createElement('option');
         opt.value = ch;
-        datalist.appendChild(opt);
+        opt.textContent = ch;
+        if (ch === current) opt.selected = true;
+        sel.appendChild(opt);
     });
     // Reveal Step 2 once subject is picked from Step 1
-    if (subjectOverride === undefined && subject) {
+    if (!isOverride && subject) {
         const step2 = document.getElementById('giftStep');
         if (step2 && step2.style.display === 'none') {
             step2.style.display = 'block';
