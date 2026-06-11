@@ -3,12 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Add MCQ â€” Pitthugram</title>
+    <title>Create MCQ — Pitthugram</title>
     <link rel="icon" href="logo.png">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/@phosphor-icons/web" defer></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
     <link rel="stylesheet" href="style.css">
     <style>
         .cm-page { padding: 1.5rem; max-width: 860px; margin: 72px auto 6rem; }
@@ -32,36 +31,16 @@
         .meta-field select { appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24'%3E%3Cpath fill='%23888' d='M7 10l5 5 5-5z'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 0.75rem center; padding-right: 2rem; }
         .meta-field select option { background: var(--bg-elevated); }
 
-        /* OCR textarea */
-        .ocr-textarea { width: 100%; min-height: 200px; padding: 0.875rem; background: var(--bg-input); border: 1.5px solid var(--border-light); border-radius: var(--radius); font-family: var(--font-body); font-size: 0.9rem; color: var(--text-primary); resize: vertical; transition: var(--transition); line-height: 1.6; }
-        .ocr-textarea:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-glow); }
-        .ocr-hint { font-size: 0.78rem; color: var(--text-muted); margin-top: 0.5rem; display: flex; align-items: flex-start; gap: 0.35rem; }
-
-        /* Marking canvas */
-        .mark-upload { border: 2px dashed var(--border-light); border-radius: var(--radius-lg); padding: 2rem 1rem; text-align: center; cursor: pointer; transition: var(--transition); color: var(--text-muted); }
-        .mark-upload:hover { border-color: var(--primary); color: var(--text-primary); }
-        .mark-upload i { font-size: 2rem; color: var(--primary); display: block; margin-bottom: 0.5rem; }
-        .mark-upload-sub { font-size: 0.78rem; margin-top: 0.35rem; }
-        .mark-pagenav { display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap; margin-bottom: 0.7rem; padding-bottom: 0.7rem; border-bottom: 1px solid var(--border-light); }
-        .mark-toolbar { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 0.6rem; }
-        .mark-tool-label { font-size: 0.78rem; font-weight: 600; color: var(--text-muted); }
-        .mark-spacer { flex: 1; }
-        .mark-type-btn { display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.4rem 0.8rem; background: var(--bg-input); border: 1.5px solid var(--border-light); border-radius: var(--radius); font-family: var(--font-body); font-size: 0.8rem; font-weight: 600; color: var(--text-muted); cursor: pointer; transition: var(--transition); }
-        .mark-type-btn.active { border-color: var(--primary); color: var(--primary); background: var(--primary-glow); }
-        .mark-hint { font-size: 0.78rem; color: var(--text-muted); margin-bottom: 0.6rem; }
-        .mark-wrap { position: relative; display: inline-block; max-width: 100%; border: 1.5px solid var(--border); border-radius: var(--radius); overflow: hidden; line-height: 0; }
-        .mark-wrap img { max-width: 100%; height: auto; display: block; user-select: none; }
-        .mark-overlay { position: absolute; inset: 0; cursor: crosshair; }
-        .mark-box { position: absolute; box-sizing: border-box; border: 2px solid var(--primary); background: rgba(229,9,20,0.12); }
-        .mark-box.fig { border-color: #2b8a3e; background: rgba(43,138,62,0.14); }
-        .mark-box-tag { position: absolute; top: -1px; left: -1px; background: var(--primary); color: #fff; font-size: 0.6rem; font-weight: 700; padding: 1px 5px; border-radius: 0 0 4px 0; line-height: 1.4; }
-        .mark-box.fig .mark-box-tag { background: #2b8a3e; }
-        .mark-box-del { position: absolute; top: -9px; right: -9px; width: 18px; height: 18px; border-radius: 50%; background: #111; color: #fff; border: none; font-size: 10px; cursor: pointer; display: flex; align-items: center; justify-content: center; line-height: 1; }
-
-        /* AI button */
-        .btn-ai { display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.75rem 1.5rem; background: var(--primary); border: none; border-radius: var(--radius); font-family: var(--font-body); font-size: 0.925rem; font-weight: 700; color: #fff; cursor: pointer; transition: var(--transition); margin-top: 1rem; }
-        .btn-ai:hover:not(:disabled) { background: var(--primary-dark, #c8000a); }
-        .btn-ai:disabled { opacity: 0.55; cursor: not-allowed; }
+        /* GIFT import area */
+        .gift-textarea { width: 100%; min-height: 180px; padding: 0.875rem; background: var(--bg-input); border: 1.5px solid var(--border-light); border-radius: var(--radius); font-family: monospace; font-size: 0.85rem; color: var(--text-primary); resize: vertical; transition: var(--transition); line-height: 1.6; }
+        .gift-textarea:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-glow); }
+        .gift-hint { font-size: 0.78rem; color: var(--text-muted); margin-top: 0.5rem; display: flex; align-items: flex-start; gap: 0.35rem; }
+        .gift-actions { display: flex; gap: 0.75rem; margin-top: 1rem; flex-wrap: wrap; align-items: center; }
+        .btn-import { display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.7rem 1.4rem; background: var(--primary); border: none; border-radius: var(--radius); font-family: var(--font-body); font-size: 0.9rem; font-weight: 700; color: #fff; cursor: pointer; transition: var(--transition); }
+        .btn-import:hover { background: var(--primary-dark, #c8000a); }
+        .btn-file { display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.7rem 1.2rem; background: transparent; border: 1.5px solid var(--border-light); border-radius: var(--radius); font-family: var(--font-body); font-size: 0.875rem; font-weight: 600; color: var(--text-muted); cursor: pointer; transition: var(--transition); }
+        .btn-file:hover { border-color: var(--text-muted); color: var(--text-primary); }
+        .gift-sample { font-size: 0.72rem; color: var(--text-muted); background: var(--bg-elevated); border: 1px solid var(--border-light); border-radius: var(--radius-sm); padding: 0.6rem 0.875rem; margin-top: 0.75rem; font-family: monospace; white-space: pre; overflow-x: auto; }
 
         /* Question cards */
         .questions-panel { display: none; flex-direction: column; gap: 1rem; margin-top: 0; }
@@ -81,7 +60,7 @@
         .diff-select { padding: 0.45rem 2rem 0.45rem 0.65rem; background: var(--bg-input); border: 1.5px solid var(--border-light); border-radius: var(--radius-sm); font-family: var(--font-body); font-size: 0.8rem; color: var(--text-primary); appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24'%3E%3Cpath fill='%23888' d='M7 10l5 5 5-5z'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 0.5rem center; }
         .diff-select option { background: var(--bg-elevated); }
 
-        /* Image section */
+        /* Per-question image section */
         .img-section { margin-top: 0.85rem; padding-top: 0.85rem; border-top: 1px solid var(--border-light); }
         .img-thumbs { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.5rem; }
         .img-thumb { position: relative; width: 80px; height: 80px; border-radius: var(--radius-sm); overflow: hidden; border: 1.5px solid var(--border); flex-shrink: 0; }
@@ -92,6 +71,21 @@
         .btn-add-img:disabled { opacity: 0.4; cursor: not-allowed; }
         .btn-del-q { position: absolute; top: 1rem; right: 1rem; background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 1rem; padding: 0.25rem; border-radius: var(--radius-sm); transition: var(--transition); }
         .btn-del-q:hover { color: var(--danger, #e53e3e); background: rgba(229,62,62,0.08); }
+
+        /* Per-question override */
+        .override-toggle { display: flex; align-items: center; gap: 0.5rem; margin-top: 1rem; padding-top: 0.85rem; border-top: 1px solid var(--border-light); cursor: pointer; user-select: none; }
+        .override-toggle input[type="checkbox"] { accent-color: var(--primary); width: 15px; height: 15px; cursor: pointer; flex-shrink: 0; }
+        .override-toggle-label { font-size: 0.8rem; font-weight: 600; color: var(--text-muted); }
+        .override-fields { display: none; margin-top: 0.75rem; padding: 0.875rem; background: var(--bg-elevated); border: 1px solid var(--border-light); border-radius: var(--radius); }
+        .override-fields.show { display: block; }
+        .override-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem; }
+        @media (max-width: 500px) { .override-grid { grid-template-columns: 1fr; } }
+        .override-field label { display: block; font-size: 0.72rem; font-weight: 600; color: var(--text-muted); margin-bottom: 0.25rem; text-transform: uppercase; letter-spacing: 0.05em; }
+        .override-field input, .override-field select { width: 100%; padding: 0.55rem 0.75rem; background: var(--bg-input); border: 1.5px solid var(--border-light); border-radius: var(--radius); font-family: var(--font-body); font-size: 0.85rem; color: var(--text-primary); transition: var(--transition); }
+        .override-field input:focus, .override-field select:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 2px var(--primary-glow); }
+        .override-field select { appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24'%3E%3Cpath fill='%23888' d='M7 10l5 5 5-5z'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 0.65rem center; padding-right: 1.75rem; }
+        .override-field select option { background: var(--bg-elevated); }
+        .override-hint { font-size: 0.72rem; color: var(--text-muted); margin-bottom: 0.6rem; }
 
         /* Save bar */
         .save-bar { position: sticky; bottom: 1rem; background: var(--bg-elevated); border: 1.5px solid var(--border); border-radius: var(--radius-lg); padding: 1rem 1.25rem; display: flex; align-items: center; justify-content: space-between; gap: 1rem; box-shadow: 0 8px 32px rgba(0,0,0,0.3); display: none; flex-wrap: wrap; }
@@ -115,7 +109,6 @@
         .auth-card h2 { margin: 0.75rem 0 0.5rem; font-size: 1.2rem; }
         .auth-card p { color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1.25rem; }
 
-        /* uploading spinner overlay on thumb */
         .img-thumb.uploading { display: flex; align-items: center; justify-content: center; background: var(--bg-input); }
         .upload-spinner { width: 24px; height: 24px; border: 3px solid rgba(255,255,255,0.2); border-top-color: var(--primary); border-radius: 50%; animation: spin 0.7s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
@@ -143,7 +136,7 @@
         <i class="ph-fill ph-lock"></i>
         <h2>Login Required</h2>
         <p>Please sign in to create MCQs.</p>
-        <a href="index.html" class="btn btn-primary"><i class="ph ph-sign-in"></i> Go to Login</a>
+        <a href="portal/index.html" class="btn btn-primary"><i class="ph ph-sign-in"></i> Go to Login</a>
     </div>
 </div>
 
@@ -151,16 +144,20 @@
 <div id="cmContent" style="display:none;">
 
     <div class="cm-top">
-        <h1>Add <span>MCQ</span></h1>
+        <h1>Create <span>MCQ</span></h1>
     </div>
 
     <!-- Step 1: Metadata -->
     <div class="cm-step">
-        <div class="cm-step-title"><i class="ph ph-tag"></i> Step 1 â€” Question Details</div>
+        <div class="cm-step-title"><i class="ph ph-tag"></i> Step 1 — Default Question Details</div>
         <div class="meta-grid">
             <div class="meta-field">
+                <label>Subject *</label>
+                <input type="text" id="metaSubject" placeholder="e.g. Physics">
+            </div>
+            <div class="meta-field">
                 <label>Class / Exam *</label>
-                <select id="metaClass" onchange="onClassChange()">
+                <select id="metaClass">
                     <option value="">Select</option>
                     <option value="JEE">JEE</option>
                     <option value="NEET">NEET</option>
@@ -173,77 +170,74 @@
                     <option value="12">Class 12</option>
                 </select>
             </div>
-            <div class="meta-field" id="boardField" style="display:none;">
-                <label>Board *</label>
-                <select id="metaBoard" onchange="persistMeta()">
+            <div class="meta-field">
+                <label>Chapter *</label>
+                <input type="text" id="metaChapter" placeholder="e.g. Laws of Motion">
+            </div>
+            <div class="meta-field">
+                <label>Topic</label>
+                <input type="text" id="metaTopic" placeholder="e.g. Newton's 3rd Law">
+            </div>
+            <div class="meta-field">
+                <label>Default Difficulty</label>
+                <select id="metaDifficulty">
+                    <option value="Intermediate">Intermediate</option>
+                    <option value="Basic">Basic</option>
+                    <option value="Advanced">Advanced</option>
+                </select>
+            </div>
+            <div class="meta-field">
+                <label>Board</label>
+                <select id="metaBoard">
                     <option value="CBSE">CBSE</option>
                     <option value="ICSE">ICSE</option>
                     <option value="State">State Board</option>
                     <option value="Other">Other</option>
                 </select>
             </div>
-            <div class="meta-field">
-                <label>Subject *</label>
-                <div id="subjectWrap"></div>
-            </div>
-            <div class="meta-field">
-                <label>Chapter *</label>
-                <div id="chapterWrap"></div>
-            </div>
-            <div class="meta-field">
-                <label>Default Difficulty</label>
-                <select id="metaDifficulty" onchange="persistMeta()">
-                    <option value="Intermediate">Intermediate</option>
-                    <option value="Basic">Basic</option>
-                    <option value="Advanced">Advanced</option>
-                </select>
-            </div>
         </div>
     </div>
 
-    <!-- Step 2: Upload scan + mark -->
+    <!-- Step 2: GIFT import -->
     <div class="cm-step">
-        <div class="cm-step-title"><i class="ph ph-scan"></i> Step 2 â€” Upload Scan &amp; Mark Questions</div>
+        <div class="cm-step-title"><i class="ph ph-file-text"></i> Step 2 — Import GIFT Format</div>
+        <textarea class="gift-textarea" id="giftText" placeholder="Paste GIFT format questions here…
 
-        <div id="markUploadZone" class="mark-upload" onclick="document.getElementById('scanFile').click()">
-            <i class="ph ph-file-image"></i>
-            <div><strong>Upload a scanned paper</strong></div>
-            <div class="mark-upload-sub">Click to choose a <strong>PDF</strong> or image (JPG / PNG). Multi-page PDFs are handled page by page.</div>
+Example:
+What is the SI unit of force? {
+=Newton
+~Joule
+~Watt
+~Pascal
+}
+
+Which planet is closest to the Sun? {
+=Mercury
+~Venus
+~Earth
+~Mars
+}"></textarea>
+        <div class="gift-hint">
+            <i class="ph ph-info" style="flex-shrink:0;margin-top:1px;"></i>
+            <span>Use Google Lens to OCR your printed question paper, then lightly edit the text into GIFT format (paste above) or upload a .gift / .txt file. Each question: text + <code>{</code> =correct ~wrong ~wrong ~wrong <code>}</code></span>
         </div>
-        <input type="file" id="scanFile" accept="application/pdf,image/*" style="display:none;" onchange="loadMarkImage(event)">
-
-        <div id="markArea" style="display:none;">
-            <div class="mark-pagenav" id="pdfNav" style="display:none;">
-                <button type="button" class="mark-type-btn" onclick="pdfPrev()"><i class="ph ph-caret-left"></i> Prev</button>
-                <span id="pdfPageLabel" style="font-size:0.82rem;font-weight:600;color:var(--text-secondary);">Page 1 / 1</span>
-                <button type="button" class="mark-type-btn" onclick="pdfNext()">Next <i class="ph ph-caret-right"></i></button>
-                <span style="font-size:0.75rem;color:var(--text-muted);">Mark &amp; Extract each page, then move to the next.</span>
-            </div>
-            <div class="mark-toolbar">
-                <span class="mark-tool-label">Draw box as:</span>
-                <button type="button" class="mark-type-btn active" id="btnTypeQ" onclick="setMarkType('q')"><i class="ph ph-text-aa"></i> Question</button>
-                <button type="button" class="mark-type-btn" id="btnTypeFig" onclick="setMarkType('fig')"><i class="ph ph-image"></i> Figure</button>
-                <span class="mark-spacer"></span>
-                <button type="button" class="btn-add-img" onclick="resetMark()"><i class="ph ph-x"></i> Clear page</button>
-            </div>
-            <div class="mark-hint">
-                Drag to draw a box around <strong>each question</strong> (incl. its options). For diagrams, switch to <strong>Figure</strong> and box them â€” each figure auto-links to the question above it.
-            </div>
-            <div class="mark-wrap" id="markWrap">
-                <img id="markImg" alt="scan" draggable="false">
-                <div class="mark-overlay" id="markOverlay"></div>
-            </div>
-            <button class="btn-ai" id="btnExtract" onclick="extractMarked()">
-                <i class="ph ph-magic-wand"></i> Extract Questions from This Page
+        <div class="gift-actions">
+            <button class="btn-import" onclick="importGIFT()">
+                <i class="ph ph-arrow-circle-right"></i> Parse Questions
             </button>
+            <button class="btn-file" onclick="document.getElementById('giftFile').click()">
+                <i class="ph ph-upload-simple"></i> Upload .gift / .txt file
+            </button>
+            <input type="file" id="giftFile" accept=".gift,.txt,text/plain" style="display:none;" onchange="loadGiftFile(event)">
         </div>
     </div>
 
     <!-- Step 3: Review questions -->
     <div class="cm-step" id="reviewStep" style="display:none;">
-        <div class="cm-step-title"><i class="ph ph-pencil-simple"></i> Step 3 â€” Review &amp; Edit Questions</div>
+        <div class="cm-step-title"><i class="ph ph-pencil-simple"></i> Step 3 — Review, Edit &amp; Attach Images</div>
         <p style="font-size:0.85rem;color:var(--text-muted);margin-bottom:1rem;">
-            Review each extracted question, fix any OCR slips, and <strong>select the correct answer</strong>. Figures you boxed are already attached â€” use <strong>Add Image</strong> only if you need to add one manually.
+            Edit any field. For diagrams/figures: crop the image in Google Photos, save to device, then tap <strong>Attach Image</strong> on that question.
+            Check <strong>"Different class/subject"</strong> on a question to override the default metadata for that question only.
         </p>
         <div class="questions-panel show" id="questionsPanel"></div>
     </div>
@@ -265,19 +259,16 @@
 <div class="cm-toast" id="toast"><i class="ph ph-info" id="toastIcon"></i> <span id="toastMsg"></span></div>
 
 <script>
-const SUPA_A_URL  = 'https://qnqcysdeolnooxxcafwz.supabase.co';
-const SUPA_A_KEY  = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFucWN5c2Rlb2xub294eGNhZnd6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYzNTc0NjUsImV4cCI6MjA5MTkzMzQ2NX0.hOuPKv1zqQup7JfEpe-SJWT9Duz0RUwcCPwJb0zE_0Q';
 const SUPA_B_URL  = 'https://zqrswemxmhjaylsuulyu.supabase.co';
 const SUPA_B_PUB  = 'sb_publishable_8Y62WSnJwGidHS591ofDiw_gbzmTGAQ';
-const N8N_PRESIGN = 'https://container02.pitthugram.com/webhook/mcq-presign';
-const N8N_OCR     = 'https://container02.pitthugram.com/webhook/mcq-ocr';
-const N8N_SAVE    = 'https://container02.pitthugram.com/webhook/mcq-save';
+const N8N_PRESIGN = 'https://container01.pitthugram.com/webhook/mcq-presign';
+const N8N_SAVE    = 'https://container01.pitthugram.com/webhook/mcq-save';
 
 let currentUser   = null;
 let teacherRecord = null;
-let questions     = [];     // array of question objects with images[]
+let questions     = [];
 
-// â”€â”€ Auth â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Auth ──────────────────────────────────────────────────────────────────
 async function checkAuth() {
     const token = localStorage.getItem('pg_access_token');
     const user  = localStorage.getItem('pg_user');
@@ -289,7 +280,6 @@ async function checkAuth() {
     currentUser = JSON.parse(user);
     document.getElementById('authGate').style.display  = 'none';
     document.getElementById('cmContent').style.display = 'block';
-
     await loadTeacher();
     return true;
 }
@@ -305,367 +295,98 @@ async function loadTeacher() {
     } catch (_) {}
 }
 
-// â”€â”€ Exam syllabi (official subjects + chapters) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-const PHYSICS_JEE_NEET = [
-    'Physics and Measurement', 'Kinematics', 'Laws of Motion', 'Work, Energy and Power',
-    'Rotational Motion', 'Gravitation', 'Properties of Solids and Liquids', 'Thermodynamics',
-    'Kinetic Theory of Gases', 'Oscillations and Waves', 'Electrostatics', 'Current Electricity',
-    'Magnetic Effects of Current and Magnetism', 'Electromagnetic Induction and Alternating Current',
-    'Electromagnetic Waves', 'Optics', 'Dual Nature of Matter and Radiation', 'Atoms and Nuclei',
-    'Electronic Devices', 'Experimental Skills'
-];
-const SYLLABUS = {
-    'JEE': {
-        'Physics': PHYSICS_JEE_NEET,
-        'Chemistry': [
-            'Some Basic Concepts of Chemistry', 'Atomic Structure', 'Chemical Bonding and Molecular Structure',
-            'Chemical Thermodynamics', 'Solutions', 'Equilibrium', 'Redox Reactions and Electrochemistry',
-            'Chemical Kinetics', 'Surface Chemistry',
-            'Classification of Elements and Periodicity', 'p-Block Elements', 'd- and f-Block Elements',
-            'Coordination Compounds', 'Hydrogen', 's-Block Elements', 'Metallurgy', 'Environmental Chemistry',
-            'Purification and Characterisation of Organic Compounds', 'Basic Principles of Organic Chemistry',
-            'Hydrocarbons', 'Organic Compounds Containing Halogens', 'Organic Compounds Containing Oxygen',
-            'Organic Compounds Containing Nitrogen', 'Polymers', 'Biomolecules', 'Chemistry in Everyday Life',
-            'Practical Organic Chemistry'
-        ],
-        'Mathematics': [
-            'Sets, Relations and Functions', 'Complex Numbers and Quadratic Equations', 'Matrices and Determinants',
-            'Permutations and Combinations', 'Mathematical Induction', 'Binomial Theorem', 'Sequences and Series',
-            'Limits, Continuity and Differentiability', 'Integral Calculus', 'Differential Equations',
-            'Coordinate Geometry', 'Three-Dimensional Geometry', 'Vector Algebra', 'Statistics and Probability',
-            'Trigonometry'
-        ]
-    },
-    'NEET': {
-        'Physics': PHYSICS_JEE_NEET,
-        'Chemistry': [
-            'Some Basic Concepts of Chemistry', 'Atomic Structure', 'Chemical Bonding and Molecular Structure',
-            'Chemical Thermodynamics', 'Solutions', 'Equilibrium', 'Redox Reactions', 'Electrochemistry',
-            'Chemical Kinetics', 'Surface Chemistry',
-            'Classification of Elements and Periodicity', 'p-Block Elements', 'd- and f-Block Elements',
-            'Coordination Compounds', 'Hydrogen', 's-Block Elements', 'Metallurgy', 'Environmental Chemistry',
-            'Basic Principles of Organic Chemistry', 'Hydrocarbons', 'Haloalkanes and Haloarenes',
-            'Alcohols, Phenols and Ethers', 'Aldehydes, Ketones and Carboxylic Acids', 'Amines',
-            'Biomolecules', 'Polymers', 'Chemistry in Everyday Life', 'Practical Organic Chemistry'
-        ],
-        'Botany': [
-            'Diversity in Living World', 'Structural Organisation in Plants', 'Cell Structure and Function',
-            'Plant Physiology', 'Reproduction in Flowering Plants', 'Genetics and Evolution',
-            'Biotechnology and Its Applications', 'Ecology and Environment'
-        ],
-        'Zoology': [
-            'Structural Organisation in Animals', 'Human Physiology', 'Human Reproduction', 'Reproductive Health',
-            'Human Health and Disease', 'Biology and Human Welfare', 'Evolution', 'Biotechnology Applications',
-            'Ecology and Environment'
-        ]
+// ── GIFT Parser ───────────────────────────────────────────────────────────
+function parseGIFT(raw) {
+    const results = [];
+    // Normalize newlines, strip line comments
+    let text = raw.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+    text = text.replace(/\/\/[^\n]*/g, '');
+
+    // Match optional ::title:: then question text then { body }
+    const re = /(?:::[^:]*::\s*)?([\s\S]+?)\s*\{([\s\S]*?)\}/g;
+    let m;
+    while ((m = re.exec(text)) !== null) {
+        const qText = m[1].trim();
+        const body  = m[2].trim();
+        if (!qText || !body) continue;
+
+        // Parse answer lines
+        const lines   = body.split('\n').map(l => l.trim()).filter(Boolean);
+        const opts    = [];
+        let correctIdx = -1;
+
+        for (const line of lines) {
+            if (line.startsWith('=')) {
+                correctIdx = opts.length;
+                opts.push(line.slice(1).split('#')[0].trim());
+            } else if (line.startsWith('~')) {
+                opts.push(line.slice(1).split('#')[0].trim());
+            }
+        }
+
+        // Only include questions that look like MCQ (2–4 options, one correct)
+        if (opts.length >= 2 && correctIdx >= 0) {
+            results.push({
+                question_text:    qText,
+                option_a:         opts[0] || '',
+                option_b:         opts[1] || '',
+                option_c:         opts[2] || '',
+                option_d:         opts[3] || '',
+                correct_answer:   ['A','B','C','D'][correctIdx] || 'A',
+                explanation:      '',
+                difficulty_level: document.getElementById('metaDifficulty').value || 'Intermediate',
+                images:           [],
+                // per-question metadata override
+                override_meta:    false,
+                override_subject: '',
+                override_class:   '',
+                override_chapter: '',
+                override_topic:   ''
+            });
+        }
     }
-};
-
-function escAttr(s) { return String(s || '').replace(/"/g, '&quot;'); }
-function classType() {
-    const v = document.getElementById('metaClass').value;
-    return { v, isSchool: /^(6|7|8|9|10|11|12)$/.test(v) };
-}
-function examSyllabus() { return SYLLABUS[classType().v] || null; }
-// Subject: real dropdown when the exam has a syllabus (JEE/NEET), free text otherwise
-function renderSubjectField(value) {
-    const syl = examSyllabus();
-    const wrap = document.getElementById('subjectWrap');
-    if (syl) {
-        const opts = ['<option value="">Select subject</option>']
-            .concat(Object.keys(syl).map(s => `<option${s === value ? ' selected' : ''}>${s}</option>`)).join('');
-        wrap.innerHTML = `<select id="metaSubject" onchange="onSubjectChange()">${opts}</select>`;
-    } else {
-        wrap.innerHTML = `<input type="text" id="metaSubject" placeholder="e.g. Physics" value="${escAttr(value)}" oninput="onSubjectChange()">`;
-    }
-}
-// Chapter: real dropdown when a syllabus subject is chosen, free text otherwise
-function renderChapterField(value) {
-    const syl = examSyllabus();
-    const subjEl = document.getElementById('metaSubject');
-    const subject = subjEl ? subjEl.value.trim() : '';
-    const wrap = document.getElementById('chapterWrap');
-    if (syl && syl[subject]) {
-        const opts = ['<option value="">Select chapter</option>']
-            .concat(syl[subject].map(c => `<option${c === value ? ' selected' : ''}>${c}</option>`)).join('');
-        wrap.innerHTML = `<select id="metaChapter" onchange="persistMeta()">${opts}</select>`;
-    } else {
-        wrap.innerHTML = `<input type="text" id="metaChapter" placeholder="e.g. Laws of Motion" value="${escAttr(value)}" oninput="persistMeta()">`;
-    }
-}
-function onClassChange() {
-    document.getElementById('boardField').style.display = classType().isSchool ? '' : 'none';
-    renderSubjectField('');   // new class -> fresh subject
-    renderChapterField('');
-    persistMeta();
-}
-function onSubjectChange() {
-    renderChapterField('');   // chapter list depends on subject
-    persistMeta();
+    return results;
 }
 
-// â”€â”€ Persist Step-1 selections (remembered until changed) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-const META_IDS = ['metaClass', 'metaBoard', 'metaSubject', 'metaChapter', 'metaDifficulty'];
-const META_KEY = 'pg_mcq_meta';
-function persistMeta() {
-    const o = {};
-    META_IDS.forEach(id => { const el = document.getElementById(id); if (el) o[id] = el.value; });
-    try { localStorage.setItem(META_KEY, JSON.stringify(o)); } catch (_) {}
-}
-function restoreMeta() {
-    let o = {};
-    try { o = JSON.parse(localStorage.getItem(META_KEY) || '{}'); } catch (_) {}
-    if (o.metaClass != null)      document.getElementById('metaClass').value = o.metaClass;
-    if (o.metaDifficulty != null) document.getElementById('metaDifficulty').value = o.metaDifficulty;
-    document.getElementById('boardField').style.display = classType().isSchool ? '' : 'none';
-    if (o.metaBoard != null)      document.getElementById('metaBoard').value = o.metaBoard;
-    renderSubjectField(o.metaSubject || '');
-    renderChapterField(o.metaChapter || '');
+// ── Import handlers ───────────────────────────────────────────────────────
+function importGIFT() {
+    const text = document.getElementById('giftText').value.trim();
+    if (!text) return showToast('Please paste GIFT text first.', 'error');
+    processGIFT(text);
 }
 
-// â”€â”€ Marking canvas â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-let markImg   = null;     // HTMLImageElement of the loaded scan
-let markBoxes = [];       // { x,y,w,h (natural px), type:'q'|'fig', el, tagEl }
-let markType  = 'q';
-let drawing   = null;     // { startX, startY, el } during a drag
-
-// PDF state (null when a plain image is loaded)
-let pdfDoc = null, pdfNumPages = 0, pdfCurrentPage = 1;
-if (window.pdfjsLib) {
-    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-}
-
-function showImageSrc(src) {
-    const img = document.getElementById('markImg');
-    img.onload = () => {
-        markImg = img;
-        document.getElementById('markArea').style.display = 'block';
-        document.getElementById('markUploadZone').style.display = 'none';
-        clearBoxes();
-        attachOverlayHandlers();
-    };
-    img.src = src;
-}
-
-function loadMarkImage(event) {
-    const file = event.target.files[0];
+function loadGiftFile(e) {
+    const file = e.target.files[0];
     if (!file) return;
-    event.target.value = '';
-    if (file.type === 'application/pdf' || /\.pdf$/i.test(file.name)) {
-        loadPdf(file);
-    } else {
-        pdfDoc = null;
-        document.getElementById('pdfNav').style.display = 'none';
-        showImageSrc(URL.createObjectURL(file));
-    }
-}
-
-async function loadPdf(file) {
-    if (!window.pdfjsLib) return showToast('PDF support failed to load â€” try refreshing.', 'error');
-    try {
-        showToast('Opening PDFâ€¦', 'info');
-        const buf = await file.arrayBuffer();
-        pdfDoc = await pdfjsLib.getDocument({ data: buf }).promise;
-        pdfNumPages = pdfDoc.numPages;
-        pdfCurrentPage = 1;
-        document.getElementById('pdfNav').style.display = pdfNumPages > 1 ? 'flex' : 'none';
-        await renderPdfPage(1);
-    } catch (err) {
-        showToast('Could not open PDF: ' + err.message, 'error');
-    }
-}
-
-async function renderPdfPage(n) {
-    const page = await pdfDoc.getPage(n);
-    // Render at a fixed target width for consistent OCR quality
-    const base = page.getViewport({ scale: 1 });
-    const targetW = 1600;
-    const viewport = page.getViewport({ scale: targetW / base.width });
-    const canvas = document.createElement('canvas');
-    canvas.width = viewport.width; canvas.height = viewport.height;
-    await page.render({ canvasContext: canvas.getContext('2d'), viewport }).promise;
-    pdfCurrentPage = n;
-    document.getElementById('pdfPageLabel').textContent = `Page ${n} / ${pdfNumPages}`;
-    showImageSrc(canvas.toDataURL('image/png'));
-}
-
-function gotoPdfPage(n) {
-    if (!pdfDoc || n < 1 || n > pdfNumPages) return;
-    clearBoxes();
-    renderPdfPage(n);
-}
-function pdfPrev() { gotoPdfPage(pdfCurrentPage - 1); }
-function pdfNext() { gotoPdfPage(pdfCurrentPage + 1); }
-
-function setMarkType(t) {
-    markType = t;
-    document.getElementById('btnTypeQ').classList.toggle('active', t === 'q');
-    document.getElementById('btnTypeFig').classList.toggle('active', t === 'fig');
-}
-
-function clearBoxes() {
-    markBoxes.forEach(b => b.el.remove());
-    markBoxes = [];
-}
-
-function resetMark() {
-    clearBoxes();
-    markImg = null;
-    pdfDoc = null;
-    document.getElementById('pdfNav').style.display = 'none';
-    document.getElementById('markImg').src = '';
-    document.getElementById('markArea').style.display = 'none';
-    document.getElementById('markUploadZone').style.display = 'block';
-}
-
-function scaleFactor() {
-    const img = document.getElementById('markImg');
-    return img.naturalWidth / img.clientWidth;   // natural px per displayed px
-}
-
-function attachOverlayHandlers() {
-    const ov = document.getElementById('markOverlay');
-    ov.onmousedown = (e) => {
-        if (e.target.classList.contains('mark-box-del')) return;
-        const rect = ov.getBoundingClientRect();
-        const sx = e.clientX - rect.left, sy = e.clientY - rect.top;
-        const el = document.createElement('div');
-        el.className = 'mark-box' + (markType === 'fig' ? ' fig' : '');
-        el.style.left = sx + 'px'; el.style.top = sy + 'px'; el.style.width = '0px'; el.style.height = '0px';
-        ov.appendChild(el);
-        drawing = { startX: sx, startY: sy, el };
-        e.preventDefault();
+    e.target.value = '';
+    const reader = new FileReader();
+    reader.onload = ev => {
+        document.getElementById('giftText').value = ev.target.result;
+        processGIFT(ev.target.result);
     };
-    ov.onmousemove = (e) => {
-        if (!drawing) return;
-        const rect = ov.getBoundingClientRect();
-        const cx = Math.max(0, Math.min(e.clientX - rect.left, rect.width));
-        const cy = Math.max(0, Math.min(e.clientY - rect.top, rect.height));
-        const x = Math.min(cx, drawing.startX), y = Math.min(cy, drawing.startY);
-        const w = Math.abs(cx - drawing.startX), h = Math.abs(cy - drawing.startY);
-        drawing.el.style.left = x + 'px'; drawing.el.style.top = y + 'px';
-        drawing.el.style.width = w + 'px'; drawing.el.style.height = h + 'px';
-    };
-    ov.onmouseup = () => {
-        if (!drawing) return;
-        const el = drawing.el;
-        const w = parseFloat(el.style.width), h = parseFloat(el.style.height);
-        if (w < 12 || h < 12) { el.remove(); drawing = null; return; }   // ignore tiny
-        const s = scaleFactor();
-        const box = {
-            x: parseFloat(el.style.left) * s, y: parseFloat(el.style.top) * s,
-            w: w * s, h: h * s, type: markType, el
-        };
-        const tag = document.createElement('span');
-        tag.className = 'mark-box-tag';
-        tag.textContent = markType === 'fig' ? 'FIG' : 'Q';
-        el.appendChild(tag);
-        const del = document.createElement('button');
-        del.className = 'mark-box-del'; del.innerHTML = '&times;';
-        del.onclick = (ev) => { ev.stopPropagation(); box.el.remove(); markBoxes = markBoxes.filter(b => b !== box); };
-        el.appendChild(del);
-        box.tagEl = tag;
-        markBoxes.push(box);
-        drawing = null;
-    };
+    reader.readAsText(file);
 }
 
-function cropBox(box) {
-    const c = document.createElement('canvas');
-    c.width = Math.round(box.w); c.height = Math.round(box.h);
-    c.getContext('2d').drawImage(markImg, box.x, box.y, box.w, box.h, 0, 0, c.width, c.height);
-    return c;
-}
-const canvasToB64 = (c) => c.toDataURL('image/png').replace(/^data:image\/png;base64,/, '');
-const canvasToBlob = (c) => new Promise(res => c.toBlob(res, 'image/png'));
-
-async function ocrQuestion(box) {
-    const res = await fetch(N8N_OCR, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ qid: (crypto.randomUUID ? crypto.randomUUID() : 'q'+Date.now()+Math.random()), image_b64: canvasToB64(cropBox(box)) })
-    });
-    if (!res.ok) throw new Error('OCR failed (' + res.status + ')');
-    return res.json();
-}
-
-async function uploadFigure(box, uuid, n) {
-    const instId = teacherRecord ? teacherRecord.institute_id : 'unknown';
-    const key = `mcq-images/${instId}/${uuid}-fig${n}.png`;
-    const presignRes = await fetch(N8N_PRESIGN, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ keys: [key], expires: 3600 })
-    });
-    const pd = await presignRes.json();
-    const signed = (pd.signed || pd)[0];
-    if (!signed || !signed.putUrl) throw new Error('Presign failed for figure');
-    const blob = await canvasToBlob(cropBox(box));
-    const put = await fetch(signed.putUrl, { method: 'PUT', headers: { 'Content-Type': 'image/png' }, body: blob });
-    if (!put.ok) throw new Error('Figure upload failed (' + put.status + ')');
-    return { key, getUrl: signed.getUrl, file_name: `${uuid}-fig${n}.png` };
-}
-
-async function extractMarked() {
+function processGIFT(text) {
     const subject = document.getElementById('metaSubject').value.trim();
     const cls     = document.getElementById('metaClass').value;
     const chapter = document.getElementById('metaChapter').value.trim();
-    if (!subject) return showToast('Please enter a subject (Step 1).', 'error');
-    if (!cls)     return showToast('Please select a class / exam (Step 1).', 'error');
-    if (!chapter) return showToast('Please enter a chapter (Step 1).', 'error');
+    if (!subject) return showToast('Please enter a subject in Step 1 first.', 'error');
+    if (!cls)     return showToast('Please select a class / exam in Step 1 first.', 'error');
+    if (!chapter) return showToast('Please enter a chapter name in Step 1 first.', 'error');
 
-    const qBoxes   = markBoxes.filter(b => b.type === 'q').sort((a, b) => a.y - b.y);
-    const figBoxes = markBoxes.filter(b => b.type === 'fig');
-    if (!qBoxes.length) return showToast('Draw at least one Question box first.', 'error');
+    questions = parseGIFT(text);
+    if (!questions.length) return showToast('No valid MCQ questions found. Check GIFT format (= for correct, ~ for wrong).', 'error');
 
-    const difficulty = document.getElementById('metaDifficulty').value;
-    const btn = document.getElementById('btnExtract');
-    btn.disabled = true;
-    const setBtn = (t) => btn.innerHTML = '<div class="upload-spinner" style="width:18px;height:18px;border-width:2px;"></div> ' + t;
-
-    try {
-        const newQs = [];
-        for (let i = 0; i < qBoxes.length; i++) {
-            setBtn(`Reading question ${i + 1} of ${qBoxes.length}â€¦`);
-            const r = await ocrQuestion(qBoxes[i]);
-            newQs.push({
-                uuid: r.qid, question_type: 'MCQ',
-                question_text: r.question_text || '', option_a: r.option_a || '', option_b: r.option_b || '',
-                option_c: r.option_c || '', option_d: r.option_d || '', correct_answer: '',
-                explanation: '', difficulty_level: difficulty, images: []
-            });
-        }
-        // attach figures to nearest question box above
-        for (let f = 0; f < figBoxes.length; f++) {
-            const fb = figBoxes[f];
-            let target = 0, bestY = -Infinity;
-            qBoxes.forEach((qb, idx) => { if (qb.y <= fb.y && qb.y > bestY) { bestY = qb.y; target = idx; } });
-            setBtn(`Uploading figure ${f + 1} of ${figBoxes.length}â€¦`);
-            const img = await uploadFigure(fb, newQs[target].uuid, newQs[target].images.length + 1);
-            newQs[target].images.push(img);
-        }
-
-        questions = questions.concat(newQs);
-        renderQuestions();
-        document.getElementById('reviewStep').style.display = 'block';
-        document.getElementById('saveBar').classList.add('show');
-        updateSaveCount();
-        showToast(`Added ${newQs.length} question${newQs.length > 1 ? 's' : ''}. Review & set answers below.`, 'success');
-        if (pdfDoc && pdfCurrentPage < pdfNumPages) {
-            const next = pdfCurrentPage + 1;
-            gotoPdfPage(next);                 // multi-page PDF: advance to next page, keep marking
-            showToast(`Moved to page ${next} / ${pdfNumPages}.`, 'info');
-        } else {
-            resetMark();   // image, or last PDF page -> ready for a new upload
-        }
-        document.getElementById('reviewStep').scrollIntoView({ behavior: 'smooth', block: 'start' });
-    } catch (err) {
-        showToast(err.message || 'Extraction failed.', 'error');
-    } finally {
-        btn.disabled = false;
-        btn.innerHTML = '<i class="ph ph-magic-wand"></i> Extract Questions from This Page';
-    }
+    renderQuestions();
+    document.getElementById('reviewStep').style.display = 'block';
+    document.getElementById('saveBar').classList.add('show');
+    updateSaveCount();
+    document.getElementById('reviewStep').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    showToast(`Found ${questions.length} question${questions.length > 1 ? 's' : ''}. Review below.`, 'success');
 }
 
-// â”€â”€ Render questions â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Render questions ──────────────────────────────────────────────────────
 function renderQuestions() {
     const panel = document.getElementById('questionsPanel');
     panel.innerHTML = '';
@@ -708,7 +429,7 @@ function buildCard(q, idx) {
 
         <div class="q-field-label">Explanation (optional)</div>
         <textarea id="exp-${idx}" rows="2" onchange="questions[${idx}].explanation=this.value"
-            placeholder="Brief explanation for the correct answerâ€¦">${esc(q.explanation || '')}</textarea>
+            placeholder="Brief explanation for the correct answer…">${esc(q.explanation || '')}</textarea>
 
         <div style="display:flex;align-items:center;gap:0.75rem;margin-top:0.85rem;">
             <div class="q-field-label" style="margin:0;">Difficulty</div>
@@ -717,18 +438,74 @@ function buildCard(q, idx) {
             </select>
         </div>
 
+        <!-- Image attach -->
         <div class="img-section">
             <div class="q-field-label" style="margin-top:0;">Images (diagrams / figures)</div>
             <div class="img-thumbs" id="thumbs-${idx}"></div>
             <button class="btn-add-img" id="addimg-${idx}" onclick="pickImage(${idx})" style="margin-top:0.5rem;">
-                <i class="ph ph-image-square-plus"></i> Add Image
+                <i class="ph ph-image-square-plus"></i> Attach Image
             </button>
             <input type="file" id="filein-${idx}" accept="image/*" style="display:none;"
                 onchange="uploadImage(event, ${idx})">
+        </div>
+
+        <!-- Per-question metadata override -->
+        <label class="override-toggle" onclick="toggleOverride(${idx})">
+            <input type="checkbox" id="override-chk-${idx}" onclick="event.stopPropagation();toggleOverride(${idx})"
+                ${q.override_meta ? 'checked' : ''}>
+            <span class="override-toggle-label">Different class / subject for this question</span>
+        </label>
+        <div class="override-fields${q.override_meta ? ' show' : ''}" id="override-fields-${idx}">
+            <div class="override-hint">Overrides Step 1 defaults for this question only.</div>
+            <div class="override-grid">
+                <div class="override-field">
+                    <label>Subject</label>
+                    <input type="text" id="ov-subject-${idx}" value="${esc(q.override_subject)}"
+                        onchange="questions[${idx}].override_subject=this.value"
+                        placeholder="${esc(document.getElementById('metaSubject').value || 'e.g. Physics')}">
+                </div>
+                <div class="override-field">
+                    <label>Class / Exam</label>
+                    <select id="ov-class-${idx}" onchange="questions[${idx}].override_class=this.value">
+                        <option value="">— same as default —</option>
+                        <option value="JEE" ${q.override_class==='JEE'?'selected':''}>JEE</option>
+                        <option value="NEET" ${q.override_class==='NEET'?'selected':''}>NEET</option>
+                        <option value="6" ${q.override_class==='6'?'selected':''}>Class 6</option>
+                        <option value="7" ${q.override_class==='7'?'selected':''}>Class 7</option>
+                        <option value="8" ${q.override_class==='8'?'selected':''}>Class 8</option>
+                        <option value="9" ${q.override_class==='9'?'selected':''}>Class 9</option>
+                        <option value="10" ${q.override_class==='10'?'selected':''}>Class 10</option>
+                        <option value="11" ${q.override_class==='11'?'selected':''}>Class 11</option>
+                        <option value="12" ${q.override_class==='12'?'selected':''}>Class 12</option>
+                    </select>
+                </div>
+                <div class="override-field">
+                    <label>Chapter</label>
+                    <input type="text" id="ov-chapter-${idx}" value="${esc(q.override_chapter)}"
+                        onchange="questions[${idx}].override_chapter=this.value"
+                        placeholder="${esc(document.getElementById('metaChapter').value || 'e.g. Laws of Motion')}">
+                </div>
+                <div class="override-field">
+                    <label>Topic</label>
+                    <input type="text" id="ov-topic-${idx}" value="${esc(q.override_topic)}"
+                        onchange="questions[${idx}].override_topic=this.value"
+                        placeholder="${esc(document.getElementById('metaTopic').value || 'e.g. Newton\'s 3rd Law')}">
+                </div>
+            </div>
         </div>`;
 
     renderThumbs(q, idx);
     return card;
+}
+
+function toggleOverride(idx) {
+    const chk    = document.getElementById(`override-chk-${idx}`);
+    const fields = document.getElementById(`override-fields-${idx}`);
+    // Checkbox state may have already changed if user clicked the checkbox directly
+    // Read current state from the checkbox
+    const isChecked = chk.checked;
+    questions[idx].override_meta = isChecked;
+    fields.classList.toggle('show', isChecked);
 }
 
 function esc(str) {
@@ -745,7 +522,7 @@ function updateSaveCount() {
     document.getElementById('saveCount').textContent = questions.length;
 }
 
-// â”€â”€ Images â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Images ────────────────────────────────────────────────────────────────
 function pickImage(idx) {
     document.getElementById(`filein-${idx}`).click();
 }
@@ -755,13 +532,12 @@ async function uploadImage(event, idx) {
     if (!file) return;
     event.target.value = '';
 
-    const instId  = teacherRecord ? teacherRecord.institute_id : 'unknown';
-    const ext     = file.name.split('.').pop();
-    const key     = `mcq-images/${instId}/tmp-${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
-    const addBtn  = document.getElementById(`addimg-${idx}`);
-    const thumbs  = document.getElementById(`thumbs-${idx}`);
+    const instId = teacherRecord ? teacherRecord.institute_id : 'unknown';
+    const ext    = file.name.split('.').pop();
+    const key    = `mcq-images/${instId}/tmp-${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+    const addBtn = document.getElementById(`addimg-${idx}`);
+    const thumbs = document.getElementById(`thumbs-${idx}`);
 
-    // Spinner thumb
     addBtn.disabled = true;
     const spinner = document.createElement('div');
     spinner.className = 'img-thumb uploading';
@@ -769,7 +545,6 @@ async function uploadImage(event, idx) {
     thumbs.appendChild(spinner);
 
     try {
-        // Get presigned PUT URL
         const presignRes = await fetch(N8N_PRESIGN, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -780,20 +555,17 @@ async function uploadImage(event, idx) {
         const signed = (presignData.signed || presignData)[0];
         if (!signed || !signed.putUrl) throw new Error('No PUT URL returned from presign');
 
-        // Upload to IDrive
         const putRes = await fetch(signed.putUrl, {
             method: 'PUT',
             headers: { 'Content-Type': file.type || 'image/png' },
             body: file
         });
-        if (!putRes.ok) throw new Error('Upload to IDrive failed: ' + putRes.status);
+        if (!putRes.ok) throw new Error('Upload failed: ' + putRes.status);
 
-        // Store in question
-        const imgObj = { key, getUrl: signed.getUrl, file_name: file.name };
-        questions[idx].images.push(imgObj);
+        questions[idx].images.push({ key, getUrl: signed.getUrl, file_name: file.name });
         spinner.remove();
         renderThumbs(questions[idx], idx);
-        showToast('Image uploaded.', 'success');
+        showToast('Image attached.', 'success');
     } catch (err) {
         spinner.remove();
         showToast('Image upload failed: ' + err.message, 'error');
@@ -805,7 +577,6 @@ async function uploadImage(event, idx) {
 function renderThumbs(q, idx) {
     const container = document.getElementById(`thumbs-${idx}`);
     if (!container) return;
-    // Clear non-spinner thumbs
     container.querySelectorAll('.img-thumb:not(.uploading)').forEach(el => el.remove());
     (q.images || []).forEach((img, imgIdx) => {
         const div = document.createElement('div');
@@ -822,11 +593,16 @@ function removeImage(qIdx, imgIdx) {
     renderThumbs(questions[qIdx], qIdx);
 }
 
-// â”€â”€ Save â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Save ──────────────────────────────────────────────────────────────────
 async function saveQuestions() {
     if (!questions.length) return showToast('No questions to save.', 'error');
 
-    // Validate required fields
+    const defaultSubject  = document.getElementById('metaSubject').value.trim();
+    const defaultClass    = document.getElementById('metaClass').value;
+    const defaultChapter  = document.getElementById('metaChapter').value.trim();
+    const defaultTopic    = document.getElementById('metaTopic').value.trim();
+    const defaultBoard    = document.getElementById('metaBoard').value;
+
     for (let i = 0; i < questions.length; i++) {
         const q = questions[i];
         if (!q.question_text || !q.question_text.trim()) return showToast(`Question ${i+1}: question text is required.`, 'error');
@@ -836,26 +612,31 @@ async function saveQuestions() {
 
     const btn = document.getElementById('btnSave');
     btn.disabled = true;
-    btn.innerHTML = '<div class="upload-spinner" style="width:18px;height:18px;border-width:2px;"></div> Savingâ€¦';
+    btn.innerHTML = '<div class="upload-spinner" style="width:18px;height:18px;border-width:2px;"></div> Saving…';
 
     const payload = {
         teacher_id:   teacherRecord ? teacherRecord.id   : null,
         institute_id: teacherRecord ? teacherRecord.institute_id : null,
-        subject:      document.getElementById('metaSubject').value.trim(),
-        class:        document.getElementById('metaClass').value,
-        chapter:      document.getElementById('metaChapter').value.trim(),
-        topic:        '',
-        board:        document.getElementById('metaBoard').value,
+        subject:      defaultSubject,
+        class:        defaultClass,
+        chapter:      defaultChapter,
+        topic:        defaultTopic,
+        board:        defaultBoard,
         questions:    questions.map(q => ({
-            question_text:  q.question_text,
-            option_a:       q.option_a || '',
-            option_b:       q.option_b || '',
-            option_c:       q.option_c || '',
-            option_d:       q.option_d || '',
-            correct_answer: q.correct_answer || 'A',
-            explanation:    q.explanation || '',
+            question_text:    q.question_text,
+            option_a:         q.option_a || '',
+            option_b:         q.option_b || '',
+            option_c:         q.option_c || '',
+            option_d:         q.option_d || '',
+            correct_answer:   q.correct_answer || 'A',
+            explanation:      q.explanation || '',
             difficulty_level: q.difficulty_level || 'Intermediate',
-            images:         q.images || []
+            images:           q.images || [],
+            // send per-question overrides if set
+            subject:   q.override_meta && q.override_subject  ? q.override_subject  : defaultSubject,
+            class:     q.override_meta && q.override_class    ? q.override_class    : defaultClass,
+            chapter:   q.override_meta && q.override_chapter  ? q.override_chapter  : defaultChapter,
+            topic:     q.override_meta && q.override_topic    ? q.override_topic    : defaultTopic
         }))
     };
 
@@ -866,16 +647,16 @@ async function saveQuestions() {
             body: JSON.stringify(payload)
         });
         if (!res.ok) throw new Error('Save webhook returned ' + res.status);
-        const data = await res.json();
+        const data  = await res.json();
         const saved = data.saved || questions.length;
 
         showToast(`${saved} question${saved > 1 ? 's' : ''} saved to question bank!`, 'success');
 
-        // Reset
         questions = [];
         document.getElementById('questionsPanel').innerHTML = '';
         document.getElementById('reviewStep').style.display = 'none';
         document.getElementById('saveBar').classList.remove('show');
+        document.getElementById('giftText').value = '';
         updateSaveCount();
 
         setTimeout(() => {
@@ -891,24 +672,21 @@ async function saveQuestions() {
     }
 }
 
-// â”€â”€ Toast â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Toast ─────────────────────────────────────────────────────────────────
 let toastTimer;
 function showToast(msg, type) {
     const el   = document.getElementById('toast');
     const icon = document.getElementById('toastIcon');
     const text = document.getElementById('toastMsg');
-
     el.className = 'cm-toast show ' + (type || '');
     icon.className = type === 'error' ? 'ph ph-warning-circle' : type === 'success' ? 'ph ph-check-circle' : 'ph ph-info';
     text.textContent = msg;
-
     clearTimeout(toastTimer);
     toastTimer = setTimeout(() => el.classList.remove('show'), 4000);
 }
 
-// â”€â”€ Init â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Init ──────────────────────────────────────────────────────────────────
 checkAuth();
-restoreMeta();
 </script>
 </body>
 </html>
