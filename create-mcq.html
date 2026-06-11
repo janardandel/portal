@@ -211,7 +211,7 @@
     </div>
 
     <!-- Step 2: GIFT import -->
-    <div class="cm-step">
+    <div class="cm-step" id="giftStep" style="display:none;">
         <div class="cm-step-title"><i class="ph ph-file-text"></i> Step 2 — Import GIFT Format</div>
         <textarea class="gift-textarea" id="giftText" placeholder="Paste GIFT format questions here…
 
@@ -717,8 +717,8 @@ const SUBJECT_CHAPTERS = {
 };
 
 function updateChapterList(inputId, datalistId, subjectOverride) {
-    const subject   = subjectOverride !== undefined ? subjectOverride : document.getElementById('metaSubject').value;
-    const datalist  = document.getElementById(datalistId);
+    const subject  = subjectOverride !== undefined ? subjectOverride : document.getElementById('metaSubject').value;
+    const datalist = document.getElementById(datalistId);
     if (!datalist) return;
     datalist.innerHTML = '';
     const chapters = SUBJECT_CHAPTERS[subject] || [];
@@ -727,6 +727,14 @@ function updateChapterList(inputId, datalistId, subjectOverride) {
         opt.value = ch;
         datalist.appendChild(opt);
     });
+    // Reveal Step 2 once subject is picked from Step 1
+    if (subjectOverride === undefined && subject) {
+        const step2 = document.getElementById('giftStep');
+        if (step2 && step2.style.display === 'none') {
+            step2.style.display = 'block';
+            step2.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+    }
 }
 
 // ── Init ──────────────────────────────────────────────────────────────────
