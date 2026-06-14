@@ -63,6 +63,7 @@
         .qb-question-item{background:var(--bg-surface);border:1px solid var(--border);border-radius:var(--radius);padding:1rem;margin-bottom:0.5rem;}
         .qb-question-text{font-weight:500;margin-bottom:0.5rem;}
         .qb-question-meta{font-size:0.8rem;color:var(--text-muted);}
+        .q-thumb{display:block;max-width:160px;max-height:120px;margin-top:6px;border-radius:6px;border:1px solid var(--border-light);object-fit:contain;}
 
         /* ── Loading states ── */
         .sidebar-loading{opacity:0.6;pointer-events:none;}
@@ -752,7 +753,7 @@ function render(questions) {
         row.dataset.id = q.id;
         row.innerHTML = `
             <input type="checkbox" class="q-checkbox" ${isSel ? 'checked' : ''} aria-label="Select question">
-            <span class="q-text">${q.question_text}</span>`;
+            <span class="q-text">${q.question_text}${q.question_image ? `<img class="q-thumb" src="${q.question_image}" alt="figure" loading="lazy">` : ''}</span>`;
 
         const checkbox = row.querySelector('.q-checkbox');
         checkbox.addEventListener('change', () => {
@@ -1360,6 +1361,7 @@ function renderQuestionBank() {
     const html = filteredQBQuestions.map(q => `
         <div class="qb-question-item">
             <div class="qb-question-text">${q.question_text}</div>
+            ${q.question_image ? `<img class="q-thumb" src="${q.question_image}" alt="figure" loading="lazy">` : ''}
             <div class="qb-question-meta">${q.class} • ${q.subject} • ${q.chapter} • ${q.difficulty_level}</div>
         </div>
     `).join('');
