@@ -164,15 +164,27 @@
             </div>
             <div class="meta-field" id="classFieldWrap" style="display:none;">
                 <label>Class *</label>
-                <select id="metaClass">
+                <select id="metaClass" onchange="filterSubjectsByClass()">
                     <option value="">Select</option>
-                    <option value="6">Class 6</option>
-                    <option value="7">Class 7</option>
-                    <option value="8">Class 8</option>
-                    <option value="9">Class 9</option>
-                    <option value="10">Class 10</option>
-                    <option value="11">Class 11</option>
-                    <option value="12">Class 12</option>
+                    <optgroup label="Middle School">
+                        <option value="6">Class 6</option>
+                        <option value="7">Class 7</option>
+                        <option value="8">Class 8</option>
+                    </optgroup>
+                    <optgroup label="High School">
+                        <option value="9">Class 9</option>
+                        <option value="10">Class 10</option>
+                    </optgroup>
+                    <optgroup label="Intermediate – Class 11">
+                        <option value="11-PCM">Class 11 – Science (PCM)</option>
+                        <option value="11-PCB">Class 11 – Science (PCB)</option>
+                        <option value="11-Commerce">Class 11 – Commerce</option>
+                    </optgroup>
+                    <optgroup label="Intermediate – Class 12">
+                        <option value="12-PCM">Class 12 – Science (PCM)</option>
+                        <option value="12-PCB">Class 12 – Science (PCB)</option>
+                        <option value="12-Commerce">Class 12 – Commerce</option>
+                    </optgroup>
                 </select>
             </div>
             <div class="meta-field">
@@ -698,11 +710,23 @@ function showToast(msg, type) {
     toastTimer = setTimeout(() => el.classList.remove('show'), 4000);
 }
 
-// ── Subject list filtered by exam (Biology hidden for JEE) ──
+// ── Subject list filtered by exam / board ──
+const BOARD_CLASS_SUBJECTS = {
+    '6':          ['Hindi','English','Mathematics','Science','Social Science','Sanskrit','Environmental Studies','Physical Education','Home Science','Agriculture'],
+    '7':          ['Hindi','English','Mathematics','Science','Social Science','Sanskrit','Environmental Studies','Physical Education','Home Science','Agriculture'],
+    '8':          ['Hindi','English','Mathematics','Science','Social Science','Sanskrit','Environmental Studies','Physical Education','Home Science','Agriculture'],
+    '9':          ['Hindi','English','Mathematics','Science','Social Science'],
+    '10':         ['Hindi','English','Mathematics','Science','Social Science'],
+    '11-PCM':     ['Hindi','English','Physics','Chemistry','Mathematics','Computer Science','Physical Education'],
+    '11-PCB':     ['Hindi','English','Physics','Chemistry','Biology'],
+    '11-Commerce':['Hindi','English','Accountancy','Business Studies','Economics','Mathematics','Computer Science'],
+    '12-PCM':     ['Hindi','English','Physics','Chemistry','Mathematics','Computer Science','Physical Education'],
+    '12-PCB':     ['Hindi','English','Physics','Chemistry','Biology'],
+    '12-Commerce':['Hindi','English','Accountancy','Business Studies','Economics','Mathematics','Computer Science'],
+};
+
 function filterSubjectsByExam() {
     const exam = document.getElementById('metaExam').value;
-    const subjectSel = document.getElementById('metaSubject');
-    const current = subjectSel.value;
     const boards = ['CBSE','ICSE','UP Board'];
     const isBoard = boards.includes(exam);
 
@@ -711,19 +735,33 @@ function filterSubjectsByExam() {
     if (classWrap) classWrap.style.display = isBoard ? '' : 'none';
     if (!isBoard) document.getElementById('metaClass').value = '';
 
-    // Subject lists
+    if (isBoard) {
+        // Reset subjects — will be set once class is chosen
+        document.getElementById('metaSubject').innerHTML = '<option value="">Select class first</option>';
+        updateChapterList('metaChapter');
+        return;
+    }
+
     const jeeSubjects  = ['Chemistry','Maths','Physics'];
     const neetSubjects = ['Botany','Chemistry','Physics','Zoology'];
-    const boardSubjects = ['Biology','Chemistry','English','Maths','Physics','Science'];
-    const list = exam === 'JEE' ? jeeSubjects : exam === 'NEET' ? neetSubjects : isBoard ? boardSubjects : [];
-
+    const list = exam === 'JEE' ? jeeSubjects : exam === 'NEET' ? neetSubjects : [];
+    const subjectSel = document.getElementById('metaSubject');
+    const current = subjectSel.value;
     subjectSel.innerHTML = '<option value="">Select</option>' +
         list.map(s => `<option value="${s}">${s}</option>`).join('');
-    if (list.includes(current)) {
-        subjectSel.value = current;
-    } else {
-        updateChapterList('metaChapter');
-    }
+    if (list.includes(current)) subjectSel.value = current;
+    else updateChapterList('metaChapter');
+}
+
+function filterSubjectsByClass() {
+    const cls = document.getElementById('metaClass').value;
+    const list = BOARD_CLASS_SUBJECTS[cls] || [];
+    const subjectSel = document.getElementById('metaSubject');
+    const current = subjectSel.value;
+    subjectSel.innerHTML = '<option value="">Select</option>' +
+        list.map(s => `<option value="${s}">${s}</option>`).join('');
+    if (list.includes(current)) subjectSel.value = current;
+    else updateChapterList('metaChapter');
 }
 // ── Syllabus dropdowns (from Supabase jee_syllabus table) ────────────────
 async function updateChapterList(chapterSelectId, topicSelectId, subjectOverride) {
