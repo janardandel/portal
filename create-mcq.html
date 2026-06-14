@@ -152,19 +152,6 @@
         <div class="cm-step-title"><i class="ph ph-tag"></i> Step 1 — Default Question Details</div>
         <div class="meta-grid">
             <div class="meta-field">
-                <label>Subject *</label>
-                <select id="metaSubject" onchange="updateChapterList('metaChapter','metaTopic')">
-                    <option value="">Select</option>
-                    <option value="Biology">Biology</option>
-                    <option value="Chemistry">Chemistry</option>
-                    <option value="English">English</option>
-                    <option value="Mathematics">Mathematics</option>
-                    <option value="Maths">Maths</option>
-                    <option value="Physics">Physics</option>
-                    <option value="Science">Science</option>
-                </select>
-            </div>
-            <div class="meta-field">
                 <label>Class / Exam *</label>
                 <select id="metaClass">
                     <option value="">Select</option>
@@ -180,15 +167,22 @@
                 </select>
             </div>
             <div class="meta-field">
-                <label>Chapter *</label>
-                <select id="metaChapter" onchange="updateTopicList('metaTopic')">
-                    <option value="">Select subject first</option>
+                <label>Subject *</label>
+                <select id="metaSubject" onchange="updateChapterList('metaChapter')">
+                    <option value="">Select</option>
+                    <option value="Biology">Biology</option>
+                    <option value="Chemistry">Chemistry</option>
+                    <option value="English">English</option>
+                    <option value="Mathematics">Mathematics</option>
+                    <option value="Maths">Maths</option>
+                    <option value="Physics">Physics</option>
+                    <option value="Science">Science</option>
                 </select>
             </div>
             <div class="meta-field">
-                <label>Topic</label>
-                <select id="metaTopic">
-                    <option value="">Select chapter first</option>
+                <label>Chapter *</label>
+                <select id="metaChapter">
+                    <option value="">Select subject first</option>
                 </select>
             </div>
             <div class="meta-field">
@@ -623,7 +617,7 @@ async function saveQuestions() {
     const defaultSubject  = document.getElementById('metaSubject').value.trim();
     const defaultClass    = document.getElementById('metaClass').value;
     const defaultChapter  = document.getElementById('metaChapter').value.trim();
-    const defaultTopic    = document.getElementById('metaTopic').value.trim();
+    const defaultTopic    = '';
     const defaultBoard    = document.getElementById('metaBoard').value;
 
     for (let i = 0; i < questions.length; i++) {
