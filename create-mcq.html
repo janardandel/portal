@@ -479,29 +479,36 @@ function buildCard(q, idx) {
                     <label>Subject</label>
                     <select id="ov-subject-${idx}" onchange="questions[${idx}].override_subject=this.value;updateChapterList('ov-chapter-${idx}','ov-topic-${idx}',this.value)">
                         <option value="">— same as default —</option>
-                        <option value="Biology" ${q.override_subject==='Biology'?'selected':''}>Biology</option>
-                        <option value="Botany" ${q.override_subject==='Botany'?'selected':''}>Botany</option>
-                        <option value="Zoology" ${q.override_subject==='Zoology'?'selected':''}>Zoology</option>
-                        <option value="Chemistry" ${q.override_subject==='Chemistry'?'selected':''}>Chemistry</option>
-                        <option value="English" ${q.override_subject==='English'?'selected':''}>English</option>
-                        <option value="Maths" ${q.override_subject==='Maths'?'selected':''}>Maths</option>
-                        <option value="Physics" ${q.override_subject==='Physics'?'selected':''}>Physics</option>
-                        <option value="Science" ${q.override_subject==='Science'?'selected':''}>Science</option>
+                        ${['Physics','Chemistry','Maths','Mathematics','Biology','Botany','Zoology','Science','Social Science','English','Hindi','Sanskrit','Computer Science','Accountancy','Business Studies','Economics','Physical Education'].map(s => `<option value="${s}" ${q.override_subject===s?'selected':''}>${s}</option>`).join('')}
                     </select>
                 </div>
                 <div class="override-field">
                     <label>Class / Exam</label>
-                    <select id="ov-class-${idx}" onchange="questions[${idx}].override_class=this.value">
+                    <select id="ov-class-${idx}" onchange="questions[${idx}].override_class=this.value;updateChapterList('ov-chapter-${idx}','ov-topic-${idx}',document.getElementById('ov-subject-${idx}').value)">
                         <option value="">— same as default —</option>
-                        <option value="JEE" ${q.override_class==='JEE'?'selected':''}>JEE</option>
-                        <option value="NEET" ${q.override_class==='NEET'?'selected':''}>NEET</option>
-                        <option value="6" ${q.override_class==='6'?'selected':''}>Class 6</option>
-                        <option value="7" ${q.override_class==='7'?'selected':''}>Class 7</option>
-                        <option value="8" ${q.override_class==='8'?'selected':''}>Class 8</option>
-                        <option value="9" ${q.override_class==='9'?'selected':''}>Class 9</option>
-                        <option value="10" ${q.override_class==='10'?'selected':''}>Class 10</option>
-                        <option value="11" ${q.override_class==='11'?'selected':''}>Class 11</option>
-                        <option value="12" ${q.override_class==='12'?'selected':''}>Class 12</option>
+                        <optgroup label="Entrance Exams">
+                            <option value="JEE" ${q.override_class==='JEE'?'selected':''}>JEE</option>
+                            <option value="NEET" ${q.override_class==='NEET'?'selected':''}>NEET</option>
+                        </optgroup>
+                        <optgroup label="Middle School">
+                            <option value="6" ${q.override_class==='6'?'selected':''}>Class 6</option>
+                            <option value="7" ${q.override_class==='7'?'selected':''}>Class 7</option>
+                            <option value="8" ${q.override_class==='8'?'selected':''}>Class 8</option>
+                        </optgroup>
+                        <optgroup label="High School">
+                            <option value="9" ${q.override_class==='9'?'selected':''}>Class 9</option>
+                            <option value="10" ${q.override_class==='10'?'selected':''}>Class 10</option>
+                        </optgroup>
+                        <optgroup label="Intermediate – Class 11">
+                            <option value="11-PCM" ${q.override_class==='11-PCM'?'selected':''}>Class 11 – Science (PCM)</option>
+                            <option value="11-PCB" ${q.override_class==='11-PCB'?'selected':''}>Class 11 – Science (PCB)</option>
+                            <option value="11-Commerce" ${q.override_class==='11-Commerce'?'selected':''}>Class 11 – Commerce</option>
+                        </optgroup>
+                        <optgroup label="Intermediate – Class 12">
+                            <option value="12-PCM" ${q.override_class==='12-PCM'?'selected':''}>Class 12 – Science (PCM)</option>
+                            <option value="12-PCB" ${q.override_class==='12-PCB'?'selected':''}>Class 12 – Science (PCB)</option>
+                            <option value="12-Commerce" ${q.override_class==='12-Commerce'?'selected':''}>Class 12 – Commerce</option>
+                        </optgroup>
                     </select>
                 </div>
                 <div class="override-field">
@@ -782,6 +789,10 @@ async function updateChapterList(chapterSelectId, topicSelectId, subjectOverride
     const sel     = document.getElementById(chapterSelectId);
     if (!sel) return;
     const isOverride = chapterSelectId !== 'metaChapter';
+    // Override rows resolve chapters against their own class; Step 1 uses the shared context
+    const examCtx = isOverride
+        ? (document.getElementById('ov-class-' + chapterSelectId.replace('ov-chapter-',''))?.value || getExamContext())
+        : getExamContext();
 
     sel.innerHTML = isOverride
         ? '<option value="">— same as default —</option>'
@@ -802,7 +813,7 @@ async function updateChapterList(chapterSelectId, topicSelectId, subjectOverride
 
     try {
         const res = await fetch(
-            `${SUPA_A_URL}/rest/v1/jee_syllabus?subject=eq.${encodeURIComponent(subject)}&exam=eq.${encodeURIComponent(getExamContext())}&select=chapter&order=chapter.asc`,
+            `${SUPA_A_URL}/rest/v1/jee_syllabus?subject=eq.${encodeURIComponent(subject)}&exam=eq.${encodeURIComponent(examCtx)}&select=chapter&order=chapter.asc`,
             { headers: { apikey: SUPA_A_KEY, 'Content-Type': 'application/json' } }
         );
         const rows = await res.json();
