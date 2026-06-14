@@ -688,7 +688,7 @@ async function fetchQuestions() {
     if (chapter)    urlA += '&chapter=eq.'          + encodeURIComponent(chapter);
     if (difficulty) urlA += '&difficulty_level=eq.' + encodeURIComponent(difficulty);
 
-    let urlB = SUPA_B_URL + '/rest/v1/questions?is_active=eq.true&select=*&order=class,subject,chapter,difficulty_level';
+    let urlB = SUPA_B_URL + '/rest/v1/questions?is_active=eq.true&select=*,question_images(idrive_url,caption)&order=class,subject,chapter,difficulty_level';
     if (dbCls)      urlB += '&class=eq.'            + encodeURIComponent(dbCls);
     if (subject)    urlB += '&subject=eq.'          + encodeURIComponent(subject);
     if (chapter)    urlB += '&chapter=eq.'          + encodeURIComponent(chapter);
@@ -719,7 +719,13 @@ async function fetchQuestions() {
     }
 
     questionsA.forEach(q => q._source = 'central');
-    questionsB.forEach(q => q._source = 'institute');
+    questionsB.forEach(q => {
+        q._source = 'institute';
+        // SUPA_B keeps images in question_images; surface the question-target one for display
+        const imgs = q.question_images || [];
+        const qi = imgs.find(im => (im.caption || 'question') === 'question') || imgs[0];
+        if (qi && qi.idrive_url) q.question_image = qi.idrive_url;
+    });
     return [...questionsA, ...questionsB];
 }
 
