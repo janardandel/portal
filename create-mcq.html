@@ -732,6 +732,9 @@ function filterSubjectsByExam() {
     const exam = document.getElementById('metaExam').value;
     const boards = ['CBSE','ICSE','UP Board'];
     const isBoard = boards.includes(exam);
+    // Hide Step 2 whenever exam changes — must re-select subject+chapter
+    const giftStep = document.getElementById('giftStep');
+    if (giftStep) giftStep.style.display = 'none';
 
     // Show/hide class selector
     const classWrap = document.getElementById('classFieldWrap');
@@ -758,6 +761,8 @@ function filterSubjectsByExam() {
 
 function filterSubjectsByClass() {
     const cls = document.getElementById('metaClass').value;
+    const giftStep = document.getElementById('giftStep');
+    if (giftStep) giftStep.style.display = 'none';
     const list = BOARD_CLASS_SUBJECTS[cls] || [];
     const subjectSel = document.getElementById('metaSubject');
     const current = subjectSel.value;
@@ -814,12 +819,17 @@ async function updateChapterList(chapterSelectId, topicSelectId, subjectOverride
         sel.innerHTML = isOverride ? '<option value="">— same as default —</option>' : '<option value="">Error loading chapters</option>';
     }
 
-    // Reveal Step 2 once subject is picked from Step 1
-    if (!isOverride && subject) {
+    // Reveal Step 2 once a chapter is selected in Step 1
+    if (!isOverride) {
         const step2 = document.getElementById('giftStep');
-        if (step2 && step2.style.display === 'none') {
-            step2.style.display = 'block';
-            step2.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        if (step2) {
+            const chapterVal = document.getElementById('metaChapter')?.value || '';
+            if (chapterVal && step2.style.display === 'none') {
+                step2.style.display = 'block';
+                step2.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            } else if (!chapterVal) {
+                step2.style.display = 'none';
+            }
         }
     }
 }
