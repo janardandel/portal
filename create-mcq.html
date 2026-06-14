@@ -382,12 +382,15 @@ function loadGiftFile(e) {
 }
 
 function processGIFT(text) {
-    const subject = document.getElementById('metaSubject').value.trim();
-    const cls     = document.getElementById('metaClass').value;
-    const chapter = document.getElementById('metaChapter').value.trim();
-    if (!subject) return showToast('Please enter a subject in Step 1 first.', 'error');
-    if (!cls)     return showToast('Please select a class / exam in Step 1 first.', 'error');
-    if (!chapter) return showToast('Please enter a chapter name in Step 1 first.', 'error');
+    const subject  = document.getElementById('metaSubject').value.trim();
+    const examVal  = document.getElementById('metaExam').value;
+    const boards   = ['CBSE','ICSE','UP Board'];
+    const cls      = boards.includes(examVal) ? document.getElementById('metaClass').value : examVal;
+    const chapter  = document.getElementById('metaChapter').value.trim();
+    if (!examVal)  return showToast('Please select an exam / board in Step 1 first.', 'error');
+    if (!subject)  return showToast('Please select a subject in Step 1 first.', 'error');
+    if (!cls)      return showToast('Please select a class in Step 1 first.', 'error');
+    if (!chapter)  return showToast('Please select a chapter in Step 1 first.', 'error');
 
     questions = parseGIFT(text);
     if (!questions.length) return showToast('No valid MCQ questions found. Check GIFT format (= for correct, ~ for wrong).', 'error');
