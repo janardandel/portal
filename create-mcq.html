@@ -579,8 +579,9 @@ async function uploadImage(event, idx) {
 
     const instId = teacherRecord ? teacherRecord.institute_id : 'unknown';
     const target = document.getElementById(`imgtarget-${idx}`)?.value || 'question';
-    const ext    = file.name.split('.').pop();
-    const key    = `mcq-images/${instId}/tmp-${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+    const ext    = (file.name.split('.').pop() || 'png').toLowerCase();
+    const uuid   = (crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(36).slice(2)}`);
+    const key    = `mcq-images/${instId}/${uuid}.${ext}`;
     const addBtn = document.getElementById(`addimg-${idx}`);
     const thumbs = document.getElementById(`thumbs-${idx}`);
 
