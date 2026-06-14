@@ -1,6 +1,13 @@
 const SUPABASE_URL = 'https://lekvzyoarawotlsbeoqa.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imxla3Z6eW9hcmF3b3Rsc2Jlb3FhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgyOTgzNTIsImV4cCI6MjA5Mzg3NDM1Mn0.KO-UyQerUdbxxhqBDX5F51ZMU2WGIi6BLg-b-rDALmk';
 
+// ── Non-secret config (secrets come from env: S3_ACCESS_KEY_ID, S3_SECRET_ACCESS_KEY, SUPA_DB_SERVICE_KEY) ──
+const S3_ENDPOINT = 'https://s3.ap-northeast-1.idrivee2.com';
+const S3_REGION   = 'ap-northeast-1';
+const S3_BUCKET   = 'mcq-supabase';
+// Teacher MCQs are saved into the "Pitthugram Onboarding Project" Supabase (SUPA_B)
+const SAVE_DB_URL = 'https://zqrswemxmhjaylsuulyu.supabase.co';
+
 export default {
     async fetch(request, env) {
         const url = new URL(request.url);
@@ -153,7 +160,7 @@ async function handleMcqPresign(request, env) {
         return json({ error: 'Invalid request body.' }, 400);
     }
     if (!Array.isArray(files) || !files.length) return json({ error: 'No files provided.' }, 400);
-    if (!env.S3_ENDPOINT || !env.S3_BUCKET || !env.S3_ACCESS_KEY_ID || !env.S3_SECRET_ACCESS_KEY) {
+    if (!env.S3_ACCESS_KEY_ID || !env.S3_SECRET_ACCESS_KEY) {
         return json({ error: 'Storage not configured.' }, 500);
     }
 
@@ -161,7 +168,7 @@ async function handleMcqPresign(request, env) {
     for (const f of files) {
         if (!f || !f.key) return json({ error: 'Each file needs a key.' }, 400);
         const putUrl = await presignPutUrl(env, f.key, 600);
-        const getUrl = `${env.S3_ENDPOINT.replace(/\/$/, '')}/${env.S3_BUCKET}/${encodeS3Key(f.key)}`;
+        const getUrl = `${S3_ENDPOINT}/${S3_BUCKET}/${encodeS3Key(f.key)}`;
         signed.push({ key: f.key, putUrl, getUrl });
     }
     return json({ signed });
@@ -172,15 +179,15 @@ function encodeS3Key(key) {
 }
 
 async function presignPutUrl(env, key, expiresSeconds) {
-    const region   = env.S3_REGION || 'us-east-1';
+    const region   = S3_REGION;
     const service  = 's3';
-    const endpoint = env.S3_ENDPOINT.replace(/\/$/, '');
+    const endpoint = S3_ENDPOINT;
     const host     = new URL(endpoint).host;
     const now      = new Date();
     const amzDate  = now.toISOString().replace(/[:-]|\.\d{3}/g, '');   // YYYYMMDDTHHMMSSZ
     const dateStamp = amzDate.slice(0, 8);
     const scope    = `${dateStamp}/${region}/${service}/aws4_request`;
-    const canonicalUri = `/${env.S3_BUCKET}/${encodeS3Key(key)}`;
+    const canonicalUri = `/${S3_BUCKET}/${encodeS3Key(key)}`;
     const signedHeaders = 'host';
 
     const params = {
@@ -211,54 +218,87 @@ async function handleMcqSave(request, env) {
         return json({ error: 'Invalid request body.' }, 400);
     }
     const { subject, chapter, board, questions } = body;
-    const cls     = body.class;
-    const addedBy = body.added_by || body.institute_id || '';
+    const cls         = body.class;
+    const instituteId = body.institute_id;
+    const teacherId   = body.teacher_id || null;
     if (!Array.isArray(questions) || !questions.length) return json({ error: 'No questions to save.' }, 400);
-    if (!env.SUPA_DB_URL || !env.SUPA_DB_SERVICE_KEY) return json({ error: 'Database not configured.' }, 500);
+    if (!instituteId) return json({ error: 'Missing institute_id.' }, 400);
+    if (!env.SUPA_DB_SERVICE_KEY) return json({ error: 'Database not configured.' }, 500);
 
-    const imgUrl = (imgs, t) => {
-        const m = (imgs || []).find(im => (im.target || 'question') === t);
-        return m ? (m.getUrl || null) : null;
+    const base = SAVE_DB_URL;
+    const headers = {
+        'Content-Type': 'application/json',
+        'apikey': env.SUPA_DB_SERVICE_KEY,
+        'Authorization': `Bearer ${env.SUPA_DB_SERVICE_KEY}`
     };
 
-    const rows = questions.map(q => ({
-        question_text:    q.question_text,
-        option_a:         q.option_a || '',
-        option_b:         q.option_b || '',
-        option_c:         q.option_c || '',
-        option_d:         q.option_d || '',
-        correct_answer:   q.correct_answer || 'A',
-        subject:          q.subject  || subject,
-        chapter:          q.chapter  || chapter,
-        class:            q.class    || cls,
-        board:            (q.board !== undefined ? q.board : board) || '',
-        difficulty_level: q.difficulty_level || 'Intermediate',
-        explanation:      q.explanation || '',
-        question_type:    'MCQ',
-        is_active:        true,
-        added_by:         addedBy,
-        question_image:   imgUrl(q.images, 'question'),
-        option_a_image:   imgUrl(q.images, 'A'),
-        option_b_image:   imgUrl(q.images, 'B'),
-        option_c_image:   imgUrl(q.images, 'C'),
-        option_d_image:   imgUrl(q.images, 'D')
-    }));
+    let saved = 0;
+    for (const q of questions) {
+        const row = {
+            institute_id:     instituteId,
+            teacher_id:       teacherId,
+            question_text:    q.question_text,
+            option_a:         q.option_a || '',
+            option_b:         q.option_b || '',
+            option_c:         q.option_c || '',
+            option_d:         q.option_d || '',
+            correct_answer:   q.correct_answer || 'A',
+            correct_option:   q.correct_answer || 'A',
+            subject:          q.subject || subject,
+            chapter:          q.chapter || chapter,
+            class:            q.class   || cls,
+            board:            (q.board !== undefined ? q.board : board) || '',
+            topic:            q.topic || '',
+            difficulty_level: q.difficulty_level || 'Intermediate',
+            explanation:      q.explanation || '',
+            question_type:    'MCQ',
+            is_active:        true,
+            source:           'manual'
+        };
 
-    const res = await fetch(`${env.SUPA_DB_URL.replace(/\/$/, '')}/rest/v1/questions`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'apikey': env.SUPA_DB_SERVICE_KEY,
-            'Authorization': `Bearer ${env.SUPA_DB_SERVICE_KEY}`,
-            'Prefer': 'return=minimal'
-        },
-        body: JSON.stringify(rows)
-    });
-    if (!res.ok) {
-        const txt = await res.text();
-        return json({ error: 'Save failed: ' + txt }, 500);
+        // 1) Insert the question, get its id back
+        const qRes = await fetch(`${base}/rest/v1/questions`, {
+            method: 'POST',
+            headers: { ...headers, 'Prefer': 'return=representation' },
+            body: JSON.stringify(row)
+        });
+        if (!qRes.ok) {
+            const txt = await qRes.text();
+            return json({ error: 'Question insert failed: ' + txt, saved }, 500);
+        }
+        const qid = (await qRes.json())[0].id;
+
+        // 2) Insert normalized option rows
+        const optRows = ['a', 'b', 'c', 'd']
+            .filter(l => row['option_' + l])
+            .map(l => ({ question_id: qid, option_label: l.toUpperCase(), option_text: row['option_' + l] }));
+        if (optRows.length) {
+            await fetch(`${base}/rest/v1/options`, {
+                method: 'POST',
+                headers: { ...headers, 'Prefer': 'return=minimal' },
+                body: JSON.stringify(optRows)
+            });
+        }
+
+        // 3) Insert image rows (caption = target: question / A / B / C / D)
+        const imgs = (q.images || []).filter(im => im && im.key);
+        if (imgs.length) {
+            const imgRows = imgs.map((im, i) => ({
+                question_id: qid,
+                idrive_key:  im.key,
+                idrive_url:  im.getUrl || null,
+                caption:     im.target || 'question',
+                order_index: i
+            }));
+            await fetch(`${base}/rest/v1/question_images`, {
+                method: 'POST',
+                headers: { ...headers, 'Prefer': 'return=minimal' },
+                body: JSON.stringify(imgRows)
+            });
+        }
+        saved++;
     }
-    return json({ saved: rows.length });
+    return json({ saved });
 }
 
 // ── SigV4 / crypto helpers (Web Crypto) ─────────────────────────────────────
