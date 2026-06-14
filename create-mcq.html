@@ -352,10 +352,10 @@ function parseGIFT(raw) {
                 images:           [],
                 // per-question metadata override
                 override_meta:    false,
-                override_subject: '',
+                override_exam:    '',
                 override_class:   '',
-                override_chapter: '',
-                override_topic:   ''
+                override_subject: '',
+                override_chapter: ''
             });
         }
     }
@@ -408,6 +408,7 @@ function renderQuestions() {
     const panel = document.getElementById('questionsPanel');
     panel.innerHTML = '';
     questions.forEach((q, idx) => panel.appendChild(buildCard(q, idx)));
+    questions.forEach((q, idx) => restoreOverrideUI(idx));
 }
 
 function buildCard(q, idx) {
@@ -476,50 +477,50 @@ function buildCard(q, idx) {
             <div class="override-hint">Overrides Step 1 defaults for this question only.</div>
             <div class="override-grid">
                 <div class="override-field">
-                    <label>Subject</label>
-                    <select id="ov-subject-${idx}" onchange="questions[${idx}].override_subject=this.value;updateChapterList('ov-chapter-${idx}','ov-topic-${idx}',this.value)">
+                    <label>Exam / Board</label>
+                    <select id="ov-exam-${idx}" onchange="onOverrideExamChange(${idx})">
                         <option value="">— same as default —</option>
-                        ${['Physics','Chemistry','Maths','Mathematics','Biology','Botany','Zoology','Science','Social Science','English','Hindi','Sanskrit','Computer Science','Accountancy','Business Studies','Economics','Physical Education'].map(s => `<option value="${s}" ${q.override_subject===s?'selected':''}>${s}</option>`).join('')}
+                        <option value="JEE">JEE</option>
+                        <option value="NEET">NEET</option>
+                        <option value="CBSE">CBSE</option>
+                        <option value="ICSE">ICSE</option>
+                        <option value="UP Board">UP Board</option>
+                    </select>
+                </div>
+                <div class="override-field" id="ov-class-wrap-${idx}" style="display:none;">
+                    <label>Class</label>
+                    <select id="ov-class-${idx}" onchange="onOverrideClassChange(${idx})">
+                        <option value="">Select</option>
+                        <optgroup label="Middle School">
+                            <option value="6">Class 6</option>
+                            <option value="7">Class 7</option>
+                            <option value="8">Class 8</option>
+                        </optgroup>
+                        <optgroup label="High School">
+                            <option value="9">Class 9</option>
+                            <option value="10">Class 10</option>
+                        </optgroup>
+                        <optgroup label="Intermediate – Class 11">
+                            <option value="11-PCM">Class 11 – Science (PCM)</option>
+                            <option value="11-PCB">Class 11 – Science (PCB)</option>
+                            <option value="11-Commerce">Class 11 – Commerce</option>
+                        </optgroup>
+                        <optgroup label="Intermediate – Class 12">
+                            <option value="12-PCM">Class 12 – Science (PCM)</option>
+                            <option value="12-PCB">Class 12 – Science (PCB)</option>
+                            <option value="12-Commerce">Class 12 – Commerce</option>
+                        </optgroup>
                     </select>
                 </div>
                 <div class="override-field">
-                    <label>Class / Exam</label>
-                    <select id="ov-class-${idx}" onchange="questions[${idx}].override_class=this.value;updateChapterList('ov-chapter-${idx}','ov-topic-${idx}',document.getElementById('ov-subject-${idx}').value)">
+                    <label>Subject</label>
+                    <select id="ov-subject-${idx}" onchange="onOverrideSubjectChange(${idx})">
                         <option value="">— same as default —</option>
-                        <optgroup label="Entrance Exams">
-                            <option value="JEE" ${q.override_class==='JEE'?'selected':''}>JEE</option>
-                            <option value="NEET" ${q.override_class==='NEET'?'selected':''}>NEET</option>
-                        </optgroup>
-                        <optgroup label="Middle School">
-                            <option value="6" ${q.override_class==='6'?'selected':''}>Class 6</option>
-                            <option value="7" ${q.override_class==='7'?'selected':''}>Class 7</option>
-                            <option value="8" ${q.override_class==='8'?'selected':''}>Class 8</option>
-                        </optgroup>
-                        <optgroup label="High School">
-                            <option value="9" ${q.override_class==='9'?'selected':''}>Class 9</option>
-                            <option value="10" ${q.override_class==='10'?'selected':''}>Class 10</option>
-                        </optgroup>
-                        <optgroup label="Intermediate – Class 11">
-                            <option value="11-PCM" ${q.override_class==='11-PCM'?'selected':''}>Class 11 – Science (PCM)</option>
-                            <option value="11-PCB" ${q.override_class==='11-PCB'?'selected':''}>Class 11 – Science (PCB)</option>
-                            <option value="11-Commerce" ${q.override_class==='11-Commerce'?'selected':''}>Class 11 – Commerce</option>
-                        </optgroup>
-                        <optgroup label="Intermediate – Class 12">
-                            <option value="12-PCM" ${q.override_class==='12-PCM'?'selected':''}>Class 12 – Science (PCM)</option>
-                            <option value="12-PCB" ${q.override_class==='12-PCB'?'selected':''}>Class 12 – Science (PCB)</option>
-                            <option value="12-Commerce" ${q.override_class==='12-Commerce'?'selected':''}>Class 12 – Commerce</option>
-                        </optgroup>
                     </select>
                 </div>
                 <div class="override-field">
                     <label>Chapter</label>
-                    <select id="ov-chapter-${idx}" onchange="questions[${idx}].override_chapter=this.value;updateTopicList('ov-topic-${idx}',${idx})">
-                        <option value="">— same as default —</option>
-                    </select>
-                </div>
-                <div class="override-field">
-                    <label>Topic</label>
-                    <select id="ov-topic-${idx}" onchange="questions[${idx}].override_topic=this.value">
+                    <select id="ov-chapter-${idx}" onchange="questions[${idx}].override_chapter=this.value">
                         <option value="">— same as default —</option>
                     </select>
                 </div>
@@ -657,22 +658,33 @@ async function saveQuestions() {
         chapter:      defaultChapter,
         topic:        defaultTopic,
         board:        defaultBoard,
-        questions:    questions.map(q => ({
-            question_text:    q.question_text,
-            option_a:         q.option_a || '',
-            option_b:         q.option_b || '',
-            option_c:         q.option_c || '',
-            option_d:         q.option_d || '',
-            correct_answer:   q.correct_answer || 'A',
-            explanation:      q.explanation || '',
-            difficulty_level: q.difficulty_level || 'Intermediate',
-            images:           q.images || [],
-            // send per-question overrides if set
-            subject:   q.override_meta && q.override_subject  ? q.override_subject  : defaultSubject,
-            class:     q.override_meta && q.override_class    ? q.override_class    : defaultClass,
-            chapter:   q.override_meta && q.override_chapter  ? q.override_chapter  : defaultChapter,
-            topic:     q.override_meta && q.override_topic    ? q.override_topic    : defaultTopic
-        }))
+        questions:    questions.map(q => {
+            // Resolve per-question overrides, mirroring Step 1 (exam → class/board)
+            const ovOn      = q.override_meta;
+            const ovExam    = ovOn ? (q.override_exam || '') : '';
+            const ovIsBoard = boards.includes(ovExam);
+            let qClass = defaultClass, qBoard = defaultBoard;
+            if (ovOn && ovExam) {
+                qClass = ovIsBoard ? (q.override_class || '') : ovExam;
+                qBoard = ovIsBoard ? ovExam : '';
+            }
+            return {
+                question_text:    q.question_text,
+                option_a:         q.option_a || '',
+                option_b:         q.option_b || '',
+                option_c:         q.option_c || '',
+                option_d:         q.option_d || '',
+                correct_answer:   q.correct_answer || 'A',
+                explanation:      q.explanation || '',
+                difficulty_level: q.difficulty_level || 'Intermediate',
+                images:           q.images || [],
+                subject:          ovOn && q.override_subject ? q.override_subject : defaultSubject,
+                class:            qClass,
+                chapter:          ovOn && q.override_chapter ? q.override_chapter : defaultChapter,
+                board:            qBoard,
+                topic:            defaultTopic
+            };
+        })
     };
 
     try {
@@ -778,6 +790,84 @@ function filterSubjectsByClass() {
     if (list.includes(current)) subjectSel.value = current;
     else updateChapterList('metaChapter');
 }
+// ── Per-question override (mirrors Step 1: Exam/Board → Class → Subject → Chapter) ──
+function subjectsFor(exam, cls) {
+    const boards = ['CBSE','ICSE','UP Board'];
+    if (exam === 'JEE')  return ['Chemistry','Maths','Physics'];
+    if (exam === 'NEET') return ['Botany','Chemistry','Physics','Zoology'];
+    if (boards.includes(exam)) return BOARD_CLASS_SUBJECTS[cls] || [];
+    return [];
+}
+
+function onOverrideExamChange(idx) {
+    const exam   = document.getElementById('ov-exam-' + idx).value;
+    questions[idx].override_exam = exam;
+    const boards  = ['CBSE','ICSE','UP Board'];
+    const isBoard = boards.includes(exam);
+    const wrap    = document.getElementById('ov-class-wrap-' + idx);
+    if (wrap) wrap.style.display = isBoard ? '' : 'none';
+    if (!isBoard) {
+        const clsSel = document.getElementById('ov-class-' + idx);
+        if (clsSel) clsSel.value = '';
+        questions[idx].override_class = '';
+    }
+    fillOverrideSubjects(idx);
+}
+
+function onOverrideClassChange(idx) {
+    questions[idx].override_class = document.getElementById('ov-class-' + idx).value;
+    fillOverrideSubjects(idx);
+}
+
+function fillOverrideSubjects(idx) {
+    const exam = document.getElementById('ov-exam-' + idx).value;
+    const cls  = document.getElementById('ov-class-' + idx)?.value || '';
+    const list = subjectsFor(exam, cls);
+    const sel  = document.getElementById('ov-subject-' + idx);
+    const cur  = sel.value;
+    sel.innerHTML = '<option value="">— same as default —</option>' +
+        list.map(s => `<option value="${s}">${s}</option>`).join('');
+    sel.value = list.includes(cur) ? cur : '';
+    questions[idx].override_subject = sel.value;
+    updateChapterList('ov-chapter-' + idx, null, sel.value);
+}
+
+function onOverrideSubjectChange(idx) {
+    const subject = document.getElementById('ov-subject-' + idx).value;
+    questions[idx].override_subject = subject;
+    updateChapterList('ov-chapter-' + idx, null, subject);
+}
+
+function overrideExamCtx(idx) {
+    const e = document.getElementById('ov-exam-' + idx)?.value || '';
+    if (e === 'JEE' || e === 'NEET') return e;
+    if (['CBSE','ICSE','UP Board'].includes(e)) return document.getElementById('ov-class-' + idx)?.value || '';
+    return getExamContext();
+}
+
+// Restore override dropdown state after a re-render
+async function restoreOverrideUI(idx) {
+    const q = questions[idx];
+    if (!q.override_meta || !q.override_exam) return;
+    const examSel = document.getElementById('ov-exam-' + idx);
+    if (!examSel) return;
+    examSel.value = q.override_exam;
+    const isBoard = ['CBSE','ICSE','UP Board'].includes(q.override_exam);
+    const wrap = document.getElementById('ov-class-wrap-' + idx);
+    if (wrap) wrap.style.display = isBoard ? '' : 'none';
+    if (isBoard) document.getElementById('ov-class-' + idx).value = q.override_class || '';
+    const list = subjectsFor(q.override_exam, q.override_class || '');
+    const subSel = document.getElementById('ov-subject-' + idx);
+    subSel.innerHTML = '<option value="">— same as default —</option>' +
+        list.map(s => `<option value="${s}">${s}</option>`).join('');
+    subSel.value = q.override_subject || '';
+    if (q.override_subject) {
+        await updateChapterList('ov-chapter-' + idx, null, q.override_subject);
+        const chSel = document.getElementById('ov-chapter-' + idx);
+        if (chSel) chSel.value = q.override_chapter || '';
+    }
+}
+
 // ── Syllabus dropdowns (from Supabase jee_syllabus table) ────────────────
 function getExamContext() {
     const e = document.getElementById('metaExam')?.value || '';
@@ -789,9 +879,9 @@ async function updateChapterList(chapterSelectId, topicSelectId, subjectOverride
     const sel     = document.getElementById(chapterSelectId);
     if (!sel) return;
     const isOverride = chapterSelectId !== 'metaChapter';
-    // Override rows resolve chapters against their own class; Step 1 uses the shared context
+    // Override rows resolve chapters against their own exam/class; Step 1 uses the shared context
     const examCtx = isOverride
-        ? (document.getElementById('ov-class-' + chapterSelectId.replace('ov-chapter-',''))?.value || getExamContext())
+        ? overrideExamCtx(chapterSelectId.replace('ov-chapter-',''))
         : getExamContext();
 
     sel.innerHTML = isOverride
