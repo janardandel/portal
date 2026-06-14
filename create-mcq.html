@@ -764,6 +764,11 @@ function filterSubjectsByClass() {
     else updateChapterList('metaChapter');
 }
 // ── Syllabus dropdowns (from Supabase jee_syllabus table) ────────────────
+function getExamContext() {
+    const e = document.getElementById('metaExam')?.value || '';
+    if (e === 'JEE' || e === 'NEET') return e;
+    return document.getElementById('metaClass')?.value || '';
+}
 async function updateChapterList(chapterSelectId, topicSelectId, subjectOverride) {
     const subject = subjectOverride !== undefined ? subjectOverride : document.getElementById('metaSubject').value;
     const sel     = document.getElementById(chapterSelectId);
@@ -789,7 +794,7 @@ async function updateChapterList(chapterSelectId, topicSelectId, subjectOverride
 
     try {
         const res = await fetch(
-            `${SUPA_A_URL}/rest/v1/jee_syllabus?subject=eq.${encodeURIComponent(subject)}&select=chapter&order=chapter.asc`,
+            `${SUPA_A_URL}/rest/v1/jee_syllabus?subject=eq.${encodeURIComponent(subject)}&exam=eq.${encodeURIComponent(getExamContext())}&select=chapter&order=chapter.asc`,
             { headers: { apikey: SUPA_A_KEY, 'Content-Type': 'application/json' } }
         );
         const rows = await res.json();
