@@ -171,6 +171,8 @@
                 <select id="metaSubject" onchange="updateChapterList('metaChapter')">
                     <option value="">Select</option>
                     <option value="Biology">Biology</option>
+                    <option value="Botany">Botany</option>
+                    <option value="Zoology">Zoology</option>
                     <option value="Chemistry">Chemistry</option>
                     <option value="English">English</option>
                     <option value="Maths">Maths</option>
@@ -472,6 +474,8 @@ function buildCard(q, idx) {
                     <select id="ov-subject-${idx}" onchange="questions[${idx}].override_subject=this.value;updateChapterList('ov-chapter-${idx}','ov-topic-${idx}',this.value)">
                         <option value="">— same as default —</option>
                         <option value="Biology" ${q.override_subject==='Biology'?'selected':''}>Biology</option>
+                        <option value="Botany" ${q.override_subject==='Botany'?'selected':''}>Botany</option>
+                        <option value="Zoology" ${q.override_subject==='Zoology'?'selected':''}>Zoology</option>
                         <option value="Chemistry" ${q.override_subject==='Chemistry'?'selected':''}>Chemistry</option>
                         <option value="English" ${q.override_subject==='English'?'selected':''}>English</option>
                         <option value="Maths" ${q.override_subject==='Maths'?'selected':''}>Maths</option>
@@ -706,9 +710,10 @@ function filterSubjectsByExam() {
     const exam = document.getElementById('metaClass').value;
     const subjectSel = document.getElementById('metaSubject');
     const current = subjectSel.value;
-    const all = ['Biology','Chemistry','English','Maths','Physics','Science'];
-    const jeeHidden = ['Biology','English','Science'];
-    const list = exam === 'JEE' ? all.filter(s => !jeeHidden.includes(s)) : all;
+    const all = ['Biology','Botany','Chemistry','English','Maths','Physics','Science','Zoology'];
+    const jeeSubjects  = ['Chemistry','Maths','Physics'];
+    const neetSubjects = ['Botany','Chemistry','Physics','Zoology'];
+    const list = exam === 'JEE' ? jeeSubjects : exam === 'NEET' ? neetSubjects : all;
     subjectSel.innerHTML = '<option value="">Select</option>' +
         list.map(s => `<option value="${s}">${s}</option>`).join('');
     if (list.includes(current)) {
