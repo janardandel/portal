@@ -192,7 +192,7 @@
                     <option value="Advanced">Advanced</option>
                 </select>
             </div>
-            <div class="meta-field">
+            <div class="meta-field" id="boardFieldWrap">
                 <label>Board</label>
                 <select id="metaBoard">
                     <option value="CBSE">CBSE</option>
@@ -616,7 +616,8 @@ async function saveQuestions() {
     const defaultClass    = document.getElementById('metaClass').value;
     const defaultChapter  = document.getElementById('metaChapter').value.trim();
     const defaultTopic    = '';
-    const defaultBoard    = document.getElementById('metaBoard').value;
+    const examVal = document.getElementById('metaClass').value;
+    const defaultBoard    = (examVal === 'JEE' || examVal === 'NEET') ? '' : document.getElementById('metaBoard').value;
 
     for (let i = 0; i < questions.length; i++) {
         const q = questions[i];
@@ -715,6 +716,9 @@ function filterSubjectsByExam() {
     } else {
         updateChapterList('metaChapter');
     }
+    // Show Board only for school classes, hide for JEE/NEET
+    const boardWrap = document.getElementById('boardFieldWrap');
+    if (boardWrap) boardWrap.style.display = (exam === 'JEE' || exam === 'NEET') ? 'none' : '';
 }
 // ── Syllabus dropdowns (from Supabase jee_syllabus table) ────────────────
 async function updateChapterList(chapterSelectId, topicSelectId, subjectOverride) {
