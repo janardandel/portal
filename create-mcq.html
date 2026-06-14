@@ -153,7 +153,7 @@
         <div class="meta-grid">
             <div class="meta-field">
                 <label>Class / Exam *</label>
-                <select id="metaClass">
+                <select id="metaClass" onchange="filterSubjectsByExam()">
                     <option value="">Select</option>
                     <option value="JEE">JEE</option>
                     <option value="NEET">NEET</option>
@@ -702,6 +702,21 @@ function showToast(msg, type) {
     toastTimer = setTimeout(() => el.classList.remove('show'), 4000);
 }
 
+// ── Subject list filtered by exam (Biology hidden for JEE) ──
+function filterSubjectsByExam() {
+    const exam = document.getElementById('metaClass').value;
+    const subjectSel = document.getElementById('metaSubject');
+    const current = subjectSel.value;
+    const all = ['Biology','Chemistry','English','Mathematics','Maths','Physics','Science'];
+    const list = exam === 'JEE' ? all.filter(s => s !== 'Biology') : all;
+    subjectSel.innerHTML = '<option value="">Select</option>' +
+        list.map(s => `<option value="${s}">${s}</option>`).join('');
+    if (list.includes(current)) {
+        subjectSel.value = current;
+    } else {
+        updateChapterList('metaChapter');
+    }
+}
 // ── Syllabus dropdowns (from Supabase jee_syllabus table) ────────────────
 async function updateChapterList(chapterSelectId, topicSelectId, subjectOverride) {
     const subject = subjectOverride !== undefined ? subjectOverride : document.getElementById('metaSubject').value;
