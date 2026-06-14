@@ -668,6 +668,7 @@ async function saveQuestions() {
     btn.innerHTML = '<div class="upload-spinner" style="width:18px;height:18px;border-width:2px;"></div> Saving…';
 
     const payload = {
+        email:        currentUser ? currentUser.email : '',
         teacher_id:   teacherRecord ? teacherRecord.id   : null,
         institute_id: teacherRecord ? teacherRecord.institute_id : null,
         subject:      defaultSubject,
