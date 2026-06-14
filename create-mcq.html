@@ -152,7 +152,7 @@
         <div class="cm-step-title"><i class="ph ph-tag"></i> Step 1 — Default Question Details</div>
         <div class="meta-grid">
             <div class="meta-field">
-                <label>Exam / Board *</label>
+                <label>Class / Exam *</label>
                 <select id="metaExam" onchange="filterSubjectsByExam()">
                     <option value="">Select</option>
                     <option value="JEE">JEE</option>
@@ -477,7 +477,7 @@ function buildCard(q, idx) {
             <div class="override-hint">Overrides Step 1 defaults for this question only.</div>
             <div class="override-grid">
                 <div class="override-field">
-                    <label>Exam / Board</label>
+                    <label>Class / Exam</label>
                     <select id="ov-exam-${idx}" onchange="onOverrideExamChange(${idx})">
                         <option value="">— same as default —</option>
                         <option value="JEE">JEE</option>
