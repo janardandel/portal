@@ -708,7 +708,8 @@ function filterSubjectsByExam() {
     const subjectSel = document.getElementById('metaSubject');
     const current = subjectSel.value;
     const all = ['Biology','Chemistry','English','Mathematics','Maths','Physics','Science'];
-    const list = exam === 'JEE' ? all.filter(s => s !== 'Biology') : all;
+    const jeeHidden = ['Biology','English','Science'];
+    const list = exam === 'JEE' ? all.filter(s => !jeeHidden.includes(s)) : all;
     subjectSel.innerHTML = '<option value="">Select</option>' +
         list.map(s => `<option value="${s}">${s}</option>`).join('');
     if (list.includes(current)) {
