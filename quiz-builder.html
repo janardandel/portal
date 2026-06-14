@@ -255,7 +255,7 @@
                         <ul class="qb-subjects" id="jeeSubjectList">
                             <li onclick="quickLoad('JEE','Physics')"><i class="ph ph-atom"></i> Physics <span class="subject-count">(...)</span></li>
                             <li onclick="quickLoad('JEE','Chemistry')"><i class="ph ph-flask"></i> Chemistry <span class="subject-count">(...)</span></li>
-                            <li onclick="quickLoad('JEE','Mathematics')"><i class="ph ph-calculator"></i> Mathematics <span class="subject-count">(...)</span></li>
+                            <li onclick="quickLoad('JEE','Maths')"><i class="ph ph-calculator"></i> Maths <span class="subject-count">(...)</span></li>
                         </ul>
                     </div>
                     <div class="comp-exam-group">
@@ -1198,7 +1198,7 @@ async function loadSubjectCounts() {
         });
 
         // Update JEE subjects
-        ['Physics', 'Chemistry', 'Mathematics'].forEach(subject => {
+        ['Physics', 'Chemistry', 'Maths'].forEach(subject => {
             const count = counts[`JEE-${subject}`] || 0;
             const li = document.querySelector(`#jeeSubjectList li[onclick*="JEE','${subject}'"]`);
             if (li) {
