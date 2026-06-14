@@ -195,7 +195,7 @@
             </div>
             <div class="meta-field">
                 <label>Chapter *</label>
-                <select id="metaChapter">
+                <select id="metaChapter" onchange="const s=document.getElementById('giftStep');if(s){s.style.display=this.value?'block':'none';if(this.value)s.scrollIntoView({behavior:'smooth',block:'start'})}">
                     <option value="">Select subject first</option>
                 </select>
             </div>
