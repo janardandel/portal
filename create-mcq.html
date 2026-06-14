@@ -577,7 +577,7 @@ async function uploadImage(event, idx) {
     if (!file) return;
     event.target.value = '';
 
-    const instId = teacherRecord ? teacherRecord.institute_id : 'unknown';
+    const instId = teacherRecord ? teacherRecord.institute_id : 'central';
     const target = document.getElementById(`imgtarget-${idx}`)?.value || 'question';
     const ext    = (file.name.split('.').pop() || 'png').toLowerCase();
     const uuid   = (crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(36).slice(2)}`);
