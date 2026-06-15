@@ -240,6 +240,7 @@
                 <nav class="qb-nav">
                     <ul>
                         <li><a href="#" onclick="showDashboard(event)"><i class="ph ph-house"></i> Dashboard</a></li>
+                        <li><a href="#" onclick="openBatchModal(event)"><i class="ph ph-calendar-plus"></i> Schedule Quiz</a></li>
 
                         
                         <li><a href="./create-mcq.html"><i class="ph ph-pencil-simple-line"></i> Add MCQ</a></li>
@@ -331,6 +332,7 @@
                             <i class="ph ph-list"></i>
                         </button>
                         <h1>Quiz <span>Builder</span></h1>
+                        <button class="new-quiz-mobile-btn" onclick="openBatchModal(event)"><i class="ph ph-calendar-plus"></i> Schedule Quiz</button>
 
                     </div>
                     <div class="user-chip">
@@ -488,7 +490,7 @@
 <!-- New Quiz — Batch Selection Modal -->
 <div class="batch-modal-bg" id="batchModal">
     <div class="batch-modal-box">
-        <p class="batch-modal-title"><i class="ph ph-plus-circle"></i> New Quiz — Select Batch</p>
+        <p class="batch-modal-title"><i class="ph ph-plus-circle"></i> Schedule Quiz — Select Batch</p>
         <p class="batch-modal-sub">Choose the class or competitive batch you want to create a quiz for.</p>
 
         <p class="batch-section-label"><i class="ph ph-trophy"></i> Competitive Exams</p>
@@ -878,7 +880,7 @@ async function scheduleQuiz() {
     const shuffle   = document.getElementById('quizShuffle').value === '1';
 
     if (!selected.size) return showErr('Please select at least one question.');
-    if (!cls)           return showErr('No class selected. Please use New Quiz to select a class first.');
+    if (!cls)           return showErr('Pick a class first - click "Schedule Quiz" (top) or a subject in the sidebar.');
     if (!title)         return showErr('Please enter a quiz title.');
     if (!courseid)      return showErr('Please select a Moodle course.');
     if (!date)          return showErr('Please select a date.');
