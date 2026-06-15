@@ -708,7 +708,7 @@ async function fetchQuestions() {
     const difficulty = activeDifficulty;
     const token      = localStorage.getItem('pg_access_token');
 
-    const CLASS_DB_MAP = { '6': '9' };
+    const CLASS_DB_MAP = {};
     const dbCls = CLASS_DB_MAP[cls] || cls;
 
     let urlA = SUPABASE_URL + '/rest/v1/questions?is_active=eq.true&select=*&order=class,subject,chapter,difficulty_level';
@@ -1087,7 +1087,7 @@ document.querySelectorAll('.batch-btn').forEach(btn => {
         document.getElementById('mDifficulty').value = '';
 
         try {
-            const CLASS_DB_MAP = { '6': '9' };
+            const CLASS_DB_MAP = {};
             const dbCls = CLASS_DB_MAP[selectedBatch] || selectedBatch;
 
             // Fetch subjects + chapters from both Supabases for this class
@@ -1154,7 +1154,7 @@ async function loadFilterBar(cls, preSubject) {
     selCh.innerHTML  = '<option value="">All Chapters</option>';
 
     try {
-        const CLASS_DB_MAP = { '6': '9' };
+        const CLASS_DB_MAP = {};
         const dbCls = CLASS_DB_MAP[cls] || cls;
 
         const [resA, resB] = await Promise.allSettled([
@@ -1620,7 +1620,7 @@ async function loadSchoolClassSubjects(cls) {
 
     // Load subjects for this class
     try {
-        const CLASS_DB_MAP = { '6': '9' };
+        const CLASS_DB_MAP = {};
         const dbCls = CLASS_DB_MAP[cls] || cls;
 
         const res = await fetch(
@@ -1688,7 +1688,7 @@ async function toggleSchoolSubject(cls, subject) {
 
     // Load questions for this subject
     try {
-        const CLASS_DB_MAP = { '6': '9' };
+        const CLASS_DB_MAP = {};
         const dbCls = CLASS_DB_MAP[cls] || cls;
 
         const res = await fetch(
