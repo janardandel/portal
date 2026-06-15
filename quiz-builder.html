@@ -819,11 +819,10 @@ async function loadMoodleCourses() {
         const tr = await fetch(SUPA_B_URL + '/rest/v1/teachers?email=eq.' + encodeURIComponent(currentUser.email) + '&select=institute_id&limit=1', { headers: { apikey: SUPA_B_PUB } });
         const rows = await tr.json();
         teacherInstituteId = (rows && rows[0]) ? rows[0].institute_id : null;
-        if (!teacherInstituteId) { sel.innerHTML = '<option value="">No Moodle for this account</option>'; return; }
-        const res = await fetch(API_BASE + '/api/moodle-courses', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ institute_id: teacherInstituteId }) });
+        const res = await fetch(API_BASE + '/api/moodle-courses', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ institute_id: teacherInstituteId, email: currentUser.email }) });
         const data = await res.json();
         const courses = data.courses || [];
-        if (!courses.length) { sel.innerHTML = '<option value="">No courses found</option>'; return; }
+        if (!courses.length) { sel.innerHTML = '<option value="">No Moodle courses available</option>'; return; }
         sel.innerHTML = '<option value="">Select course</option>' + courses.map(c => `<option value="${c.id}">${(c.fullname || c.shortname)}</option>`).join('');
     } catch (e) {
         sel.innerHTML = '<option value="">Course load failed</option>';
@@ -861,7 +860,6 @@ async function scheduleQuiz() {
     if (!selected.size) return showErr('Please select at least one question.');
     if (!cls)           return showErr('No class selected. Please use New Quiz to select a class first.');
     if (!title)         return showErr('Please enter a quiz title.');
-    if (!teacherInstituteId) return showErr('No Moodle is configured for your institute.');
     if (!courseid)      return showErr('Please select a Moodle course.');
     if (!date)          return showErr('Please select a date.');
     if (!time)          return showErr('Please select a time.');
@@ -904,6 +902,7 @@ async function scheduleQuiz() {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 institute_id:   teacherInstituteId,
+                email:          currentUser.email,
                 courseid:       parseInt(courseid, 10),
                 name:           title,
                 timeopen:       timeopen,
