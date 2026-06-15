@@ -408,6 +408,14 @@
                     <input type="text" id="quizTitle" placeholder="e.g. Chapter 3 Test">
                 </div>
                 <div>
+                    <label>Moodle Course</label>
+                    <select id="quizCourse"><option value="">Loading…</option></select>
+                </div>
+                <div>
+                    <label>Duration (min, optional)</label>
+                    <input type="number" id="quizDuration" min="1" placeholder="e.g. 30">
+                </div>
+                <div>
                     <label>Date</label>
                     <input type="date" id="quizDate">
                 </div>
@@ -631,7 +639,9 @@ const SUPABASE_URL  = 'https://qnqcysdeolnooxxcafwz.supabase.co';
 const SUPABASE_KEY  = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFucWN5c2Rlb2xub294eGNhZnd6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYzNTc0NjUsImV4cCI6MjA5MTkzMzQ2NX0.hOuPKv1zqQup7JfEpe-SJWT9Duz0RUwcCPwJb0zE_0Q';
 const SUPA_B_URL    = 'https://zqrswemxmhjaylsuulyu.supabase.co';
 const SUPA_B_PUB    = 'sb_publishable_8Y62WSnJwGidHS591ofDiw_gbzmTGAQ';
-const N8N_WEBHOOK   = 'YOUR_N8N_WEBHOOK_URL'; // Replace when n8n Moodle webhook is ready
+const N8N_WEBHOOK   = 'YOUR_N8N_WEBHOOK_URL'; // (legacy, unused — Moodle push now via worker)
+const API_BASE      = 'https://api.pitthugram.com';
+let   teacherInstituteId = null;
 
 let allQuestions       = [];
 let selected           = new Set();
@@ -656,6 +666,7 @@ function checkAuth() {
     document.getElementById('userEmail').textContent       = currentUser.email;
     document.getElementById('authGate').style.display      = 'none';
     document.getElementById('qbContent').style.display     = 'flex';
+    loadMoodleCourses();
 
     if (window.innerWidth > 720) {
         if (typeof forceSidebarVisible === 'function') forceSidebarVisible();
@@ -800,20 +811,58 @@ function clearSel() {
     updateUI();
 }
 
+// ── Moodle course list (per institute, via worker) ────
+async function loadMoodleCourses() {
+    const sel = document.getElementById('quizCourse');
+    if (!sel || !currentUser) return;
+    try {
+        const tr = await fetch(SUPA_B_URL + '/rest/v1/teachers?email=eq.' + encodeURIComponent(currentUser.email) + '&select=institute_id&limit=1', { headers: { apikey: SUPA_B_PUB } });
+        const rows = await tr.json();
+        teacherInstituteId = (rows && rows[0]) ? rows[0].institute_id : null;
+        if (!teacherInstituteId) { sel.innerHTML = '<option value="">No Moodle for this account</option>'; return; }
+        const res = await fetch(API_BASE + '/api/moodle-courses', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ institute_id: teacherInstituteId }) });
+        const data = await res.json();
+        const courses = data.courses || [];
+        if (!courses.length) { sel.innerHTML = '<option value="">No courses found</option>'; return; }
+        sel.innerHTML = '<option value="">Select course</option>' + courses.map(c => `<option value="${c.id}">${(c.fullname || c.shortname)}</option>`).join('');
+    } catch (e) {
+        sel.innerHTML = '<option value="">Course load failed</option>';
+    }
+}
+
+// Convert a selected question (central or institute) into the Moodle schedule shape.
+function toSchedQuestion(q) {
+    const optImg = {};
+    if (q._source === 'institute' && Array.isArray(q.question_images)) {
+        q.question_images.forEach(im => { const c = (im.caption || 'question'); if (['A','B','C','D'].includes(c)) optImg[c] = im.idrive_url; });
+    } else {
+        optImg.A = q.option_a_image; optImg.B = q.option_b_image; optImg.C = q.option_c_image; optImg.D = q.option_d_image;
+    }
+    const correct = (q.correct_answer || 'A').toUpperCase();
+    const answers = ['A','B','C','D']
+        .filter(L => (q['option_' + L.toLowerCase()] || optImg[L]))
+        .map(L => ({ text: q['option_' + L.toLowerCase()] || '', image: optImg[L] || '', correct: (L === correct) }));
+    return { questiontext: q.question_text || '', image: q.question_image || '', answers };
+}
+
 // ── Schedule ──────────────────────────────────────────
 async function scheduleQuiz() {
     if (!currentUser) {
         return showErr('Please sign in to schedule quizzes.');
     }
 
-    const cls   = activeClass;
-    const title = document.getElementById('quizTitle').value.trim();
-    const date  = document.getElementById('quizDate').value;
-    const time  = document.getElementById('quizTime').value;
+    const cls      = activeClass;
+    const title    = document.getElementById('quizTitle').value.trim();
+    const date     = document.getElementById('quizDate').value;
+    const time     = document.getElementById('quizTime').value;
+    const courseid = document.getElementById('quizCourse').value;
+    const duration = parseInt(document.getElementById('quizDuration').value, 10) || 0;
 
     if (!selected.size) return showErr('Please select at least one question.');
     if (!cls)           return showErr('No class selected. Please use New Quiz to select a class first.');
     if (!title)         return showErr('Please enter a quiz title.');
+    if (!teacherInstituteId) return showErr('No Moodle is configured for your institute.');
+    if (!courseid)      return showErr('Please select a Moodle course.');
     if (!date)          return showErr('Please select a date.');
     if (!time)          return showErr('Please select a time.');
 
@@ -845,29 +894,31 @@ async function scheduleQuiz() {
             })
         });
 
-        if (!saveRes.ok) throw new Error('Failed to save quiz to database.');
+        // scheduled_quizzes is a best-effort record; the Moodle creation below is the real action.
 
-        // Fire n8n webhook when ready
-        if (N8N_WEBHOOK !== 'YOUR_N8N_WEBHOOK_URL') {
-            await fetch(N8N_WEBHOOK, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    class:          cls,
-                    quiz_title:     title,
-                    scheduled_date: date,
-                    scheduled_time: time,
-                    question_ids:   [...selected],
-                    questions:      selQuestions,
-                    teacher_email:  currentUser.email,
-                    teacher_id:     currentUser.id
-                })
-            });
-        }
+        // Create the scheduled quiz in Moodle via the worker (Moodle token stays server-side).
+        const timeopen  = Math.floor(new Date(date + 'T' + time + ':00').getTime() / 1000);
+        const timeclose = duration ? (timeopen + duration * 60) : 0;
+        const schedRes = await fetch(API_BASE + '/api/moodle-schedule', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                institute_id:   teacherInstituteId,
+                courseid:       parseInt(courseid, 10),
+                name:           title,
+                timeopen:       timeopen,
+                timeclose:      timeclose,
+                timelimit:      duration ? duration * 60 : 0,
+                attempts:       0,
+                shuffleanswers: true,
+                questions:      selQuestions.map(toSchedQuestion)
+            })
+        });
+        const schedData = await schedRes.json();
+        if (!schedRes.ok || schedData.error) throw new Error(schedData.error || 'Failed to create the quiz in Moodle.');
 
-        const clsLabel = isNaN(cls) ? cls : 'Class ' + cls;
         document.getElementById('successMsg').textContent =
-            '"' + title + '" for ' + clsLabel + ' scheduled for ' + date + ' at ' + time + '. It will appear in Moodle automatically.';
+            '"' + title + '" created in Moodle with ' + (schedData.questioncount || selQuestions.length) + ' question(s), opening ' + date + ' at ' + time + '.';
         document.getElementById('successModal').classList.add('show');
 
     } catch(err) {
@@ -884,6 +935,7 @@ function closeModal() {
     document.getElementById('quizTitle').value = '';
     document.getElementById('quizDate').value  = '';
     document.getElementById('quizTime').value  = '';
+    document.getElementById('quizDuration').value = '';
     refresh();
 }
 
