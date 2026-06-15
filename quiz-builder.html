@@ -399,7 +399,7 @@
         <div class="schedule-bar" id="scheduleBar" style="display:none;">
             <h3>
                 <i class="ph-fill ph-calendar-check"></i>
-                Schedule Quix
+                Schedule Quiz
                 <span class="count-pill" id="schedCount">0</span>
             </h3>
             <div class="schedule-fields">
@@ -412,8 +412,8 @@
                     <select id="quizCourse"><option value="">Loading…</option></select>
                 </div>
                 <div>
-                    <label>Duration (min, optional)</label>
-                    <input type="number" id="quizDuration" min="1" placeholder="e.g. 30">
+                    <label>Time limit (min, 0 = none)</label>
+                    <input type="number" id="quizDuration" min="0" value="0">
                 </div>
                 <div>
                     <label>Date</label>
@@ -455,6 +455,22 @@
                         <option value="20:30">8:30 PM</option>
                         <option value="21:00">9:00 PM</option>
                     </select>
+                </div>
+                <div>
+                    <label>Closes — Date (optional)</label>
+                    <input type="date" id="quizCloseDate">
+                </div>
+                <div>
+                    <label>Closes — Time (optional)</label>
+                    <input type="time" id="quizCloseTime">
+                </div>
+                <div>
+                    <label>Attempts (0 = unlimited)</label>
+                    <input type="number" id="quizAttempts" min="0" value="1">
+                </div>
+                <div>
+                    <label>Shuffle answers</label>
+                    <select id="quizShuffle"><option value="1">Yes</option><option value="0">No</option></select>
                 </div>
             </div>
             <button class="btn-schedule" id="schedBtn" onclick="scheduleQuiz()">
@@ -854,8 +870,12 @@ async function scheduleQuiz() {
     const title    = document.getElementById('quizTitle').value.trim();
     const date     = document.getElementById('quizDate').value;
     const time     = document.getElementById('quizTime').value;
-    const courseid = document.getElementById('quizCourse').value;
-    const duration = parseInt(document.getElementById('quizDuration').value, 10) || 0;
+    const courseid  = document.getElementById('quizCourse').value;
+    const duration  = parseInt(document.getElementById('quizDuration').value, 10) || 0;
+    const closeDate = document.getElementById('quizCloseDate').value;
+    const closeTime = document.getElementById('quizCloseTime').value;
+    const attempts  = parseInt(document.getElementById('quizAttempts').value, 10) || 0;
+    const shuffle   = document.getElementById('quizShuffle').value === '1';
 
     if (!selected.size) return showErr('Please select at least one question.');
     if (!cls)           return showErr('No class selected. Please use New Quiz to select a class first.');
@@ -896,7 +916,7 @@ async function scheduleQuiz() {
 
         // Create the scheduled quiz in Moodle via the worker (Moodle token stays server-side).
         const timeopen  = Math.floor(new Date(date + 'T' + time + ':00').getTime() / 1000);
-        const timeclose = duration ? (timeopen + duration * 60) : 0;
+        const timeclose = closeDate ? Math.floor(new Date(closeDate + 'T' + (closeTime || '23:59') + ':00').getTime() / 1000) : 0;
         const schedRes = await fetch(API_BASE + '/api/moodle-schedule', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -908,8 +928,8 @@ async function scheduleQuiz() {
                 timeopen:       timeopen,
                 timeclose:      timeclose,
                 timelimit:      duration ? duration * 60 : 0,
-                attempts:       0,
-                shuffleanswers: true,
+                attempts:       attempts,
+                shuffleanswers: shuffle,
                 questions:      selQuestions.map(toSchedQuestion)
             })
         });
@@ -934,7 +954,11 @@ function closeModal() {
     document.getElementById('quizTitle').value = '';
     document.getElementById('quizDate').value  = '';
     document.getElementById('quizTime').value  = '';
-    document.getElementById('quizDuration').value = '';
+    document.getElementById('quizDuration').value = '0';
+    document.getElementById('quizCloseDate').value = '';
+    document.getElementById('quizCloseTime').value = '';
+    document.getElementById('quizAttempts').value = '1';
+    document.getElementById('quizShuffle').value = '1';
     refresh();
 }
 
