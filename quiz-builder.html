@@ -1248,6 +1248,23 @@ async function onModalBoardClassChange() {
 
 // ── Filter bar — load subjects + chapters from Supabase ──
 let _filterAllRows = []; // cached rows for the active class (subject+chapter only)
+let _fbClass = '';       // exam/class context for the on-page filter bar
+let _fbBoard = '';       // board context for the on-page filter bar
+
+// Load chapters into the on-page filter bar from the syllabus (board-aware)
+async function loadFilterChapters(subj) {
+    const selCh = document.getElementById('filterChapter');
+    selCh.innerHTML = '<option value="">All Chapters</option>';
+    if (!subj) return;
+    let url = SUPABASE_URL + '/rest/v1/jee_syllabus?select=chapter&subject=eq.' + encodeURIComponent(subj) + '&exam=eq.' + encodeURIComponent(_fbClass) + '&order=chapter.asc';
+    if (_fbBoard) url += '&or=(board.is.null,board.eq.' + encodeURIComponent(_fbBoard) + ')';
+    try {
+        const r = await fetch(url, { headers: { 'apikey': SUPABASE_KEY } });
+        if (!r.ok) return;
+        const chs = [...new Set((await r.json()).map(x => x.chapter).filter(Boolean))];
+        chs.forEach(c => { const o = document.createElement('option'); o.value = c; o.textContent = c; selCh.appendChild(o); });
+    } catch(_) {}
+}
 
 async function loadFilterBar(cls, preSubject, board) {
     const bar     = document.getElementById('chapterBar');
@@ -1258,66 +1275,55 @@ async function loadFilterBar(cls, preSubject, board) {
     const clsLabel = isNaN(cls) ? cls : 'Class ' + cls;
     title.textContent = board ? (board + ' · ' + clsLabel) : clsLabel;
     bar.style.display = 'block';
+    _fbClass = cls;
+    _fbBoard = board || '';
 
     selSub.innerHTML = '<option value="">Loading…</option>';
     selCh.innerHTML  = '<option value="">All Chapters</option>';
 
-    try {
-        const CLASS_DB_MAP = {};
-        const dbCls = CLASS_DB_MAP[cls] || cls;
-        const boardQ = board ? '&board=eq.' + encodeURIComponent(board) : '';
+    const dbCls = cls;
+    const boardQ = board ? '&board=eq.' + encodeURIComponent(board) : '';
+    let subjects = [];
 
-        const [resA, resB] = await Promise.allSettled([
-            fetch(SUPABASE_URL + '/rest/v1/questions?select=subject,chapter&class=eq.' + encodeURIComponent(dbCls) + boardQ + '&limit=10000', { headers: { 'apikey': SUPABASE_KEY } }),
-            fetch(SUPA_B_URL   + '/rest/v1/questions?select=subject,chapter&class=eq.' + encodeURIComponent(dbCls) + boardQ + '&limit=10000', { headers: { 'apikey': SUPA_B_PUB  } })
-        ]);
-        if (resA.status !== 'fulfilled' || !resA.value.ok) throw new Error('HTTP ' + (resA.value?.status || 'network'));
-        let rowsA = await resA.value.json();
-        let rowsB = [];
-        if (resB.status === 'fulfilled' && resB.value.ok) { try { rowsB = await resB.value.json(); } catch(_){} }
-        _filterAllRows = [...rowsA, ...rowsB];
-
-        let baseSubjects = [];
-        if (board) {
-            try {
-                const sr = await fetch(SUPABASE_URL + '/rest/v1/board_subjects?select=subject&board=eq.' + encodeURIComponent(board) + '&class=eq.' + encodeURIComponent(dbCls) + '&is_active=eq.true&order=subject.asc', { headers: { 'apikey': SUPABASE_KEY } });
-                if (sr.ok) baseSubjects = (await sr.json()).map(r => r.subject);
-            } catch(_) {}
-        }
-        const subjects = [...new Set([...baseSubjects, ..._filterAllRows.map(q => q.subject).filter(Boolean)])].sort();
-        selSub.innerHTML = '<option value="">All Subjects</option>';
-        subjects.forEach(s => {
-            const o = document.createElement('option');
-            o.value = s; o.textContent = s;
-            selSub.appendChild(o);
-        });
-
-        if (preSubject) selSub.value = preSubject;
-        _populateChapterDropdown(selSub.value);
-
-    } catch (err) {
-        selSub.innerHTML = '<option value="">— ' + err.message + ' —</option>';
-        console.error('Filter bar load error:', err);
+    // Boards: standard subjects from board_subjects
+    if (board) {
+        try {
+            const sr = await fetch(SUPABASE_URL + '/rest/v1/board_subjects?select=subject&board=eq.' + encodeURIComponent(board) + '&class=eq.' + encodeURIComponent(dbCls) + '&is_active=eq.true&order=subject.asc', { headers: { 'apikey': SUPABASE_KEY } });
+            if (sr.ok) subjects = (await sr.json()).map(r => r.subject);
+        } catch(_) {}
     }
-}
 
-function _populateChapterDropdown(subj) {
-    const selCh = document.getElementById('filterChapter');
-    selCh.innerHTML = '<option value="">All Chapters</option>';
-    const rows = subj ? _filterAllRows.filter(q => q.subject === subj) : _filterAllRows;
-    const chapters = [...new Set(rows.map(q => q.chapter).filter(Boolean))].sort();
-    chapters.forEach(c => {
-        const o = document.createElement('option');
-        o.value = c; o.textContent = c;
-        selCh.appendChild(o);
-    });
+    // Also include any subjects that already have questions for this class/board
+    try {
+        const [resA, resB] = await Promise.allSettled([
+            fetch(SUPABASE_URL + '/rest/v1/questions?select=subject&class=eq.' + encodeURIComponent(dbCls) + boardQ + '&limit=10000', { headers: { 'apikey': SUPABASE_KEY } }),
+            fetch(SUPA_B_URL   + '/rest/v1/questions?select=subject&class=eq.' + encodeURIComponent(dbCls) + boardQ + '&limit=10000', { headers: { 'apikey': SUPA_B_PUB  } })
+        ]);
+        if (resA.status === 'fulfilled' && resA.value.ok) { try { subjects = subjects.concat((await resA.value.json()).map(r => r.subject)); } catch(_){} }
+        if (resB.status === 'fulfilled' && resB.value.ok) { try { subjects = subjects.concat((await resB.value.json()).map(r => r.subject)); } catch(_){} }
+    } catch(_) {}
+
+    // JEE/NEET: fall back to syllabus subjects if nothing found
+    if (!subjects.length && !board) {
+        try {
+            const sy = await fetch(SUPABASE_URL + '/rest/v1/jee_syllabus?select=subject&exam=eq.' + encodeURIComponent(cls), { headers: { 'apikey': SUPABASE_KEY } });
+            if (sy.ok) subjects = (await sy.json()).map(r => r.subject);
+        } catch(_) {}
+    }
+
+    subjects = [...new Set(subjects.filter(Boolean))].sort();
+    selSub.innerHTML = '<option value="">All Subjects</option>';
+    subjects.forEach(s => { const o = document.createElement('option'); o.value = s; o.textContent = s; selSub.appendChild(o); });
+
+    if (preSubject) selSub.value = preSubject;
+    await loadFilterChapters(selSub.value);
 }
 
 function onFilterSubjectChange() {
     activeSubject = document.getElementById('filterSubject').value;
     activeChapter = '';
     document.getElementById('filterChapter').value = '';
-    _populateChapterDropdown(activeSubject);
+    loadFilterChapters(activeSubject);
     refresh();
 }
 
