@@ -1756,17 +1756,6 @@ async function toggleSchoolSubject(cls, subject) {
 // ── Board (CBSE / ICSE / UP Board) Class Subjects ─────
 function boardKey(board) { return board.replace(/[^a-z0-9]/gi, '').toLowerCase(); }
 
-// Standard subjects per class for all boards (shown even when no MCQs exist yet)
-const QB_BOARD_SUBJECTS = {
-    '6':  ['English','Hindi','Mathematics','Sanskrit','Science','Social Science'],
-    '7':  ['English','Hindi','Mathematics','Sanskrit','Science','Social Science'],
-    '8':  ['English','Hindi','Mathematics','Sanskrit','Science','Social Science'],
-    '9':  ['English','Hindi','Mathematics','Sanskrit','Science','Social Science'],
-    '10': ['English','Hindi','Mathematics','Sanskrit','Science','Social Science'],
-    '11': ['Accountancy','Biology','Business Studies','Chemistry','Computer Science','Economics','English','Hindi','Mathematics','Physics'],
-    '12': ['Accountancy','Biology','Business Studies','Chemistry','Computer Science','Economics','English','Hindi','Mathematics','Physics'],
-};
-
 async function loadBoardClassSubjects(board, cls) {
     const bk = boardKey(board);
     const selectedLi = document.getElementById(`${bk}Class${cls}Toggle`);
@@ -1781,7 +1770,15 @@ async function loadBoardClassSubjects(board, cls) {
         );
         if (!res.ok) throw new Error('Failed to load subjects');
         const questions = await res.json();
-        const fixed = QB_BOARD_SUBJECTS[cls] || [];
+        // Standard subject list comes from the board_subjects reference table
+        let fixed = [];
+        try {
+            const subRes = await fetch(
+                SUPABASE_URL + '/rest/v1/board_subjects?select=subject&board=eq.' + encodeURIComponent(board) + '&class=eq.' + encodeURIComponent(cls) + '&is_active=eq.true&order=subject.asc',
+                { headers: { 'apikey': SUPABASE_KEY } }
+            );
+            if (subRes.ok) fixed = (await subRes.json()).map(r => r.subject);
+        } catch (e) { /* fall back to whatever subjects have questions */ }
         const subjects = [...new Set([...fixed, ...questions.map(q => q.subject).filter(Boolean)])].sort();
         const subList = document.createElement('ul');
         subList.className = 'qb-subjects-sublist';
