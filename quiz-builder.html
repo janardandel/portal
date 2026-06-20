@@ -1223,7 +1223,18 @@ async function onModalBoardClassChange() {
         );
         if (subRes.ok) subjects = (await subRes.json()).map(r => r.subject);
 
-        subjects = [...new Set(subjects)].sort();
+        // Fallback: also include subjects that already have questions for this board+class
+        try {
+            const [qa, qb] = await Promise.allSettled([
+                fetch(SUPABASE_URL + '/rest/v1/questions?select=subject&class=eq.' + encodeURIComponent(cls) + '&board=eq.' + encodeURIComponent(board) + '&limit=10000', { headers: { 'apikey': SUPABASE_KEY } }),
+                fetch(SUPA_B_URL   + '/rest/v1/questions?select=subject&class=eq.' + encodeURIComponent(cls) + '&board=eq.' + encodeURIComponent(board) + '&limit=10000', { headers: { 'apikey': SUPA_B_PUB } })
+            ]);
+            if (qa.status === 'fulfilled' && qa.value.ok) subjects = subjects.concat((await qa.value.json()).map(r => r.subject));
+            if (qb.status === 'fulfilled' && qb.value.ok) subjects = subjects.concat((await qb.value.json()).map(r => r.subject));
+        } catch(_) {}
+
+        subjects = [...new Set(subjects.filter(Boolean))].sort();
+        if (!subjects.length) { mSub.innerHTML = '<option value="">No subjects found</option>'; }
         subjects.forEach(s => { const o = document.createElement('option'); o.value = s; o.textContent = s; mSub.appendChild(o); });
 
         // Chapters from the syllabus (board-aware), refreshed when subject changes
