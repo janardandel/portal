@@ -1166,24 +1166,12 @@ document.querySelectorAll('.batch-btn').forEach(btn => {
                 mSub.appendChild(o);
             });
 
-            // Helper: populate chapters for a given subject (or all if blank)
-            function populateChapters(subj) {
-                mCh.innerHTML = '<option value="">All Chapters</option>';
-                const rows = subj ? allRows.filter(q => q.subject === subj) : allRows;
-                const chapters = [...new Set(rows.map(q => q.chapter).filter(Boolean))].sort();
-                chapters.forEach(c => {
-                    const o = document.createElement('option');
-                    o.value = c; o.textContent = c;
-                    mCh.appendChild(o);
-                });
-            }
-
-            // Pre-select subject (if a subject button was clicked) and load its chapters
+            // Pre-select subject (if a subject button was clicked) and load chapters from syllabus
             if (preSubject) mSub.value = preSubject;
-            populateChapters(mSub.value);
+            await loadModalChapters(mSub.value, selectedBatch, null);
 
             // Re-populate chapters whenever subject changes
-            mSub.onchange = () => populateChapters(mSub.value);
+            mSub.onchange = () => loadModalChapters(mSub.value, selectedBatch, null);
 
         } catch(err) {
             console.error('Failed to load filters:', err);
@@ -1194,7 +1182,22 @@ document.querySelectorAll('.batch-btn').forEach(btn => {
     });
 });
 
-// Board selected → class chosen: load subjects (from board_subjects) + chapters (from questions)
+// Load chapters for the schedule modal from the syllabus (jee_syllabus, board-aware)
+async function loadModalChapters(subject, examCtx, board) {
+    const mCh = document.getElementById('mChapter');
+    mCh.innerHTML = '<option value="">All Chapters</option>';
+    if (!subject) return;
+    let url = SUPABASE_URL + '/rest/v1/jee_syllabus?select=chapter&subject=eq.' + encodeURIComponent(subject) + '&exam=eq.' + encodeURIComponent(examCtx) + '&order=chapter.asc';
+    if (board) url += '&or=(board.is.null,board.eq.' + encodeURIComponent(board) + ')';
+    try {
+        const r = await fetch(url, { headers: { 'apikey': SUPABASE_KEY } });
+        if (!r.ok) return;
+        const chs = [...new Set((await r.json()).map(x => x.chapter).filter(Boolean))];
+        chs.forEach(c => { const o = document.createElement('option'); o.value = c; o.textContent = c; mCh.appendChild(o); });
+    } catch(_) {}
+}
+
+// Board selected → class chosen: subjects from board_subjects, chapters from syllabus
 async function onModalBoardClassChange() {
     const cls   = document.getElementById('mBoardClass').value;
     const board = selectedBoard;
@@ -1220,25 +1223,12 @@ async function onModalBoardClassChange() {
         );
         if (subRes.ok) subjects = (await subRes.json()).map(r => r.subject);
 
-        // Chapters come from existing questions for this board+class
-        const [resA, resB] = await Promise.allSettled([
-            fetch(SUPABASE_URL + '/rest/v1/questions?select=subject,chapter&class=eq.' + encodeURIComponent(cls) + '&board=eq.' + encodeURIComponent(board) + '&limit=10000', { headers: { 'apikey': SUPABASE_KEY } }),
-            fetch(SUPA_B_URL   + '/rest/v1/questions?select=subject,chapter&class=eq.' + encodeURIComponent(cls) + '&board=eq.' + encodeURIComponent(board) + '&limit=10000', { headers: { 'apikey': SUPA_B_PUB } })
-        ]);
-        let allRows = [];
-        if (resA.status === 'fulfilled' && resA.value.ok) { try { allRows = allRows.concat(await resA.value.json()); } catch(_){} }
-        if (resB.status === 'fulfilled' && resB.value.ok) { try { allRows = allRows.concat(await resB.value.json()); } catch(_){} }
-
-        subjects = [...new Set([...subjects, ...allRows.map(q => q.subject).filter(Boolean)])].sort();
+        subjects = [...new Set(subjects)].sort();
         subjects.forEach(s => { const o = document.createElement('option'); o.value = s; o.textContent = s; mSub.appendChild(o); });
 
-        function populateChapters(subj) {
-            mCh.innerHTML = '<option value="">All Chapters</option>';
-            const rows = subj ? allRows.filter(q => q.subject === subj) : allRows;
-            [...new Set(rows.map(q => q.chapter).filter(Boolean))].sort().forEach(c => { const o = document.createElement('option'); o.value = c; o.textContent = c; mCh.appendChild(o); });
-        }
-        populateChapters('');
-        mSub.onchange = () => populateChapters(mSub.value);
+        // Chapters from the syllabus (board-aware), refreshed when subject changes
+        await loadModalChapters(mSub.value, cls, board);
+        mSub.onchange = () => loadModalChapters(mSub.value, cls, board);
     } catch (err) {
         console.error('Failed to load board filters:', err);
         showErr('Could not load subjects: ' + err.message);
