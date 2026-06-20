@@ -545,15 +545,28 @@
             </div>
         </div>
 
-        <p class="batch-section-label" style="margin-top:1.1rem;"><i class="ph ph-student"></i> School Classes</p>
+        <p class="batch-section-label" style="margin-top:1.1rem;"><i class="ph ph-book-open"></i> Boards</p>
         <div class="batch-btn-grid">
-            <button class="batch-btn" data-batch="6">Class 6</button>
-            <button class="batch-btn" data-batch="7">Class 7</button>
-            <button class="batch-btn" data-batch="8">Class 8</button>
-            <button class="batch-btn" data-batch="9">Class 9</button>
-            <button class="batch-btn" data-batch="10">Class 10</button>
-            <button class="batch-btn" data-batch="11">Class 11</button>
-            <button class="batch-btn" data-batch="12">Class 12</button>
+            <button class="batch-btn" data-board="CBSE">CBSE</button>
+            <button class="batch-btn" data-board="ICSE">ICSE</button>
+            <button class="batch-btn" data-board="UP Board">UP Board</button>
+        </div>
+        <div id="boardClassRow" style="display:none;margin-top:0.75rem;">
+            <p class="batch-filters-label">Class</p>
+            <select class="batch-filter-select" id="mBoardClass" onchange="onModalBoardClassChange()">
+                <option value="">Select Class</option>
+                <option value="6">Class 6</option>
+                <option value="7">Class 7</option>
+                <option value="8">Class 8</option>
+                <option value="9">Class 9</option>
+                <option value="10">Class 10</option>
+                <option value="11-PCM">Class 11 — Science (PCM)</option>
+                <option value="11-PCB">Class 11 — Science (PCB)</option>
+                <option value="11-Commerce">Class 11 — Commerce</option>
+                <option value="12-PCM">Class 12 — Science (PCM)</option>
+                <option value="12-PCB">Class 12 — Science (PCB)</option>
+                <option value="12-Commerce">Class 12 — Commerce</option>
+            </select>
         </div>
 
         <div class="batch-modal-actions">
@@ -682,6 +695,7 @@ let selected           = new Set();
 let scheduleBarVisible = false;
 let currentUser        = null;
 let activeClass        = '';
+let activeBoard        = '';
 let activeSubject      = '';
 let activeChapter      = '';
 let activeDifficulty   = '';
@@ -728,16 +742,18 @@ async function fetchQuestions() {
     const dbCls = CLASS_DB_MAP[cls] || cls;
 
     let urlA = SUPABASE_URL + '/rest/v1/questions?is_active=eq.true&select=*&order=class,subject,chapter,difficulty_level';
-    if (dbCls)      urlA += '&class=eq.'            + encodeURIComponent(dbCls);
-    if (subject)    urlA += '&subject=eq.'          + encodeURIComponent(subject);
-    if (chapter)    urlA += '&chapter=eq.'          + encodeURIComponent(chapter);
-    if (difficulty) urlA += '&difficulty_level=eq.' + encodeURIComponent(difficulty);
+    if (dbCls)       urlA += '&class=eq.'            + encodeURIComponent(dbCls);
+    if (activeBoard) urlA += '&board=eq.'            + encodeURIComponent(activeBoard);
+    if (subject)     urlA += '&subject=eq.'          + encodeURIComponent(subject);
+    if (chapter)     urlA += '&chapter=eq.'          + encodeURIComponent(chapter);
+    if (difficulty)  urlA += '&difficulty_level=eq.' + encodeURIComponent(difficulty);
 
     let urlB = SUPA_B_URL + '/rest/v1/questions?is_active=eq.true&select=*,question_images(idrive_url,caption)&order=class,subject,chapter,difficulty_level';
-    if (dbCls)      urlB += '&class=eq.'            + encodeURIComponent(dbCls);
-    if (subject)    urlB += '&subject=eq.'          + encodeURIComponent(subject);
-    if (chapter)    urlB += '&chapter=eq.'          + encodeURIComponent(chapter);
-    if (difficulty) urlB += '&difficulty_level=eq.' + encodeURIComponent(difficulty);
+    if (dbCls)       urlB += '&class=eq.'            + encodeURIComponent(dbCls);
+    if (activeBoard) urlB += '&board=eq.'            + encodeURIComponent(activeBoard);
+    if (subject)     urlB += '&subject=eq.'          + encodeURIComponent(subject);
+    if (chapter)     urlB += '&chapter=eq.'          + encodeURIComponent(chapter);
+    if (difficulty)  urlB += '&difficulty_level=eq.' + encodeURIComponent(difficulty);
 
     const headersA = { 'apikey': SUPABASE_KEY };
     if (token) headersA['Authorization'] = 'Bearer ' + token;
@@ -1038,12 +1054,17 @@ async function refresh() {
 
 // ── New Quiz Batch Modal ──────────────────────────────
 let selectedBatch = null;
+let selectedBoard = null;
 
 function openBatchModal(e) {
     if (e) e.preventDefault();
     selectedBatch = null;
+    selectedBoard = null;
     document.querySelectorAll('.batch-btn').forEach(b => b.classList.remove('active'));
     document.getElementById('batchStartBtn').classList.remove('ready');
+    document.getElementById('batchFilters').classList.remove('visible');
+    const bcr = document.getElementById('boardClassRow');
+    if (bcr) { bcr.style.display = 'none'; document.getElementById('mBoardClass').value = ''; }
     document.getElementById('batchModal').classList.add('show');
     closeSidebar();
 }
@@ -1051,7 +1072,10 @@ function openBatchModal(e) {
 function closeBatchModal() {
     document.getElementById('batchModal').classList.remove('show');
     document.getElementById('batchFilters').classList.remove('visible');
+    const bcr = document.getElementById('boardClassRow');
+    if (bcr) bcr.style.display = 'none';
     selectedBatch = null;
+    selectedBoard = null;
 }
 
 function startNewQuiz() {
@@ -1063,13 +1087,14 @@ function startNewQuiz() {
     closeBatchModal();
 
     activeClass      = batch;
+    activeBoard      = selectedBoard || '';
     activeSubject    = subject;
     activeChapter    = chapter;
     activeDifficulty = difficulty;
     _filterAllRows   = [];
 
     refresh();
-    loadFilterBar(batch, subject).then(() => {
+    loadFilterBar(batch, subject, activeBoard).then(() => {
         if (chapter) {
             const selCh = document.getElementById('filterChapter');
             selCh.value = chapter;
@@ -1086,6 +1111,22 @@ document.querySelectorAll('.batch-btn').forEach(btn => {
     btn.addEventListener('click', async function() {
         document.querySelectorAll('.batch-btn').forEach(b => b.classList.remove('active'));
         this.classList.add('active');
+
+        // Board buttons: reveal the class picker, defer subject loading until a class is chosen
+        if (this.dataset.board) {
+            selectedBoard = this.dataset.board;
+            selectedBatch = null;
+            document.getElementById('boardClassRow').style.display = '';
+            document.getElementById('mBoardClass').value = '';
+            document.getElementById('batchFilters').classList.remove('visible');
+            document.getElementById('batchStartBtn').classList.remove('ready');
+            setTimeout(() => document.getElementById('boardClassRow').scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 60);
+            return;
+        }
+
+        // Non-board batch (competitive / school class): clear any board state
+        selectedBoard = null;
+        document.getElementById('boardClassRow').style.display = 'none';
         selectedBatch    = this.dataset.batch;
         const preSubject = this.dataset.subject || '';
         document.getElementById('batchStartBtn').classList.add('ready');
@@ -1153,17 +1194,68 @@ document.querySelectorAll('.batch-btn').forEach(btn => {
     });
 });
 
+// Board selected → class chosen: load subjects (from board_subjects) + chapters (from questions)
+async function onModalBoardClassChange() {
+    const cls   = document.getElementById('mBoardClass').value;
+    const board = selectedBoard;
+    selectedBatch = cls;
+    const mSub = document.getElementById('mSubject');
+    const mCh  = document.getElementById('mChapter');
+    mSub.innerHTML = '<option value="">All Subjects</option>';
+    mCh.innerHTML  = '<option value="">All Chapters</option>';
+    document.getElementById('mDifficulty').value = '';
+
+    const bf = document.getElementById('batchFilters');
+    if (!cls) { bf.classList.remove('visible'); document.getElementById('batchStartBtn').classList.remove('ready'); return; }
+    document.getElementById('batchStartBtn').classList.add('ready');
+    bf.classList.add('visible');
+    setTimeout(() => bf.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 60);
+
+    try {
+        // Standard subject list for this board+class
+        let subjects = [];
+        const subRes = await fetch(
+            SUPABASE_URL + '/rest/v1/board_subjects?select=subject&board=eq.' + encodeURIComponent(board) + '&class=eq.' + encodeURIComponent(cls) + '&is_active=eq.true&order=subject.asc',
+            { headers: { 'apikey': SUPABASE_KEY } }
+        );
+        if (subRes.ok) subjects = (await subRes.json()).map(r => r.subject);
+
+        // Chapters come from existing questions for this board+class
+        const [resA, resB] = await Promise.allSettled([
+            fetch(SUPABASE_URL + '/rest/v1/questions?select=subject,chapter&class=eq.' + encodeURIComponent(cls) + '&board=eq.' + encodeURIComponent(board) + '&limit=10000', { headers: { 'apikey': SUPABASE_KEY } }),
+            fetch(SUPA_B_URL   + '/rest/v1/questions?select=subject,chapter&class=eq.' + encodeURIComponent(cls) + '&board=eq.' + encodeURIComponent(board) + '&limit=10000', { headers: { 'apikey': SUPA_B_PUB } })
+        ]);
+        let allRows = [];
+        if (resA.status === 'fulfilled' && resA.value.ok) { try { allRows = allRows.concat(await resA.value.json()); } catch(_){} }
+        if (resB.status === 'fulfilled' && resB.value.ok) { try { allRows = allRows.concat(await resB.value.json()); } catch(_){} }
+
+        subjects = [...new Set([...subjects, ...allRows.map(q => q.subject).filter(Boolean)])].sort();
+        subjects.forEach(s => { const o = document.createElement('option'); o.value = s; o.textContent = s; mSub.appendChild(o); });
+
+        function populateChapters(subj) {
+            mCh.innerHTML = '<option value="">All Chapters</option>';
+            const rows = subj ? allRows.filter(q => q.subject === subj) : allRows;
+            [...new Set(rows.map(q => q.chapter).filter(Boolean))].sort().forEach(c => { const o = document.createElement('option'); o.value = c; o.textContent = c; mCh.appendChild(o); });
+        }
+        populateChapters('');
+        mSub.onchange = () => populateChapters(mSub.value);
+    } catch (err) {
+        console.error('Failed to load board filters:', err);
+        showErr('Could not load subjects: ' + err.message);
+    }
+}
+
 // ── Filter bar — load subjects + chapters from Supabase ──
 let _filterAllRows = []; // cached rows for the active class (subject+chapter only)
 
-async function loadFilterBar(cls, preSubject) {
+async function loadFilterBar(cls, preSubject, board) {
     const bar     = document.getElementById('chapterBar');
     const title   = document.getElementById('chapterBarTitle');
     const selSub  = document.getElementById('filterSubject');
     const selCh   = document.getElementById('filterChapter');
 
-    const label = isNaN(cls) ? cls : 'Class ' + cls;
-    title.textContent = label;
+    const clsLabel = isNaN(cls) ? cls : 'Class ' + cls;
+    title.textContent = board ? (board + ' · ' + clsLabel) : clsLabel;
     bar.style.display = 'block';
 
     selSub.innerHTML = '<option value="">Loading…</option>';
@@ -1172,10 +1264,11 @@ async function loadFilterBar(cls, preSubject) {
     try {
         const CLASS_DB_MAP = {};
         const dbCls = CLASS_DB_MAP[cls] || cls;
+        const boardQ = board ? '&board=eq.' + encodeURIComponent(board) : '';
 
         const [resA, resB] = await Promise.allSettled([
-            fetch(SUPABASE_URL + '/rest/v1/questions?select=subject,chapter&class=eq.' + encodeURIComponent(dbCls) + '&limit=10000', { headers: { 'apikey': SUPABASE_KEY } }),
-            fetch(SUPA_B_URL   + '/rest/v1/questions?select=subject,chapter&class=eq.' + encodeURIComponent(dbCls) + '&limit=10000', { headers: { 'apikey': SUPA_B_PUB  } })
+            fetch(SUPABASE_URL + '/rest/v1/questions?select=subject,chapter&class=eq.' + encodeURIComponent(dbCls) + boardQ + '&limit=10000', { headers: { 'apikey': SUPABASE_KEY } }),
+            fetch(SUPA_B_URL   + '/rest/v1/questions?select=subject,chapter&class=eq.' + encodeURIComponent(dbCls) + boardQ + '&limit=10000', { headers: { 'apikey': SUPA_B_PUB  } })
         ]);
         if (resA.status !== 'fulfilled' || !resA.value.ok) throw new Error('HTTP ' + (resA.value?.status || 'network'));
         let rowsA = await resA.value.json();
@@ -1183,7 +1276,14 @@ async function loadFilterBar(cls, preSubject) {
         if (resB.status === 'fulfilled' && resB.value.ok) { try { rowsB = await resB.value.json(); } catch(_){} }
         _filterAllRows = [...rowsA, ...rowsB];
 
-        const subjects = [...new Set(_filterAllRows.map(q => q.subject).filter(Boolean))].sort();
+        let baseSubjects = [];
+        if (board) {
+            try {
+                const sr = await fetch(SUPABASE_URL + '/rest/v1/board_subjects?select=subject&board=eq.' + encodeURIComponent(board) + '&class=eq.' + encodeURIComponent(dbCls) + '&is_active=eq.true&order=subject.asc', { headers: { 'apikey': SUPABASE_KEY } });
+                if (sr.ok) baseSubjects = (await sr.json()).map(r => r.subject);
+            } catch(_) {}
+        }
+        const subjects = [...new Set([...baseSubjects, ..._filterAllRows.map(q => q.subject).filter(Boolean)])].sort();
         selSub.innerHTML = '<option value="">All Subjects</option>';
         subjects.forEach(s => {
             const o = document.createElement('option');
@@ -1550,6 +1650,7 @@ async function quickLoad(batch, subject) {
 
     try {
         activeClass      = batch;
+        activeBoard      = '';
         activeSubject    = subject || '';
         activeChapter    = '';
         activeDifficulty = '';
@@ -1877,6 +1978,7 @@ async function toggleBoardSubject(board, cls, subject) {
 function loadQuestionDetails(question) {
     // Set active filters to match this question
     activeClass = question.class || '';
+    activeBoard = question.board || '';
     activeSubject = question.subject || '';
     activeChapter = question.chapter || '';
     activeDifficulty = question.difficulty || '';
