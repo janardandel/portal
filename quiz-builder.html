@@ -405,12 +405,30 @@
             <span id="qbErrMsg"></span>
         </div>
 
+        <!-- Selection action bar (top, sticky) -->
+        <div id="selActionTop" style="display:none;position:sticky;top:0;z-index:30;align-items:center;justify-content:space-between;gap:0.75rem;background:var(--primary);color:#fff;padding:0.6rem 1rem;border-radius:var(--radius);box-shadow:0 2px 10px rgba(0,0,0,0.18);">
+            <span><strong id="selCountTop">0</strong> question(s) selected</span>
+            <span style="display:flex;gap:0.5rem;">
+                <button onclick="clearSel()" style="background:rgba(255,255,255,0.2);color:#fff;border:none;padding:0.45rem 0.8rem;border-radius:8px;cursor:pointer;font-weight:600;">Clear</button>
+                <button onclick="openReview()" style="background:#fff;color:var(--primary);border:none;padding:0.45rem 0.9rem;border-radius:8px;cursor:pointer;font-weight:700;"><i class="ph ph-list-checks"></i> Review &amp; Schedule</button>
+            </span>
+        </div>
+
         <!-- Questions -->
         <div id="qContainer">
             <div class="loading-state">
                 <div class="loader"></div>
                 <p>Loading questions...</p>
             </div>
+        </div>
+
+        <!-- Selection action bar (bottom) -->
+        <div id="selActionBottom" style="display:none;align-items:center;justify-content:space-between;gap:0.75rem;background:var(--primary);color:#fff;padding:0.6rem 1rem;border-radius:var(--radius);box-shadow:0 2px 10px rgba(0,0,0,0.18);">
+            <span><strong id="selCountBottom">0</strong> question(s) selected</span>
+            <span style="display:flex;gap:0.5rem;">
+                <button onclick="clearSel()" style="background:rgba(255,255,255,0.2);color:#fff;border:none;padding:0.45rem 0.8rem;border-radius:8px;cursor:pointer;font-weight:600;">Clear</button>
+                <button onclick="openReview()" style="background:#fff;color:var(--primary);border:none;padding:0.45rem 0.9rem;border-radius:8px;cursor:pointer;font-weight:700;"><i class="ph ph-list-checks"></i> Review &amp; Schedule</button>
+            </span>
         </div>
 
         <!-- Schedule bar -->
@@ -502,6 +520,19 @@
         </div><!-- /qb-layout -->
     </div><!-- /qb-wrap -->
 </div><!-- /qbPage -->
+
+<!-- Review Selected Questions Modal -->
+<div class="batch-modal-bg" id="reviewModal">
+    <div class="batch-modal-box" style="max-width:680px;">
+        <p class="batch-modal-title"><i class="ph ph-list-checks"></i> Review Selected <span class="count-pill" id="reviewCount">0</span></p>
+        <p class="batch-modal-sub">Questions you picked across all subjects &amp; classes. Remove any, add more, or proceed to schedule.</p>
+        <div id="reviewList" style="max-height:52vh;overflow-y:auto;margin:0.5rem 0 0.25rem;"></div>
+        <div class="batch-modal-actions">
+            <button class="batch-cancel-btn" onclick="closeReview()"><i class="ph ph-plus-circle"></i> Add more</button>
+            <button class="batch-start-btn" onclick="proceedToSchedule()"><i class="ph ph-arrow-right"></i> Proceed to Schedule</button>
+        </div>
+    </div>
+</div>
 
 <!-- New Quiz — Batch Selection Modal -->
 <div class="batch-modal-bg" id="batchModal">
@@ -690,6 +721,7 @@ let   teacherInstituteId = null;
 
 let allQuestions       = [];
 let selected           = new Set();
+let selectedQuestions  = new Map();  // id -> question object (persists across subjects/classes)
 let scheduleBarVisible = false;
 let currentUser        = null;
 let activeClass        = '';
@@ -824,7 +856,7 @@ function render(questions) {
 
         const checkbox = row.querySelector('.q-checkbox');
         checkbox.addEventListener('change', () => {
-            toggleCard(q.id, row);
+            toggleCard(q, row);
         });
 
         list.appendChild(row);
@@ -835,30 +867,79 @@ function render(questions) {
     updateUI();
 }
 
-function toggleCard(id, card) {
-    if (selected.has(id)) { selected.delete(id); card.classList.remove('selected'); }
-    else                   { selected.add(id);    card.classList.add('selected'); }
+function toggleCard(q, card) {
+    const id = q.id;
+    if (selected.has(id)) { selected.delete(id); selectedQuestions.delete(id); card.classList.remove('selected'); }
+    else                   { selected.add(id);    selectedQuestions.set(id, q); card.classList.add('selected'); }
     updateUI();
 }
 
 function updateUI() {
     const n = selected.size;
-    document.getElementById('selCount').textContent    = n;
-    document.getElementById('schedCount').textContent  = n;
-    const scheduleBar = document.getElementById('scheduleBar');
+    ['selCount','schedCount','selCountTop','selCountBottom','reviewCount'].forEach(id => {
+        const e = document.getElementById(id); if (e) e.textContent = n;
+    });
     const visible = n > 0;
-    scheduleBar.style.display = visible ? 'block' : 'none';
-    if (visible && !scheduleBarVisible) {
-        scheduleBar.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-    }
-    scheduleBarVisible = visible;
+    const top = document.getElementById('selActionTop');
+    const bot = document.getElementById('selActionBottom');
+    if (top) top.style.display = visible ? 'flex' : 'none';
+    if (bot) bot.style.display = visible ? 'flex' : 'none';
     document.getElementById('clearBtn').style.display = visible ? 'inline' : 'none';
+    if (!visible) document.getElementById('scheduleBar').style.display = 'none';
 }
 
 function clearSel() {
     selected.clear();
-    document.querySelectorAll('.question-row.selected').forEach(c => c.classList.remove('selected'));
+    selectedQuestions.clear();
+    document.querySelectorAll('.question-row.selected').forEach(c => { c.classList.remove('selected'); const cb = c.querySelector('.q-checkbox'); if (cb) cb.checked = false; });
+    document.getElementById('scheduleBar').style.display = 'none';
     updateUI();
+}
+
+// ── Review selected questions (across all subjects/classes) ──
+function openReview() {
+    if (!selected.size) return;
+    renderReview();
+    document.getElementById('reviewModal').classList.add('show');
+}
+function closeReview() {
+    document.getElementById('reviewModal').classList.remove('show');
+}
+function renderReview() {
+    const list = document.getElementById('reviewList');
+    if (!selectedQuestions.size) {
+        list.innerHTML = '<div class="empty-state" style="padding:1.5rem;"><i class="ph ph-tray"></i><p>No questions selected.</p></div>';
+        return;
+    }
+    list.innerHTML = '';
+    selectedQuestions.forEach((q, id) => {
+        const meta = [q.board, q.class, q.subject, q.chapter].filter(Boolean).join(' · ');
+        const row = document.createElement('div');
+        row.style.cssText = 'display:flex;gap:0.6rem;align-items:flex-start;padding:0.6rem 0.4rem;border-bottom:1px solid var(--border);';
+        row.innerHTML =
+            '<div style="flex:1;min-width:0;">' +
+                '<div style="font-size:0.7rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.04em;margin-bottom:0.2rem;">' + (meta || '') + '</div>' +
+                '<div style="font-size:0.9rem;">' + (q.question_text || '') + '</div>' +
+            '</div>' +
+            '<button title="Remove" style="flex:none;background:rgba(220,53,69,0.12);color:#dc3545;border:none;width:30px;height:30px;border-radius:8px;cursor:pointer;font-size:1rem;">&times;</button>';
+        row.querySelector('button').addEventListener('click', () => removeFromReview(id));
+        list.appendChild(row);
+    });
+}
+function removeFromReview(id) {
+    selected.delete(id);
+    selectedQuestions.delete(id);
+    const row = document.querySelector('.question-row[data-id="' + id + '"]');
+    if (row) { row.classList.remove('selected'); const cb = row.querySelector('.q-checkbox'); if (cb) cb.checked = false; }
+    updateUI();
+    if (!selected.size) { closeReview(); return; }
+    renderReview();
+}
+function proceedToSchedule() {
+    closeReview();
+    const bar = document.getElementById('scheduleBar');
+    bar.style.display = 'block';
+    bar.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
 // ── Moodle course list (per institute, via worker) ────
@@ -923,7 +1004,7 @@ async function scheduleQuiz() {
     btn.innerHTML = '<div class="loader" style="width:18px;height:18px;border-width:2px;margin:0;border-color:rgba(255,255,255,0.3);border-top-color:#fff;"></div> &nbsp;Scheduling...';
 
     const token = localStorage.getItem('pg_access_token');
-    const selQuestions = allQuestions.filter(q => selected.has(q.id));
+    const selQuestions = [...selectedQuestions.values()];
 
     try {
         // Save to Supabase
@@ -985,6 +1066,8 @@ async function scheduleQuiz() {
 function closeModal() {
     document.getElementById('successModal').classList.remove('show');
     selected.clear();
+    selectedQuestions.clear();
+    document.getElementById('scheduleBar').style.display = 'none';
     document.getElementById('quizTitle').value = '';
     document.getElementById('quizDate').value  = '';
     document.getElementById('quizTime').value  = '';
@@ -1105,6 +1188,9 @@ function startNewQuiz() {
 
 document.getElementById('batchModal').addEventListener('click', function(e) {
     if (e.target === this) closeBatchModal();
+});
+document.getElementById('reviewModal').addEventListener('click', function(e) {
+    if (e.target === this) closeReview();
 });
 
 document.querySelectorAll('.batch-btn').forEach(btn => {
