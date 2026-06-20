@@ -763,7 +763,10 @@ async function loadBoardSubjects() {
         if (!res.ok) return;
         const rows = await res.json();
         const map = {};
-        rows.forEach(r => { (map[r.class] = map[r.class] || []).push(r.subject); });
+        rows.forEach(r => {
+            const arr = (map[r.class] = map[r.class] || []);
+            if (!arr.includes(r.subject)) arr.push(r.subject); // subjects are identical across boards → dedupe
+        });
         BOARD_CLASS_SUBJECTS = map;
     } catch (e) { console.error('board_subjects load failed', e); }
 }
