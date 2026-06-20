@@ -509,13 +509,35 @@
         <p class="batch-modal-title"><i class="ph ph-plus-circle"></i> Schedule Quiz — Select Batch</p>
         <p class="batch-modal-sub">Choose the class or competitive batch you want to create a quiz for.</p>
 
-        <p class="batch-section-label"><i class="ph ph-trophy"></i> Competitive Exams</p>
+        <p class="batch-section-label"><i class="ph ph-trophy"></i> Exam / Board</p>
         <div class="batch-btn-grid">
             <button class="batch-btn" data-batch="JEE">JEE</button>
             <button class="batch-btn" data-batch="NEET">NEET</button>
+            <button class="batch-btn" data-board="CBSE">CBSE</button>
+            <button class="batch-btn" data-board="ICSE">ICSE</button>
+            <button class="batch-btn" data-board="UP Board">UP Board</button>
         </div>
 
-        <!-- Filters appear HERE — immediately below the selected batch -->
+        <!-- Class picker (boards only) -->
+        <div id="boardClassRow" style="display:none;margin-top:0.85rem;">
+            <p class="batch-filters-label">Class</p>
+            <select class="batch-filter-select" id="mBoardClass" onchange="onModalBoardClassChange()">
+                <option value="">Select Class</option>
+                <option value="6">Class 6</option>
+                <option value="7">Class 7</option>
+                <option value="8">Class 8</option>
+                <option value="9">Class 9</option>
+                <option value="10">Class 10</option>
+                <option value="11-PCM">Class 11 — Science (PCM)</option>
+                <option value="11-PCB">Class 11 — Science (PCB)</option>
+                <option value="11-Commerce">Class 11 — Commerce</option>
+                <option value="12-PCM">Class 12 — Science (PCM)</option>
+                <option value="12-PCB">Class 12 — Science (PCB)</option>
+                <option value="12-Commerce">Class 12 — Commerce</option>
+            </select>
+        </div>
+
+        <!-- Filters appear HERE — below the selected exam/board (and class, for boards) -->
         <div class="batch-filters" id="batchFilters">
             <p class="batch-filters-label" style="font-size:0.75rem;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.07em;margin-bottom:0.5rem;">
                 <i class="ph ph-funnel"></i> &nbsp;Subject &amp; Chapter
@@ -543,30 +565,6 @@
                     <option value="Advanced">Advanced</option>
                 </select>
             </div>
-        </div>
-
-        <p class="batch-section-label" style="margin-top:1.1rem;"><i class="ph ph-book-open"></i> Boards</p>
-        <div class="batch-btn-grid">
-            <button class="batch-btn" data-board="CBSE">CBSE</button>
-            <button class="batch-btn" data-board="ICSE">ICSE</button>
-            <button class="batch-btn" data-board="UP Board">UP Board</button>
-        </div>
-        <div id="boardClassRow" style="display:none;margin-top:0.75rem;">
-            <p class="batch-filters-label">Class</p>
-            <select class="batch-filter-select" id="mBoardClass" onchange="onModalBoardClassChange()">
-                <option value="">Select Class</option>
-                <option value="6">Class 6</option>
-                <option value="7">Class 7</option>
-                <option value="8">Class 8</option>
-                <option value="9">Class 9</option>
-                <option value="10">Class 10</option>
-                <option value="11-PCM">Class 11 — Science (PCM)</option>
-                <option value="11-PCB">Class 11 — Science (PCB)</option>
-                <option value="11-Commerce">Class 11 — Commerce</option>
-                <option value="12-PCM">Class 12 — Science (PCM)</option>
-                <option value="12-PCB">Class 12 — Science (PCB)</option>
-                <option value="12-Commerce">Class 12 — Commerce</option>
-            </select>
         </div>
 
         <div class="batch-modal-actions">
