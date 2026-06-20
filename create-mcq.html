@@ -751,19 +751,22 @@ function showToast(msg, type) {
 }
 
 // ── Subject list filtered by exam / board ──
-const BOARD_CLASS_SUBJECTS = {
-    '6':          ['Hindi','English','Mathematics','Science','Social Science','Sanskrit','Environmental Studies','Physical Education','Home Science','Agriculture'],
-    '7':          ['Hindi','English','Mathematics','Science','Social Science','Sanskrit','Environmental Studies','Physical Education','Home Science','Agriculture'],
-    '8':          ['Hindi','English','Mathematics','Science','Social Science','Sanskrit','Environmental Studies','Physical Education','Home Science','Agriculture'],
-    '9':          ['Hindi','English','Mathematics','Science','Social Science'],
-    '10':         ['Hindi','English','Mathematics','Science','Social Science'],
-    '11-PCM':     ['Hindi','English','Physics','Chemistry','Mathematics','Computer Science','Physical Education'],
-    '11-PCB':     ['Hindi','English','Physics','Chemistry','Biology'],
-    '11-Commerce':['Hindi','English','Accountancy','Business Studies','Economics','Mathematics','Computer Science'],
-    '12-PCM':     ['Hindi','English','Physics','Chemistry','Mathematics','Computer Science','Physical Education'],
-    '12-PCB':     ['Hindi','English','Physics','Chemistry','Biology'],
-    '12-Commerce':['Hindi','English','Accountancy','Business Studies','Economics','Mathematics','Computer Science'],
-};
+// Populated at load from the central board_subjects table (single source of truth, shared with quiz-builder)
+let BOARD_CLASS_SUBJECTS = {};
+
+async function loadBoardSubjects() {
+    try {
+        const res = await fetch(
+            `${SUPA_A_URL}/rest/v1/board_subjects?select=class,subject&is_active=eq.true&order=class.asc,subject.asc`,
+            { headers: { apikey: SUPA_A_KEY } }
+        );
+        if (!res.ok) return;
+        const rows = await res.json();
+        const map = {};
+        rows.forEach(r => { (map[r.class] = map[r.class] || []).push(r.subject); });
+        BOARD_CLASS_SUBJECTS = map;
+    } catch (e) { console.error('board_subjects load failed', e); }
+}
 
 function filterSubjectsByExam() {
     const exam = document.getElementById('metaExam').value;
@@ -796,7 +799,8 @@ function filterSubjectsByExam() {
     else updateChapterList('metaChapter');
 }
 
-function filterSubjectsByClass() {
+async function filterSubjectsByClass() {
+    if (!Object.keys(BOARD_CLASS_SUBJECTS).length) await loadBoardSubjects();
     const cls = document.getElementById('metaClass').value;
     const giftStep = document.getElementById('giftStep');
     if (giftStep) giftStep.style.display = 'none';
@@ -837,7 +841,8 @@ function onOverrideClassChange(idx) {
     fillOverrideSubjects(idx);
 }
 
-function fillOverrideSubjects(idx) {
+async function fillOverrideSubjects(idx) {
+    if (!Object.keys(BOARD_CLASS_SUBJECTS).length) await loadBoardSubjects();
     const exam = document.getElementById('ov-exam-' + idx).value;
     const cls  = document.getElementById('ov-class-' + idx)?.value || '';
     const list = subjectsFor(exam, cls);
@@ -993,6 +998,7 @@ async function updateTopicList(topicSelectId, qIdx) {
 }
 
 // ── Init ──────────────────────────────────────────────────────────────────
+loadBoardSubjects();
 checkAuth();
 </script>
 </body>
