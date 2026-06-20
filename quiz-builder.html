@@ -755,8 +755,10 @@ async function fetchQuestions() {
     if (chapter)     urlB += '&chapter=eq.'          + encodeURIComponent(chapter);
     if (difficulty)  urlB += '&difficulty_level=eq.' + encodeURIComponent(difficulty);
 
+    // Central read uses the anon key only. The portal login token is issued by a
+    // different Supabase project, so sending it as Bearer here makes central reject
+    // it (401). The anon RLS policy already permits reading active questions.
     const headersA = { 'apikey': SUPABASE_KEY };
-    if (token) headersA['Authorization'] = 'Bearer ' + token;
 
     const [resA, resB] = await Promise.allSettled([
         fetch(urlA, { headers: headersA }),
