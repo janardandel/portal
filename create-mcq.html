@@ -910,6 +910,17 @@ async function updateChapterList(chapterSelectId, topicSelectId, subjectOverride
         ? overrideExamCtx(chapterSelectId.replace('ov-chapter-',''))
         : getExamContext();
 
+    // Board context: chapters are per-board for boards (CBSE/ICSE/UP Board); board-neutral rows (board IS NULL) apply to all
+    const boardsList = ['CBSE','ICSE','UP Board'];
+    let boardCtx = '';
+    if (isOverride) {
+        const oe = document.getElementById('ov-exam-' + chapterSelectId.replace('ov-chapter-','')).value || '';
+        if (boardsList.includes(oe)) boardCtx = oe;
+    } else {
+        const me = document.getElementById('metaExam')?.value || '';
+        if (boardsList.includes(me)) boardCtx = me;
+    }
+
     sel.innerHTML = isOverride
         ? '<option value="">— same as default —</option>'
         : '<option value="">Loading…</option>';
@@ -928,10 +939,9 @@ async function updateChapterList(chapterSelectId, topicSelectId, subjectOverride
     }
 
     try {
-        const res = await fetch(
-            `${SUPA_A_URL}/rest/v1/jee_syllabus?subject=eq.${encodeURIComponent(subject)}&exam=eq.${encodeURIComponent(examCtx)}&select=chapter&order=chapter.asc`,
-            { headers: { apikey: SUPA_A_KEY, 'Content-Type': 'application/json' } }
-        );
+        let chUrl = `${SUPA_A_URL}/rest/v1/jee_syllabus?subject=eq.${encodeURIComponent(subject)}&exam=eq.${encodeURIComponent(examCtx)}&select=chapter&order=chapter.asc`;
+        if (boardCtx) chUrl += `&or=(board.is.null,board.eq.${encodeURIComponent(boardCtx)})`;
+        const res = await fetch(chUrl, { headers: { apikey: SUPA_A_KEY, 'Content-Type': 'application/json' } });
         const rows = await res.json();
         // Deduplicate chapters
         const chapters = [...new Set(rows.map(r => r.chapter))];
