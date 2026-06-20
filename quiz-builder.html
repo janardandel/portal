@@ -273,35 +273,6 @@
                         </ul>
                     </div>
                     <div class="comp-exam-group">
-                        <div class="comp-exam-label" onclick="toggleSection('school')" id="schoolToggle">
-                            <span class="comp-exam-icon">🎓</span>
-                            School Classes
-                        </div>
-                        <ul class="qb-subjects" id="schoolSubjectList">
-                            <li class="class-item collapsed" onclick="loadSchoolClassSubjects('6')" id="class6Toggle">
-                                <i class="ph ph-graduation-cap"></i> Class 6 <span class="subject-count">(...)</span>
-                            </li>
-                            <li class="class-item collapsed" onclick="loadSchoolClassSubjects('7')" id="class7Toggle">
-                                <i class="ph ph-graduation-cap"></i> Class 7 <span class="subject-count">(...)</span>
-                            </li>
-                            <li class="class-item collapsed" onclick="loadSchoolClassSubjects('8')" id="class8Toggle">
-                                <i class="ph ph-graduation-cap"></i> Class 8 <span class="subject-count">(...)</span>
-                            </li>
-                            <li class="class-item collapsed" onclick="loadSchoolClassSubjects('9')" id="class9Toggle">
-                                <i class="ph ph-graduation-cap"></i> Class 9 <span class="subject-count">(...)</span>
-                            </li>
-                            <li class="class-item collapsed" onclick="loadSchoolClassSubjects('10')" id="class10Toggle">
-                                <i class="ph ph-graduation-cap"></i> Class 10 <span class="subject-count">(...)</span>
-                            </li>
-                            <li class="class-item collapsed" onclick="loadSchoolClassSubjects('11')" id="class11Toggle">
-                                <i class="ph ph-graduation-cap"></i> Class 11 <span class="subject-count">(...)</span>
-                            </li>
-                            <li class="class-item collapsed" onclick="loadSchoolClassSubjects('12')" id="class12Toggle">
-                                <i class="ph ph-graduation-cap"></i> Class 12 <span class="subject-count">(...)</span>
-                            </li>
-                        </ul>
-                    </div>
-                    <div class="comp-exam-group">
                         <div class="comp-exam-label collapsed" onclick="toggleSection('cbse')" id="cbseToggle">
                             <span class="comp-exam-icon">📘</span>
                             CBSE
@@ -1625,7 +1596,7 @@ function toggleSection(sectionId) {
 }
 
 function loadSectionStates() {
-    ['jee', 'neet', 'school'].forEach(sectionId => {
+    ['jee', 'neet'].forEach(sectionId => {
         const state = localStorage.getItem('qb_section_' + sectionId) || (sectionId === 'school' ? 'collapsed' : 'expanded');
         const label = document.getElementById(sectionId + 'Toggle');
         const list = document.getElementById(sectionId + 'SubjectList');
