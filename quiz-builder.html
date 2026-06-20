@@ -301,6 +301,51 @@
                             </li>
                         </ul>
                     </div>
+                    <div class="comp-exam-group">
+                        <div class="comp-exam-label collapsed" onclick="toggleSection('cbse')" id="cbseToggle">
+                            <span class="comp-exam-icon">📘</span>
+                            CBSE
+                        </div>
+                        <ul class="qb-subjects collapsed" id="cbseSubjectList">
+                            <li class="class-item collapsed" onclick="loadBoardClassSubjects('CBSE','6')" id="cbseClass6Toggle"><i class="ph ph-graduation-cap"></i> Class 6 <span class="subject-count">(...)</span></li>
+                            <li class="class-item collapsed" onclick="loadBoardClassSubjects('CBSE','7')" id="cbseClass7Toggle"><i class="ph ph-graduation-cap"></i> Class 7 <span class="subject-count">(...)</span></li>
+                            <li class="class-item collapsed" onclick="loadBoardClassSubjects('CBSE','8')" id="cbseClass8Toggle"><i class="ph ph-graduation-cap"></i> Class 8 <span class="subject-count">(...)</span></li>
+                            <li class="class-item collapsed" onclick="loadBoardClassSubjects('CBSE','9')" id="cbseClass9Toggle"><i class="ph ph-graduation-cap"></i> Class 9 <span class="subject-count">(...)</span></li>
+                            <li class="class-item collapsed" onclick="loadBoardClassSubjects('CBSE','10')" id="cbseClass10Toggle"><i class="ph ph-graduation-cap"></i> Class 10 <span class="subject-count">(...)</span></li>
+                            <li class="class-item collapsed" onclick="loadBoardClassSubjects('CBSE','11')" id="cbseClass11Toggle"><i class="ph ph-graduation-cap"></i> Class 11 <span class="subject-count">(...)</span></li>
+                            <li class="class-item collapsed" onclick="loadBoardClassSubjects('CBSE','12')" id="cbseClass12Toggle"><i class="ph ph-graduation-cap"></i> Class 12 <span class="subject-count">(...)</span></li>
+                        </ul>
+                    </div>
+                    <div class="comp-exam-group">
+                        <div class="comp-exam-label collapsed" onclick="toggleSection('icse')" id="icseToggle">
+                            <span class="comp-exam-icon">📗</span>
+                            ICSE
+                        </div>
+                        <ul class="qb-subjects collapsed" id="icseSubjectList">
+                            <li class="class-item collapsed" onclick="loadBoardClassSubjects('ICSE','6')" id="icseClass6Toggle"><i class="ph ph-graduation-cap"></i> Class 6 <span class="subject-count">(...)</span></li>
+                            <li class="class-item collapsed" onclick="loadBoardClassSubjects('ICSE','7')" id="icseClass7Toggle"><i class="ph ph-graduation-cap"></i> Class 7 <span class="subject-count">(...)</span></li>
+                            <li class="class-item collapsed" onclick="loadBoardClassSubjects('ICSE','8')" id="icseClass8Toggle"><i class="ph ph-graduation-cap"></i> Class 8 <span class="subject-count">(...)</span></li>
+                            <li class="class-item collapsed" onclick="loadBoardClassSubjects('ICSE','9')" id="icseClass9Toggle"><i class="ph ph-graduation-cap"></i> Class 9 <span class="subject-count">(...)</span></li>
+                            <li class="class-item collapsed" onclick="loadBoardClassSubjects('ICSE','10')" id="icseClass10Toggle"><i class="ph ph-graduation-cap"></i> Class 10 <span class="subject-count">(...)</span></li>
+                            <li class="class-item collapsed" onclick="loadBoardClassSubjects('ICSE','11')" id="icseClass11Toggle"><i class="ph ph-graduation-cap"></i> Class 11 <span class="subject-count">(...)</span></li>
+                            <li class="class-item collapsed" onclick="loadBoardClassSubjects('ICSE','12')" id="icseClass12Toggle"><i class="ph ph-graduation-cap"></i> Class 12 <span class="subject-count">(...)</span></li>
+                        </ul>
+                    </div>
+                    <div class="comp-exam-group">
+                        <div class="comp-exam-label collapsed" onclick="toggleSection('upboard')" id="upboardToggle">
+                            <span class="comp-exam-icon">📙</span>
+                            UP Board
+                        </div>
+                        <ul class="qb-subjects collapsed" id="upboardSubjectList">
+                            <li class="class-item collapsed" onclick="loadBoardClassSubjects('UP Board','6')" id="upboardClass6Toggle"><i class="ph ph-graduation-cap"></i> Class 6 <span class="subject-count">(...)</span></li>
+                            <li class="class-item collapsed" onclick="loadBoardClassSubjects('UP Board','7')" id="upboardClass7Toggle"><i class="ph ph-graduation-cap"></i> Class 7 <span class="subject-count">(...)</span></li>
+                            <li class="class-item collapsed" onclick="loadBoardClassSubjects('UP Board','8')" id="upboardClass8Toggle"><i class="ph ph-graduation-cap"></i> Class 8 <span class="subject-count">(...)</span></li>
+                            <li class="class-item collapsed" onclick="loadBoardClassSubjects('UP Board','9')" id="upboardClass9Toggle"><i class="ph ph-graduation-cap"></i> Class 9 <span class="subject-count">(...)</span></li>
+                            <li class="class-item collapsed" onclick="loadBoardClassSubjects('UP Board','10')" id="upboardClass10Toggle"><i class="ph ph-graduation-cap"></i> Class 10 <span class="subject-count">(...)</span></li>
+                            <li class="class-item collapsed" onclick="loadBoardClassSubjects('UP Board','11')" id="upboardClass11Toggle"><i class="ph ph-graduation-cap"></i> Class 11 <span class="subject-count">(...)</span></li>
+                            <li class="class-item collapsed" onclick="loadBoardClassSubjects('UP Board','12')" id="upboardClass12Toggle"><i class="ph ph-graduation-cap"></i> Class 12 <span class="subject-count">(...)</span></li>
+                        </ul>
+                    </div>
                 </div>
                 <div class="qb-sidebar-foot">
                     <a href="#" class="sidebar-link" onclick="openSettingsModal(event)"><i class="ph ph-gear"></i> Settings</a>
@@ -1733,6 +1778,91 @@ async function toggleSchoolSubject(cls, subject) {
         // Don't show error for missing data, just show empty list
         // showErr('Failed to load questions for ' + subject);
         // Reset state on error
+        if (subjectLi) subjectLi.classList.remove('active-subject');
+    }
+}
+
+// ── Board (CBSE / ICSE / UP Board) Class Subjects ─────
+function boardKey(board) { return board.replace(/[^a-z0-9]/gi, '').toLowerCase(); }
+
+async function loadBoardClassSubjects(board, cls) {
+    const bk = boardKey(board);
+    const selectedLi = document.getElementById(`${bk}Class${cls}Toggle`);
+    const subId = `${bk}Class${cls}Subjects`;
+    const existing = document.getElementById(subId);
+    if (existing) { existing.remove(); if (selectedLi) selectedLi.classList.add('collapsed'); return; }
+    if (selectedLi) selectedLi.classList.remove('collapsed');
+    try {
+        const res = await fetch(
+            SUPABASE_URL + '/rest/v1/questions?select=subject&class=eq.' + encodeURIComponent(cls) + '&board=eq.' + encodeURIComponent(board) + '&limit=1000',
+            { headers: { 'apikey': SUPABASE_KEY } }
+        );
+        if (!res.ok) throw new Error('Failed to load subjects');
+        const questions = await res.json();
+        const subjects = [...new Set(questions.map(q => q.subject).filter(Boolean))].sort();
+        const subList = document.createElement('ul');
+        subList.className = 'qb-subjects-sublist';
+        subList.id = subId;
+        subList.style.cssText = 'margin-left:1rem;margin-top:0.5rem;';
+        if (subjects.length === 0) {
+            const li = document.createElement('li');
+            li.innerHTML = `<i class="ph ph-info"></i> No subjects found for this class`;
+            li.style.cssText = 'padding:0.5rem 0.5rem;font-size:0.8rem;color:var(--text-muted);font-style:italic;';
+            subList.appendChild(li);
+        } else {
+            subjects.forEach(subject => {
+                const count = questions.filter(q => q.subject === subject).length;
+                const li = document.createElement('li');
+                li.dataset.subject = subject;
+                li.innerHTML = `<i class="ph ph-book"></i> ${subject} <span class="subject-count">(${count})</span>`;
+                li.onclick = () => toggleBoardSubject(board, cls, subject);
+                li.style.cssText = 'padding:0.5rem 0.5rem;cursor:pointer;font-size:0.85rem;';
+                subList.appendChild(li);
+            });
+        }
+        if (selectedLi) selectedLi.insertAdjacentElement('afterend', subList);
+    } catch (err) {
+        console.error('Failed to load board subjects', board, cls, err);
+        if (selectedLi) selectedLi.classList.add('collapsed');
+    }
+}
+
+async function toggleBoardSubject(board, cls, subject) {
+    const bk = boardKey(board);
+    const subjectLi = Array.from(document.querySelectorAll(`#${bk}Class${cls}Subjects li`)).find(li => li.dataset.subject === subject);
+    const qid = `${bk}Class${cls}${sanitizeId(subject)}Questions`;
+    const existing = document.getElementById(qid);
+    if (existing) { existing.remove(); if (subjectLi) subjectLi.classList.remove('active-subject'); return; }
+    document.querySelectorAll(`#${bk}Class${cls}Subjects li.active-subject`).forEach(li => li.classList.remove('active-subject'));
+    if (subjectLi) subjectLi.classList.add('active-subject');
+    try {
+        const res = await fetch(
+            SUPABASE_URL + '/rest/v1/questions?select=id,question,options,answer,explanation,difficulty,chapter,class,subject&class=eq.' + encodeURIComponent(cls) + '&subject=eq.' + encodeURIComponent(subject) + '&board=eq.' + encodeURIComponent(board) + '&limit=100',
+            { headers: { 'apikey': SUPABASE_KEY } }
+        );
+        if (!res.ok) throw new Error('Failed to load questions');
+        const questions = await res.json();
+        const questionList = document.createElement('ul');
+        questionList.className = 'qb-subjects-sublist';
+        questionList.id = qid;
+        questionList.style.cssText = 'margin-left:1.5rem;margin-top:0.5rem;max-height:300px;overflow-y:auto;';
+        if (questions.length === 0) {
+            const li = document.createElement('li');
+            li.innerHTML = `<i class="ph ph-info"></i> No questions found for this subject`;
+            li.style.cssText = 'padding:0.4rem 0.5rem;font-size:0.8rem;color:var(--text-muted);font-style:italic;';
+            questionList.appendChild(li);
+        } else {
+            questions.forEach(q => {
+                const li = document.createElement('li');
+                li.innerHTML = `<i class="ph ph-circle"></i> ${q.question.substring(0, 50)}...`;
+                li.onclick = () => loadQuestionDetails(q);
+                li.style.cssText = 'padding:0.4rem 0.5rem;cursor:pointer;font-size:0.8rem;border-left:2px solid var(--border-light);margin-left:0.5rem;';
+                questionList.appendChild(li);
+            });
+        }
+        if (subjectLi) subjectLi.insertAdjacentElement('afterend', questionList);
+    } catch (err) {
+        console.error('Failed to load board questions', board, cls, subject, err);
         if (subjectLi) subjectLi.classList.remove('active-subject');
     }
 }
