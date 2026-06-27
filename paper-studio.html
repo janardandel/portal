@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pitthugram Paper Studio</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<style>
+  :root{ --red:#F40009; --ink:#1a1a1a; --muted:#6b7280; --border:#e5e7eb; --bg:#f7f7f8; }
+  *{box-sizing:border-box;}
+  body{margin:0;font-family:-apple-system,Segoe UI,Roboto,Arial,sans-serif;color:var(--ink);background:var(--bg);}
+  header{display:flex;align-items:center;gap:.6rem;padding:.7rem 1rem;background:#fff;border-bottom:1px solid var(--border);position:sticky;top:0;z-index:20;}
+  header .logo{font-weight:800;color:var(--red);letter-spacing:.3px;}
+  header .who{margin-left:auto;font-size:.85rem;color:var(--muted);}
+  button{font:inherit;cursor:pointer;border:none;border-radius:8px;padding:.5rem .8rem;background:var(--red);color:#fff;font-weight:600;}
+  button.ghost{background:#fff;color:var(--ink);border:1px solid var(--border);}
+  button:disabled{opacity:.5;cursor:not-allowed;}
+  .wrap{display:grid;grid-template-columns:1fr 1fr;gap:0;height:calc(100vh - 56px);}
+  .panel{overflow:auto;padding:1rem;}
+  .panel.left{border-right:1px solid var(--border);background:#fff;}
+  textarea{width:100%;min-height:120px;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.8rem;border:1px solid var(--border);border-radius:8px;padding:.6rem;}
+  .q-card{border:1px solid var(--border);border-radius:10px;padding:.7rem;margin-bottom:.7rem;}
+  .q-card.active{border-color:var(--red);box-shadow:0 0 0 2px rgba(244,0,9,.12);}
+  .q-meta{font-size:.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:.3rem;}
+  .q-stem{font-weight:600;margin-bottom:.4rem;white-space:pre-wrap;}
+  .opt{display:flex;gap:.4rem;padding:.2rem .4rem;border-radius:6px;font-size:.9rem;}
+  .opt.correct{background:rgba(40,167,69,.14);color:#1e7e34;font-weight:600;}
+  .opt b{color:var(--muted);}
+  .ph{display:inline-block;background:#fff3cd;border:1px dashed #d39e00;border-radius:4px;padding:0 .3rem;font-size:.7rem;color:#856404;}
+  .toolbar{display:flex;gap:.5rem;flex-wrap:wrap;align-items:center;margin-bottom:.7rem;}
+  select,input[type=file]{font:inherit;border:1px solid var(--border);border-radius:8px;padding:.4rem;}
+  .pdfwrap{position:relative;}
+  #pdfCanvas{max-width:100%;border:1px solid var(--border);display:block;}
+  #cropBox{position:absolute;border:2px solid var(--red);background:rgba(244,0,9,.12);display:none;pointer-events:none;}
+  .row{display:flex;gap:.5rem;align-items:center;flex-wrap:wrap;margin:.5rem 0;}
+  .pill{font-size:.75rem;color:var(--muted);}
+  /* login */
+  #login{position:fixed;inset:0;background:#fff;display:flex;align-items:center;justify-content:center;z-index:50;}
+  #login .box{width:340px;max-width:90vw;border:1px solid var(--border);border-radius:14px;padding:1.5rem;}
+  #login input{width:100%;padding:.6rem;margin:.4rem 0;border:1px solid var(--border);border-radius:8px;font:inherit;}
+  #login h2{margin:.2rem 0 1rem;color:var(--red);}
+  .err{color:var(--red);font-size:.85rem;min-height:1.1em;}
+  .ok{color:#1e7e34;font-size:.85rem;}
+  @media(max-width:820px){ .wrap{grid-template-columns:1fr;height:auto;} .panel.left{border-right:none;border-bottom:1px solid var(--border);} }
+</style>
+</head>
+<body>
+
+<div id="login">
+  <div class="box">
+    <h2>Paper Studio</h2>
+    <input id="email" type="email" placeholder="Email" autocomplete="username">
+    <input id="password" type="password" placeholder="Password" autocomplete="current-password">
+    <button id="loginBtn" style="width:100%;margin-top:.4rem;">Sign in</button>
+    <div class="err" id="loginErr"></div>
+    <p class="pill">Pitthugram Paper Studio — exam PDF → Moodle GIFT.</p>
+  </div>
+</div>
+
+<header style="display:none;" id="appHeader">
+  <span class="logo">PITTHUGRAM</span> <span class="pill">Paper Studio</span>
+  <span class="who" id="who"></span>
+  <button class="ghost" id="exportBtn">Export GIFT</button>
+  <button class="ghost" id="logoutBtn">Sign out</button>
+</header>
+
+<div class="wrap" id="app" style="display:none;">
+  <!-- LEFT: questions -->
+  <div class="panel left">
+    <h3>1 · Paste question JSON</h3>
+    <textarea id="jsonIn" placeholder='Paste the JSON array from Gemini here...'></textarea>
+    <div class="row">
+      <button id="loadJson">Load questions</button>
+      <button class="ghost" id="saveBank">Save to bank</button>
+      <span class="ok" id="saveMsg"></span>
+    </div>
+    <div class="err" id="jsonErr"></div>
+    <hr>
+    <h3>Questions <span class="pill" id="qcount"></span></h3>
+    <div id="questions"></div>
+  </div>
+
+  <!-- RIGHT: PDF + crop -->
+  <div class="panel">
+    <h3>2 · Upload PDF &amp; crop images</h3>
+    <div class="toolbar">
+      <input type="file" id="pdfFile" accept="application/pdf">
+      <button class="ghost" id="prevPage">◀</button>
+      <span class="pill" id="pageInfo">—</span>
+      <button class="ghost" id="nextPage">▶</button>
+    </div>
+    <div class="toolbar">
+      <span class="pill">Attach crop to:</span>
+      <select id="targetQ"><option value="">— question —</option></select>
+      <select id="targetPlace">
+        <option value="stem">stem</option>
+        <option value="optA">option A</option><option value="optB">option B</option>
+        <option value="optC">option C</option><option value="optD">option D</option>
+        <option value="explanation">explanation</option>
+      </select>
+      <button id="cropUpload" disabled>Crop &amp; upload</button>
+      <span class="ok" id="cropMsg"></span>
+    </div>
+    <div class="pdfwrap">
+      <canvas id="pdfCanvas"></canvas>
+      <div id="cropBox"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ====================== CONFIG (fill these) ======================
+const SUPABASE_URL = 'https://qnqcysdeolnooxxcafwz.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFucWN5c2Rlb2xub294eGNhZnd6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYzNTc0NjUsImV4cCI6MjA5MTkzMzQ2NX0.hOuPKv1zqQup7JfEpe-SJWT9Duz0RUwcCPwJb0zE_0Q';
+// Set this once the n8n upload webhook is built:
+const N8N_UPLOAD_WEBHOOK = 'https://awsn8n.pitthugram.com/webhook/paper-studio-upload';
+// =================================================================
+
+pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+let PROFILE = null;          // {institute_id, role}
+let QUESTIONS = [];          // [{data:{...}, assets:[{asset_id,placement,order_index,idrive_url,idrive_path}], _id}]
+let pdfDoc = null, pageNum = 1, renderScale = 2.5, lastViewport = null;
+
+const $ = id => document.getElementById(id);
+
+// ---------- Auth ----------
+async function init(){
+  const { data:{ session } } = await sb.auth.getSession();
+  if(session){ await onLogin(session); }
+}
+$('loginBtn').onclick = async () => {
+  $('loginErr').textContent = '';
+  const { data, error } = await sb.auth.signInWithPassword({ email:$('email').value.trim(), password:$('password').value });
+  if(error){ $('loginErr').textContent = error.message; return; }
+  await onLogin(data.session);
+};
+$('logoutBtn').onclick = async () => { await sb.auth.signOut(); location.reload(); };
+
+async function onLogin(session){
+  const { data, error } = await sb.from('ps_profiles').select('institute_id, role').eq('user_id', session.user.id).maybeSingle();
+  if(error || !data){ $('loginErr').textContent = 'No profile found for this account. Ask admin to assign an institute.'; return; }
+  PROFILE = data;
+  $('login').style.display='none'; $('appHeader').style.display='flex'; $('app').style.display='grid';
+  $('who').textContent = `${session.user.email} · ${PROFILE.institute_id} · ${PROFILE.role}`;
+}
+
+// ---------- Load JSON ----------
+$('loadJson').onclick = () => {
+  $('jsonErr').textContent='';
+  let arr;
+  try { arr = JSON.parse($('jsonIn').value); } catch(e){ $('jsonErr').textContent='Invalid JSON: '+e.message; return; }
+  if(!Array.isArray(arr)){ $('jsonErr').textContent='JSON must be an array of questions.'; return; }
+  QUESTIONS = arr.map(d => ({ data:d, assets:[], _id: crypto.randomUUID() }));
+  renderQuestions();
+};
+
+function fieldText(q, place){
+  const d=q.data;
+  if(place==='stem') return d.stem||'';
+  if(place==='explanation') return d.explanation||'';
+  if(place.startsWith('opt')) return (d.options||{})[place.slice(3)]||'';
+  return '';
+}
+function setFieldText(q, place, text){
+  const d=q.data;
+  if(place==='stem') d.stem=text;
+  else if(place==='explanation') d.explanation=text;
+  else if(place.startsWith('opt')){ d.options=d.options||{}; d.options[place.slice(3)]=text; }
+}
+
+function renderQuestions(){
+  $('qcount').textContent = QUESTIONS.length ? `(${QUESTIONS.length})` : '';
+  const wrap=$('questions'); wrap.innerHTML='';
+  const sel=$('targetQ'); sel.innerHTML='<option value="">— question —</option>';
+  QUESTIONS.forEach((q,i)=>{
+    const d=q.data;
+    const card=document.createElement('div'); card.className='q-card'; card.dataset.i=i;
+    const opts=(d.options)?Object.entries(d.options).map(([k,v])=>
+      `<div class="opt ${d.correct_answer===k?'correct':''}"><b>${k}</b><span>${esc(v)}</span></div>`).join(''):'';
+    card.innerHTML=`<div class="q-meta">${esc(d.subject||'')} · ${esc(d.chapter||'')} · ${esc(d.difficulty||'')} · ${esc(d.question_type||'mcq')} ${d.external_ref?'· '+esc(d.external_ref):''}</div>
+      <div class="q-stem">${withPlaceholders(esc(d.stem||''))}</div>${opts}
+      ${d.explanation?`<div class="pill" style="margin-top:.4rem;">Exp: ${withPlaceholders(esc(d.explanation))}</div>`:''}
+      <div class="pill" style="margin-top:.3rem;">${q.assets.length} image(s) attached</div>`;
+    card.onclick=()=>{ document.querySelectorAll('.q-card').forEach(c=>c.classList.remove('active')); card.classList.add('active'); $('targetQ').value=i; };
+    wrap.appendChild(card);
+    const o=document.createElement('option'); o.value=i; o.textContent=`#${i+1} ${(d.stem||'').slice(0,40)}`; sel.appendChild(o);
+  });
+}
+const esc = s => (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+const withPlaceholders = s => s.replace(/\[\[([0-9a-f-]+)\]\]/g,'<span class="ph">🖼 image</span>');
+
+// ---------- PDF render ----------
+$('pdfFile').onchange = async e => {
+  const f=e.target.files[0]; if(!f) return;
+  const buf=await f.arrayBuffer();
+  pdfDoc=await pdfjsLib.getDocument({data:buf}).promise; pageNum=1; await renderPage();
+};
+$('prevPage').onclick=async()=>{ if(pdfDoc&&pageNum>1){pageNum--;await renderPage();} };
+$('nextPage').onclick=async()=>{ if(pdfDoc&&pageNum<pdfDoc.numPages){pageNum++;await renderPage();} };
+async function renderPage(){
+  const page=await pdfDoc.getPage(pageNum);
+  lastViewport=page.getViewport({scale:renderScale});
+  const c=$('pdfCanvas'); c.width=lastViewport.width; c.height=lastViewport.height;
+  await page.render({canvasContext:c.getContext('2d'),viewport:lastViewport}).promise;
+  $('pageInfo').textContent=`Page ${pageNum}/${pdfDoc.numPages}`;
+  $('cropBox').style.display='none'; crop=null; $('cropUpload').disabled=true;
+}
+
+// ---------- Crop selection (screen coords -> full-res canvas) ----------
+let dragging=false, start=null, crop=null;
+const canvas=$('pdfCanvas'), box=$('cropBox');
+canvas.addEventListener('mousedown',e=>{ const r=canvas.getBoundingClientRect(); dragging=true; start={x:e.clientX-r.left,y:e.clientY-r.top}; box.style.display='block'; });
+canvas.addEventListener('mousemove',e=>{ if(!dragging)return; const r=canvas.getBoundingClientRect(); const x=e.clientX-r.left,y=e.clientY-r.top;
+  const left=Math.min(x,start.x),top=Math.min(y,start.y),w=Math.abs(x-start.x),h=Math.abs(y-start.y);
+  Object.assign(box.style,{left:left+'px',top:(top+canvas.offsetTop)+'px',width:w+'px',height:h+'px'});
+  // scale screen->canvas pixels
+  const sx=canvas.width/r.width, sy=canvas.height/r.height;
+  crop={x:left*sx,y:top*sy,w:w*sx,h:h*sy};
+  $('cropUpload').disabled=!(crop.w>4&&crop.h>4);
+});
+window.addEventListener('mouseup',()=>{dragging=false;});
+
+// ---------- Crop + upload via n8n ----------
+$('cropUpload').onclick = async () => {
+  $('cropMsg').textContent='';
+  const qi=$('targetQ').value; if(qi===''){ $('cropMsg').textContent='Pick a question first.'; return; }
+  if(!crop){ return; }
+  const q=QUESTIONS[qi], place=$('targetPlace').value;
+  // crop from the high-res canvas
+  const out=document.createElement('canvas'); out.width=Math.round(crop.w); out.height=Math.round(crop.h);
+  out.getContext('2d').drawImage(canvas, crop.x,crop.y,crop.w,crop.h, 0,0,out.width,out.height);
+  const blob=await new Promise(r=>out.toBlob(r,'image/png'));
+  if(blob.size>2*1024*1024){ $('cropMsg').textContent='Image >2MB, crop smaller.'; return; }
+  const { data:{ session } } = await sb.auth.getSession();
+  const asset_id=crypto.randomUUID();
+  const fd=new FormData();
+  fd.append('file', blob, asset_id+'.png');
+  fd.append('placement', place);
+  fd.append('asset_id', asset_id);
+  $('cropUpload').disabled=true; $('cropMsg').textContent='Uploading…';
+  try{
+    const res=await fetch(N8N_UPLOAD_WEBHOOK,{ method:'POST', headers:{ 'Authorization':'Bearer '+session.access_token }, body:fd });
+    if(!res.ok){ throw new Error('upload failed '+res.status); }
+    const j=await res.json();   // { idrive_url, idrive_path }
+    q.assets.push({ asset_id, placement:place, order_index:q.assets.filter(a=>a.placement===place).length, idrive_url:j.idrive_url, idrive_path:j.idrive_path });
+    setFieldText(q, place, (fieldText(q,place)+` [[${asset_id}]]`).trim());
+    renderQuestions();
+    $('cropMsg').textContent='Attached ✓';
+  }catch(err){ $('cropMsg').textContent='Error: '+err.message; }
+};
+
+// ---------- Save to bank ----------
+$('saveBank').onclick = async () => {
+  $('saveMsg').textContent='';
+  if(!QUESTIONS.length){ return; }
+  const inst=PROFILE.institute_id, isPublic = (inst==='central');
+  try{
+    for(const q of QUESTIONS){
+      const question_id=crypto.randomUUID();
+      const { error:e1 }=await sb.from('ps_questions').insert({ question_id, institute_id:inst, data:q.data, is_public:isPublic });
+      if(e1) throw e1;
+      if(q.assets.length){
+        const rows=q.assets.map(a=>({ asset_id:a.asset_id, question_id, institute_id:inst, placement:a.placement, order_index:a.order_index, idrive_path:a.idrive_path, idrive_url:a.idrive_url }));
+        const { error:e2 }=await sb.from('ps_assets').insert(rows);
+        if(e2) throw e2;
+      }
+    }
+    $('saveMsg').textContent=`Saved ${QUESTIONS.length} question(s) to ${inst}.`;
+  }catch(err){ $('saveMsg').textContent='Save failed: '+err.message; }
+};
+
+// ---------- GIFT export ----------
+function giftEscape(s){ return (s||'').replace(/([~=#{}\\:])/g,'\\$1'); }
+function resolveImgs(q, text){
+  return (text||'').replace(/\[\[([0-9a-f-]+)\]\]/g,(m,id)=>{
+    const a=q.assets.find(x=>x.asset_id===id); return a?`<img src="${a.idrive_url}">`:'';
+  });
+}
+$('exportBtn').onclick = () => {
+  if(!QUESTIONS.length){ alert('Load/Save questions first.'); return; }
+  let out='';
+  QUESTIONS.forEach((q,i)=>{
+    const d=q.data;
+    const stem=resolveImgs(q, d.stem||'');
+    const title=(d.external_ref||('Q'+(i+1)));
+    if(d.question_type==='mcq' && d.options){
+      const correct=d.correct_answer;
+      const ans=Object.entries(d.options).map(([k,v])=>{
+        const t=resolveImgs(q,v); return (k===correct?'=':'~')+giftEscape(t);
+      }).join(' ');
+      out+=`::${giftEscape(title)}:: ${giftEscape(stem)} {${ans}`;
+      if(d.explanation) out+=`\n#### ${giftEscape(resolveImgs(q,d.explanation))}`;
+      out+='}\n\n';
+    } else if(d.question_type==='integer'){
+      out+=`::${giftEscape(title)}:: ${giftEscape(stem)} {#${giftEscape(d.correct_answer||'')}}\n\n`;
+    } else { // assertion_reason or other -> render as description+mcq fallback
+      out+=`::${giftEscape(title)}:: ${giftEscape(stem)} {}\n\n`;
+    }
+  });
+  const blob=new Blob([out],{type:'text/plain'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
+  a.download=`${(PROFILE.institute_id||'export')}_paper_studio.txt`; a.click();
+};
+
+init();
+</script>
+</body>
+</html>
