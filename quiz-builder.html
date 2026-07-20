@@ -565,6 +565,10 @@
                 <option value="12-PCM">Class 12 — Science (PCM)</option>
                 <option value="12-PCB">Class 12 — Science (PCB)</option>
                 <option value="12-Commerce">Class 12 — Commerce</option>
+                <option value="11-Arts">Class 11 – Arts</option>
+                <option value="11-Agriculture">Class 11 – Agriculture</option>
+                <option value="12-Arts">Class 12 – Arts</option>
+                <option value="12-Agriculture">Class 12 – Agriculture</option>
             </select>
         </div>
 
@@ -914,12 +918,23 @@ function renderReview() {
     list.innerHTML = '';
     selectedQuestions.forEach((q, id) => {
         const meta = [q.board, q.class, q.subject, q.chapter].filter(Boolean).join(' · ');
+        const correctLetter = (q.correct_answer || '').trim().toUpperCase();
+        const optionsHtml = [['A', q.option_a], ['B', q.option_b], ['C', q.option_c], ['D', q.option_d]]
+            .filter(([, text]) => text)
+            .map(([letter, text]) => {
+                const isCorrect = letter === correctLetter;
+                const style = isCorrect ? 'color:#198754;font-weight:600;' : 'color:var(--text-muted);';
+                return '<div style="' + style + 'font-size:0.85rem;padding:0.1rem 0;">' +
+                       letter + '. ' + text + (isCorrect ? ' <i class="ph ph-check-circle"></i>' : '') +
+                       '</div>';
+            }).join('');
         const row = document.createElement('div');
         row.style.cssText = 'display:flex;gap:0.6rem;align-items:flex-start;padding:0.6rem 0.4rem;border-bottom:1px solid var(--border);';
         row.innerHTML =
             '<div style="flex:1;min-width:0;">' +
                 '<div style="font-size:0.7rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.04em;margin-bottom:0.2rem;">' + (meta || '') + '</div>' +
-                '<div style="font-size:0.9rem;">' + (q.question_text || '') + '</div>' +
+                '<div style="font-size:0.9rem;margin-bottom:0.3rem;">' + (q.question_text || '') + '</div>' +
+                '<div style="margin-left:0.5rem;">' + optionsHtml + '</div>' +
             '</div>' +
             '<button title="Remove" style="flex:none;background:rgba(220,53,69,0.12);color:#dc3545;border:none;width:30px;height:30px;border-radius:8px;cursor:pointer;font-size:1rem;">&times;</button>';
         row.querySelector('button').addEventListener('click', () => removeFromReview(id));
@@ -1958,7 +1973,7 @@ function loadBoardClassStreams(board, baseCls) {
     const existing = document.getElementById(listId);
     if (existing) { existing.remove(); if (selectedLi) selectedLi.classList.add('collapsed'); return; }
     if (selectedLi) selectedLi.classList.remove('collapsed');
-    const streams = [['PCM','Science (PCM)'], ['PCB','Science (PCB)'], ['Commerce','Commerce']];
+    const streams = [['PCM','Science (PCM)'], ['PCB','Science (PCB)'], ['Commerce','Commerce'], ['Arts','Arts'], ['Agriculture','Agriculture']];
     const ul = document.createElement('ul');
     ul.className = 'qb-subjects-sublist';
     ul.id = listId;
