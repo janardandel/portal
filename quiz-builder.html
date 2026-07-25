@@ -1179,13 +1179,14 @@ function closeBatchModal() {
 function startNewQuiz() {
     if (!selectedBatch) return;
     const batch      = selectedBatch;
+    const board      = selectedBoard;   // capture before closeBatchModal() nulls it
     const subject    = document.getElementById('mSubject').value;
     const chapter    = document.getElementById('mChapter').value;
     const difficulty = document.getElementById('mDifficulty').value;
     closeBatchModal();
 
     activeClass      = batch;
-    activeBoard      = selectedBoard || '';
+    activeBoard      = board || '';
     activeSubject    = subject;
     activeChapter    = chapter;
     activeDifficulty = difficulty;
