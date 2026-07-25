@@ -1434,11 +1434,12 @@ function onFilterChapterChange() {
 }
 
 // ── Quick-load a subject directly from sidebar ────────
-async function quickLoad(batch, subject) {
+async function quickLoad(batch, subject, board) {
     activeClass      = batch;
     activeSubject    = subject;
     activeChapter    = '';
     activeDifficulty = '';
+    activeBoard      = board || '';
 
     // Highlight active subject in sidebar
     document.querySelectorAll('.qb-subjects li[onclick]').forEach(li => li.classList.remove('active-subject'));
@@ -1450,7 +1451,7 @@ async function quickLoad(batch, subject) {
 
     closeSidebar();
     refresh();
-    await loadFilterBar(batch, subject);
+    await loadFilterBar(batch, subject, activeBoard);
 }
 
 function clearSubjectFilter() {
@@ -1938,7 +1939,7 @@ async function toggleSchoolSubject(cls, subject) {
         } else {
             questions.forEach(q => {
                 const li = document.createElement('li');
-                li.innerHTML = `<i class="ph ph-circle"></i> ${q.question.substring(0, 50)}...`;
+                li.innerHTML = `<i class="ph ph-circle"></i> ${(q.question_text||'').substring(0, 50)}...`;
                 li.onclick = () => loadQuestionDetails(q);
                 li.setAttribute('aria-label', `Question: ${q.question}`);
                 li.style.cssText = 'padding:0.4rem 0.5rem;cursor:pointer;font-size:0.8rem;border-left:2px solid var(--border-light);margin-left:0.5rem;';
@@ -2052,7 +2053,7 @@ async function toggleBoardSubject(board, cls, subject) {
     if (subjectLi) subjectLi.classList.add('active-subject');
     try {
         const res = await fetch(
-            SUPABASE_URL + '/rest/v1/questions?select=id,question,options,answer,explanation,difficulty,chapter,class,subject&class=eq.' + encodeURIComponent(cls) + '&subject=eq.' + encodeURIComponent(subject) + '&board=eq.' + encodeURIComponent(board) + '&limit=100',
+            SUPABASE_URL + '/rest/v1/questions?select=id,question_text,option_a,option_b,option_c,option_d,correct_answer,explanation,difficulty_level,chapter,class,subject,board&class=eq.' + encodeURIComponent(cls) + '&subject=eq.' + encodeURIComponent(subject) + '&board=eq.' + encodeURIComponent(board) + '&limit=100',
             { headers: { 'apikey': SUPABASE_KEY } }
         );
         if (!res.ok) throw new Error('Failed to load questions');
@@ -2069,7 +2070,7 @@ async function toggleBoardSubject(board, cls, subject) {
         } else {
             questions.forEach(q => {
                 const li = document.createElement('li');
-                li.innerHTML = `<i class="ph ph-circle"></i> ${q.question.substring(0, 50)}...`;
+                li.innerHTML = `<i class="ph ph-circle"></i> ${(q.question_text||'').substring(0, 50)}...`;
                 li.onclick = () => loadQuestionDetails(q);
                 li.style.cssText = 'padding:0.4rem 0.5rem;cursor:pointer;font-size:0.8rem;border-left:2px solid var(--border-light);margin-left:0.5rem;';
                 questionList.appendChild(li);
@@ -2089,10 +2090,10 @@ function loadQuestionDetails(question) {
     activeBoard = question.board || '';
     activeSubject = question.subject || '';
     activeChapter = question.chapter || '';
-    activeDifficulty = question.difficulty || '';
+    activeDifficulty = question.difficulty_level || question.difficulty || '';
 
     // Load questions for this subject/chapter/difficulty combination
-    quickLoad(activeClass, activeSubject);
+    quickLoad(activeClass, activeSubject, activeBoard);
     
     // After loading, scroll to and highlight the specific question
     setTimeout(() => {
