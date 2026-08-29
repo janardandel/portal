@@ -349,6 +349,9 @@
                         </button>
                         <h1>Quiz <span>Builder</span></h1>
                         <button class="new-quiz-mobile-btn" onclick="openBatchModal(event)"><i class="ph ph-calendar-plus"></i> Schedule Quiz</button>
+                        <button class="btn-outline btn-sm" onclick="showMyQuizzes(event)" style="display:inline-flex;align-items:center;gap:0.4rem;padding:0.45rem 0.85rem;border-radius:var(--radius);font-weight:600;cursor:pointer;border:1.5px solid var(--border-light);background:transparent;color:var(--text-primary);">
+                            <i class="ph ph-calendar-check"></i> Scheduled Tests
+                        </button>
 
                     </div>
                     <div class="user-chip">
@@ -2253,7 +2256,11 @@ function forceSidebarVisible() {
 forceSidebarVisible();
 window.addEventListener('resize', forceSidebarVisible);
 
-init();
+
+    if (window.location.hash === '#my-quizzes' || window.location.hash === '#scheduled-tests') {
+        setTimeout(function() { showMyQuizzes(); }, 150);
+    }
+    init();
 </script>
 </body>
 </html>
