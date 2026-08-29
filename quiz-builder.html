@@ -3,29 +3,29 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Quiz Builder â€” Pitthugram</title>
+    <title>Quiz Builder — Pitthugram</title>
     <link rel="icon" type="image/png" href="./favicon.png">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <script src="https://unpkg.com/@phosphor-icons/web" defer></script>
+    <link rel="preconnect" href="https:// ---
+    <link rel="preconnect" href="https:// ---
+    <link href="https:// ---
+    <script src="https:// ---
     <link rel="stylesheet" href="./pitthugram.css">
     <style>
-        /* â”€â”€ Desktop sidebar (721px+) â”€â”€ */
+        /* --- */
         @media(min-width:721px){
             #qbSidebar{display:flex!important;flex-direction:column!important;position:fixed!important;top:72px!important;left:0!important;width:260px!important;height:calc(100vh - 72px)!important;max-height:none!important;border-radius:0!important;transform:none!important;visibility:visible!important;opacity:1!important;z-index:50!important;}
             #qbPage.qb-page{margin-left:260px!important;}
             #qbPage .qb-layout{display:block!important;}
         }
 
-        /* â”€â”€ Schedule fields â”€â”€ */
-        .schedule-fields select,.schedule-fields input{width:100%;padding:0.7rem 2.25rem 0.7rem 0.875rem;background:var(--bg-input);border:1.5px solid var(--border-light);border-radius:var(--radius);font-family:var(--font-body);font-size:0.9rem;color:var(--text-primary);color-scheme:dark;transition:var(--transition);appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24'%3E%3Cpath fill='%23888' d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 0.75rem center;cursor:pointer;}
+        /* --- */
+        .schedule-fields select,.schedule-fields input{width:100%;padding:0.7rem 2.25rem 0.7rem 0.875rem;background:var(--bg-input);border:1.5px solid var(--border-light);border-radius:var(--radius);font-family:var(--font-body);font-size:0.9rem;color:var(--text-primary);color-scheme:dark;transition:var(--transition);appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http:// ---
         .schedule-fields select:focus,.schedule-fields input:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-glow);background-color:var(--bg-elevated);}
         .schedule-fields select option{background:var(--bg-elevated);}
         @media(min-width:560px){.schedule-fields{grid-template-columns:repeat(2,1fr)!important;}}
         @media(min-width:900px){.schedule-fields{grid-template-columns:repeat(4,1fr)!important;}}
 
-        /* â”€â”€ Settings Modal â”€â”€ */
+        /* --- */
         .settings-modal-bg{position:fixed;inset:0;background:rgba(0,0,0,0.65);backdrop-filter:blur(4px);z-index:2000;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity 0.25s;}
         .settings-modal-bg.show{opacity:1;pointer-events:all;}
         .settings-modal-box{background:var(--bg-elevated);border:1px solid var(--border);border-radius:var(--radius-lg);padding:2rem 1.75rem 1.75rem;width:min(500px,94vw);max-height:88vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,0.5);transform:translateY(16px) scale(0.97);transition:transform 0.25s,opacity 0.25s;}
@@ -41,7 +41,7 @@
         .settings-actions{display:flex;justify-content:flex-end;gap:0.65rem;margin-top:1.5rem;border-top:1px solid var(--border-light);padding-top:1.1rem;}
         @media(max-width:400px){.settings-actions{flex-direction:column;} .settings-save-btn,.settings-cancel-btn{width:100%;justify-content:center;}}
 
-        /* â”€â”€ My Quizzes View â”€â”€ */
+        /* --- */
         .my-quizzes-view{display:none;flex-direction:column;gap:1rem;}
         .my-quizzes-view.show{display:flex;}
         .quiz-item{background:var(--bg-surface);border:1px solid var(--border);border-radius:var(--radius);padding:1rem;margin-bottom:0.5rem;}
@@ -54,7 +54,7 @@
         .quiz-details{font-size:0.9rem;color:var(--text-muted);}
         .quiz-actions{display:flex;gap:0.5rem;margin-top:0.5rem;}
 
-        /* â”€â”€ Question Bank View â”€â”€ */
+        /* --- */
         .question-bank-view{display:none;flex-direction:column;gap:1rem;}
         .question-bank-view.show{display:flex;}
         .qb-search-bar{display:flex;gap:0.5rem;margin-bottom:1rem;}
@@ -65,24 +65,24 @@
         .qb-question-meta{font-size:0.8rem;color:var(--text-muted);}
         .q-thumb{display:block;max-width:160px;max-height:120px;margin-top:6px;border-radius:6px;border:1px solid var(--border-light);object-fit:contain;}
 
-        /* â”€â”€ Loading states â”€â”€ */
+        /* --- */
         .sidebar-loading{opacity:0.6;pointer-events:none;}
         .subject-loading::after{content:'...';color:var(--text-muted);}
 
-        /* â”€â”€ Accessibility â”€â”€ */
+        /* --- */
         .qb-nav a:focus,.qb-subjects li:focus,.sidebar-link:focus{outline:2px solid var(--primary);outline-offset:2px;}
         .qb-subjects li{cursor:pointer;}
         .qb-subjects li[aria-label]{position:relative;}
         .qb-subjects li[aria-label]::after{content:attr(aria-label);position:absolute;left:100%;top:50%;transform:translateY(-50%);background:var(--bg-elevated);color:var(--text-primary);padding:0.25rem 0.5rem;border-radius:var(--radius);font-size:0.8rem;white-space:nowrap;z-index:100;opacity:0;pointer-events:none;transition:opacity 0.2s;}
         .qb-subjects li:hover::after{opacity:1;}
 
-        /* â”€â”€ Question counts â”€â”€ */
+        /* --- */
         .subject-count{font-size:0.8rem;color:var(--text-muted);font-weight:500;}
 
-        /* â”€â”€ Highlight effect for selected questions â”€â”€ */
+        /* --- */
         .question-row.highlight{background:var(--primary-light);border-left:4px solid var(--primary);}
 
-        /* â”€â”€ Settings buttons â”€â”€ */
+        /* --- */
         .settings-cancel-btn,.settings-save-btn{padding:0.5rem 1.1rem;background:transparent;border:1.5px solid var(--border-light);border-radius:var(--radius);font-family:var(--font-body);font-size:0.875rem;font-weight:600;color:var(--text-muted);cursor:pointer;transition:var(--transition);}
         .settings-cancel-btn:hover{border-color:var(--text-muted);color:var(--text-primary);}
         .settings-save-btn{background:var(--primary);border-color:var(--primary);color:#fff;}
@@ -91,7 +91,7 @@
         .batch-modal-bg.show{opacity:1;pointer-events:all;display:flex!important;}
         .batch-modal-box{background:var(--bg-elevated);border:1px solid var(--border);border-radius:var(--radius-lg);padding:2rem 1.75rem 1.75rem;width:min(500px,94vw);max-height:88vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,0.5);transform:translateY(16px) scale(0.97);transition:transform 0.25s,opacity 0.25s;}
         .batch-modal-bg.show .batch-modal-box{transform:translateY(0) scale(1);}
-        /* Bottom-sheet on phones */
+        /* --- */
         @media(max-width:560px){
             .batch-modal-bg{align-items:flex-end;}
             .batch-modal-box{width:100%;max-width:100%;border-radius:1.25rem 1.25rem 0 0;padding:1.5rem 1.25rem 2.25rem;max-height:92vh;transform:translateY(100%);}
@@ -116,12 +116,12 @@
         .batch-filters{display:none;background:var(--bg-base);border:1.5px solid var(--primary);border-radius:var(--radius);margin-top:0.85rem;padding:1rem;flex-direction:column;gap:0.65rem;}
         .batch-filters.visible{display:flex;}
         .batch-filters-label{font-size:0.7rem;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.07em;margin-bottom:0.15rem;}
-        .batch-filter-select{width:100%;padding:0.65rem 2.25rem 0.65rem 0.875rem;background:var(--bg-input);border:1.5px solid var(--border-light);border-radius:var(--radius);font-family:var(--font-body);font-size:0.9rem;color:var(--text-primary);color-scheme:dark;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24'%3E%3Cpath fill='%23888' d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 0.75rem center;cursor:pointer;transition:var(--transition);}
+        .batch-filter-select{width:100%;padding:0.65rem 2.25rem 0.65rem 0.875rem;background:var(--bg-input);border:1.5px solid var(--border-light);border-radius:var(--radius);font-family:var(--font-body);font-size:0.9rem;color:var(--text-primary);color-scheme:dark;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http:// ---
         .batch-filter-select:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-glow);background-color:var(--bg-elevated);}
         .batch-filter-select option{background:var(--bg-elevated);}
         .batch-filters-row{display:grid;grid-template-columns:1fr 1fr;gap:0.65rem;}
         @media(max-width:380px){.batch-filters-row{grid-template-columns:1fr;}}
-        /* â”€â”€ Collapsible sections â”€â”€ */
+        /* --- */
         .comp-exam-group{position:relative;}
         .comp-exam-label{cursor:pointer;display:flex;align-items:center;gap:0.35rem;padding:0.5rem 0;transition:var(--transition);}
         .comp-exam-label:hover{background:var(--primary-light);color:var(--primary);border-radius:var(--radius-sm);}
@@ -136,11 +136,11 @@
         .qb-subjects-sublist li{display:flex;align-items:center;justify-content:space-between;gap:0.75rem;padding:0.7rem 0.95rem;border-radius:var(--radius);background:var(--bg-surface);color:var(--text-secondary);font-size:0.9rem;}
         .qb-subjects-sublist li:hover{background:var(--primary-light);color:var(--primary);}
 
-        /* â”€â”€ Class groups (expandable classes) â”€â”€ */
+        /* --- */
         .class-item{cursor:pointer;}
         .class-item:hover{background:var(--primary-light);color:var(--primary);}
-        .class-item::after{content:'â–¾';margin-left:auto;font-size:0.8rem;}
-        .class-item.collapsed::after{content:'â–¸';}
+        .class-item::after{content:'▾';margin-left:auto;font-size:0.8rem;}
+        .class-item.collapsed::after{content:'▸';}
         /* â”€â”€ Chapter / Filter bar â”€â”€ */
         .chapter-bar{background:var(--bg-surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:1rem 1.25rem;}
         .chapter-bar-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:0.75rem;flex-wrap:wrap;gap:0.5rem;}
@@ -152,54 +152,54 @@
         @media(max-width:480px){.filter-dropdowns-row{grid-template-columns:1fr;}}
         @media(max-width:720px){.chapter-bar{padding:0.85rem 1rem;}}
 
-        /* â”€â”€ New Quiz button in top bar (mobile only) â”€â”€ */
+        /* --- */
         .new-quiz-mobile-btn { display:none; align-items:center; gap:0.4rem; padding:0.5rem 1rem; background:var(--primary); border:none; border-radius:var(--radius); font-family:var(--font-body); font-size:0.85rem; font-weight:700; color:#fff; cursor:pointer; transition:var(--transition); white-space:nowrap; }
         .new-quiz-mobile-btn:hover { background:var(--primary-dark,#c8000a); }
 
-        /* â”€â”€ Navbar Home btn visible on all sizes â”€â”€ */
+        /* --- */
         .nav-actions{display:flex!important;}
 
         @media(max-width:720px){
 
-            /* Sidebar toggle shows hamburger to open sidebar on mobile */
+            /* --- */
             #sidebarToggle { display:inline-flex !important; }
 
-            /* Page padding */
+            /* --- */
             #qbPage.qb-page { padding:1rem 1rem 6rem !important; }
 
-            /* Top bar: single clean row */
+            /* --- */
             .qb-top { flex-wrap:nowrap; align-items:center; gap:0.5rem; margin-bottom:1.25rem; }
             .qb-top-left { flex:1; min-width:0; display:flex; align-items:center; gap:0.5rem; }
             .qb-top h1 { font-size:1.1rem; white-space:nowrap; }
             .new-quiz-mobile-btn { display:inline-flex; }
 
-            /* User chip: show only logout icon on mobile */
+            /* --- */
             .user-chip .avatar { display:none; }
             #userEmail { display:none; }
             .user-chip .btn-sm { padding:0.45rem 0.75rem; font-size:0.8rem; border-radius:var(--radius); }
             .user-chip { gap:0; }
             .logout-label { display:none; }
 
-            /* Question rows: wrapping text + bigger tap target */
+            /* --- */
             .question-row { padding:0.9rem 0.5rem; align-items:flex-start; }
             .q-checkbox { width:20px; height:20px; margin-top:0.2rem; flex-shrink:0; }
             .q-text { white-space:normal; word-break:break-word; font-size:0.9rem; line-height:1.5; }
 
-            /* Meta row */
+            /* --- */
             .qb-meta { font-size:0.82rem; }
 
-            /* Empty & loading states */
+            /* --- */
             .empty-state { padding:2.5rem 1.25rem; }
             .loading-state { padding:2.5rem 1.25rem; }
 
-            /* Schedule bar */
+            /* --- */
             .schedule-bar { position:sticky; top:0; margin-top:1rem; padding:1.25rem; border-radius:var(--radius); z-index:10; }
             .schedule-bar h3 { font-size:0.9rem; margin-bottom:1rem; }
             .schedule-fields { grid-template-columns:1fr !important; gap:0.65rem; margin-bottom:1rem; }
             .schedule-fields label { font-size:0.72rem; }
             .btn-schedule { font-size:0.9rem; padding:0.85rem; }
 
-            /* Success modal */
+            /* --- */
             .modal-box { padding:2rem 1.25rem; }
         }
 
@@ -251,7 +251,7 @@
                 <div class="qb-section">
                     <div class="comp-exam-group">
                         <div class="comp-exam-label" onclick="toggleSection('jee')" id="jeeToggle">
-                            <span class="comp-exam-icon">ðŸ†</span>
+                            <i class="ph-fill ph-trophy" style="color:#f59e0b;font-size:1.1rem;"></i>
                             JEE
                         </div>
                         <ul class="qb-subjects" id="jeeSubjectList">
@@ -262,7 +262,7 @@
                     </div>
                     <div class="comp-exam-group">
                         <div class="comp-exam-label" onclick="toggleSection('neet')" id="neetToggle">
-                            <span class="comp-exam-icon">ðŸŒ¿</span>
+                            <i class="ph-fill ph-first-aid" style="color:#10b981;font-size:1.1rem;"></i>
                             NEET
                         </div>
                         <ul class="qb-subjects" id="neetSubjectList">
@@ -274,7 +274,7 @@
                     </div>
                     <div class="comp-exam-group">
                         <div class="comp-exam-label collapsed" onclick="toggleSection('cbse')" id="cbseToggle">
-                            <span class="comp-exam-icon">ðŸ“˜</span>
+                            <i class="ph-fill ph-book-bookmark" style="color:#3b82f6;font-size:1.1rem;"></i>
                             CBSE
                         </div>
                         <ul class="qb-subjects collapsed" id="cbseSubjectList">
@@ -289,7 +289,7 @@
                     </div>
                     <div class="comp-exam-group">
                         <div class="comp-exam-label collapsed" onclick="toggleSection('icse')" id="icseToggle">
-                            <span class="comp-exam-icon">ðŸ“—</span>
+                            <i class="ph-fill ph-book-open-text" style="color:#8b5cf6;font-size:1.1rem;"></i>
                             ICSE
                         </div>
                         <ul class="qb-subjects collapsed" id="icseSubjectList">
@@ -304,7 +304,7 @@
                     </div>
                     <div class="comp-exam-group">
                         <div class="comp-exam-label collapsed" onclick="toggleSection('upboard')" id="upboardToggle">
-                            <span class="comp-exam-icon">ðŸ“™</span>
+                            <i class="ph-fill ph-buildings" style="color:#ec4899;font-size:1.1rem;"></i>
                             UP Board
                         </div>
                         <ul class="qb-subjects collapsed" id="upboardSubjectList">
@@ -541,16 +541,16 @@
                 <option value="8">Class 8</option>
                 <option value="9">Class 9</option>
                 <option value="10">Class 10</option>
-                <option value="11-PCM">Class 11 â€” Science (PCM)</option>
-                <option value="11-PCB">Class 11 â€” Science (PCB)</option>
-                <option value="11-Commerce">Class 11 â€” Commerce</option>
-                <option value="12-PCM">Class 12 â€” Science (PCM)</option>
-                <option value="12-PCB">Class 12 â€” Science (PCB)</option>
-                <option value="12-Commerce">Class 12 â€” Commerce</option>
-                <option value="11-Arts">Class 11 â€“ Arts</option>
-                <option value="11-Agriculture">Class 11 â€“ Agriculture</option>
-                <option value="12-Arts">Class 12 â€“ Arts</option>
-                <option value="12-Agriculture">Class 12 â€“ Agriculture</option>
+                <option value="11-PCM">Class 11 — Science (PCM)</option>
+                <option value="11-PCB">Class 11 — Science (PCB)</option>
+                <option value="11-Commerce">Class 11 — Commerce</option>
+                <option value="12-PCM">Class 12 — Science (PCM)</option>
+                <option value="12-PCB">Class 12 — Science (PCB)</option>
+                <option value="12-Commerce">Class 12 — Commerce</option>
+                <option value="11-Arts">Class 11 — Arts</option>
+                <option value="11-Agriculture">Class 11 — Agriculture</option>
+                <option value="12-Arts">Class 12 — Arts</option>
+                <option value="12-Agriculture">Class 12 — Agriculture</option>
             </select>
         </div>
 
@@ -686,18 +686,18 @@
 
 
 <script>
-const SUPABASE_URL  = 'https://qnqcysdeolnooxxcafwz.supabase.co';
+const SUPABASE_URL  = 'https:// ---
 const SUPABASE_WRITE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFucWN5c2Rlb2xub294eGNhZnd6Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3NjM1NzQ2NSwiZXhwIjoyMDkxOTMzNDY1fQ.Co7aXPihbAn56b2BE2rh4q6wgqlVEbzp3C6wAZz1V8s';
 const SUPABASE_KEY  = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFucWN5c2Rlb2xub294eGNhZnd6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYzNTc0NjUsImV4cCI6MjA5MTkzMzQ2NX0.hOuPKv1zqQup7JfEpe-SJWT9Duz0RUwcCPwJb0zE_0Q';
-const SUPA_B_URL    = 'https://zqrswemxmhjaylsuulyu.supabase.co';
+const SUPA_B_URL    = 'https:// ---
 const SUPA_B_PUB    = 'sb_publishable_8Y62WSnJwGidHS591ofDiw_gbzmTGAQ';
-const N8N_WEBHOOK   = 'YOUR_N8N_WEBHOOK_URL'; // (legacy, unused â€” Moodle push now via worker)
-const API_BASE      = 'https://api.pitthugram.com';
+const N8N_WEBHOOK   = 'YOUR_N8N_WEBHOOK_URL'; // ---
+const API_BASE      = 'https:// ---
 let   teacherInstituteId = null;
 
 let allQuestions       = [];
 let selected           = new Set();
-let selectedQuestions  = new Map();  // id -> question object (persists across subjects/classes)
+let selectedQuestions  = new Map();  // ---
 let scheduleBarVisible = false;
 let currentUser        = null;
 let activeClass        = '';
@@ -706,7 +706,7 @@ let activeSubject      = '';
 let activeChapter      = '';
 let activeDifficulty   = '';
 
-// â”€â”€ Auth â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ---
 function checkAuth() {
     const token = localStorage.getItem('pg_access_token');
     const user  = localStorage.getItem('pg_user');
@@ -736,7 +736,7 @@ function logout() {
     window.location.href = './index.html';
 }
 
-// â”€â”€ Fetch questions (Supabase A central + Supabase B institute, merged) â”€â”€
+// ---
 async function fetchQuestions() {
     const cls        = activeClass;
     const subject    = activeSubject;
@@ -761,9 +761,9 @@ async function fetchQuestions() {
     if (chapter)     urlB += '&chapter=eq.'          + encodeURIComponent(chapter);
     if (difficulty)  urlB += '&difficulty_level=eq.' + encodeURIComponent(difficulty);
 
-    // Central read uses the anon key only. The portal login token is issued by a
-    // different Supabase project, so sending it as Bearer here makes central reject
-    // it (401). The anon RLS policy already permits reading active questions.
+    // ---
+    // ---
+    // ---
     const headersA = { 'apikey': SUPABASE_KEY };
 
     const [resA, resB] = await Promise.allSettled([
@@ -790,7 +790,7 @@ async function fetchQuestions() {
     questionsA.forEach(q => q._source = 'central');
     questionsB.forEach(q => {
         q._source = 'institute';
-        // SUPA_B keeps images in question_images; surface the question-target one for display
+        // ---
         const imgs = q.question_images || [];
         const qi = imgs.find(im => (im.caption || 'question') === 'question') || imgs[0];
         if (qi && qi.idrive_url) q.question_image = qi.idrive_url;
@@ -806,7 +806,7 @@ function getConnectionHint() {
     return '';
 }
 
-// â”€â”€ Render â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ---
 function render(questions) {
     allQuestions = questions;
     document.getElementById('totalCount').textContent = questions.length;
@@ -872,12 +872,12 @@ function clearSel() {
     updateUI();
 }
 
-// â”€â”€ Review selected questions (across all subjects/classes) â”€â”€
+// ---
 function openReview() {
     renderReview();
     loadMoodleCourses();
 
-    // Auto-prefill smart schedule defaults
+    // ---
     const today = new Date().toISOString().split('T')[0];
     const dateInput = document.getElementById('quizDate');
     if (dateInput && !dateInput.value) dateInput.value = today;
@@ -951,7 +951,7 @@ function proceedToSchedule() {
     closeReview();
     loadMoodleCourses();
 
-    // Smart prefill defaults
+    // ---
     const today = new Date().toISOString().split('T')[0];
     const dateInput = document.getElementById('quizDate');
     if (dateInput && !dateInput.value) dateInput.value = today;
@@ -985,7 +985,7 @@ function closeScheduleModal() {
     }
 }
 
-// â”€â”€ Moodle course list (per institute, via worker) â”€â”€â”€â”€
+// ---
 const DEFAULT_COURSES = [
     { id: 2, fullname: 'Class 11 NEET Droppers Physics' },
     { id: 3, fullname: 'Class 12 Mathematics & Calculus' },
@@ -998,7 +998,7 @@ async function loadMoodleCourses() {
     const sel = document.getElementById('quizCourse');
     if (!sel) return;
     
-    // Populate verified defaults instantly
+    // ---
     sel.innerHTML = '<option value="">Select Moodle Course</option>' +
         DEFAULT_COURSES.map(function(c) { return '<option value="' + c.id + '">' + c.fullname + '</option>'; }).join('');
 
@@ -1023,7 +1023,7 @@ async function loadMoodleCourses() {
     }
 }
 
-// Convert a selected question (central or institute) into the Moodle schedule shape.
+// ---
 function toSchedQuestion(q) {
     if (!q) return { questiontext: 'Question', answers: [] };
     try {
@@ -1059,7 +1059,7 @@ function toSchedQuestion(q) {
     }
 }
 
-// â”€â”€ Schedule â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ---
 async function scheduleQuiz() {
     const errBox = document.getElementById('schedModalErr');
     if (errBox) errBox.style.display = 'none';
@@ -1105,7 +1105,7 @@ async function scheduleQuiz() {
     const timeopen = Math.floor(new Date(date + 'T' + time + ':00').getTime() / 1000) || Math.floor(Date.now() / 1000);
     const email = (currentUser && currentUser.email) ? currentUser.email : (localStorage.getItem('pg_user') ? JSON.parse(localStorage.getItem('pg_user')).email : 'vikram.aditya@pitthugram.com');
 
-    // 1. Instant optimistic UI feedback: Launch success confirmation immediately!
+    // ---
     const msgEl = document.getElementById('successMsg');
     if (msgEl) {
         msgEl.textContent = '"' + title + '" successfully scheduled in ' + courseTxt + ' with ' + (selQuestions.length || qCount) + ' question(s), opening on ' + date + ' at ' + time + '.';
@@ -1120,7 +1120,7 @@ async function scheduleQuiz() {
         sModal.classList.add('show');
     }
 
-        // 2. Fire asynchronous background sync to Moodle Webhook & Supabase Queue
+        // ---
     try {
         const qIds = selQuestions.map(function(q) { return q.id; }).filter(Boolean);
         fetch(SUPABASE_URL + '/rest/v1/scheduled_quizzes', {
@@ -1142,7 +1142,7 @@ async function scheduleQuiz() {
             })
         }).catch(function(e) { console.warn('Supabase queue notice:', e); });
 
-        fetch('https://container001.pitthugram.com/webhook/moodle-tenant-sync', {
+        fetch('https:// ---
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -1209,10 +1209,10 @@ if (sidebarToggle) sidebarToggle.addEventListener('click', openSidebar);
 if (sidebarClose) sidebarClose.addEventListener('click', closeSidebar);
 if (sidebarBackdrop) sidebarBackdrop.addEventListener('click', closeSidebar);
 
-// Remove a class from this set once you've added its questions in Supabase
+// ---
 const EMPTY_CLASSES = new Set([]);
 
-// â”€â”€ Refresh â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ---
 async function refresh() {
     const cls = activeClass;
     if (!cls) {
@@ -1238,7 +1238,7 @@ async function refresh() {
 
 
 
-// â”€â”€ New Quiz Batch Modal â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ---
 let selectedBatch = null;
 let selectedBoard = null;
 
@@ -1267,7 +1267,7 @@ function closeBatchModal() {
 function startNewQuiz() {
     if (!selectedBatch) return;
     const batch      = selectedBatch;
-    const board      = selectedBoard;   // capture before closeBatchModal() nulls it
+    const board      = selectedBoard;   // ---
     const subject    = document.getElementById('mSubject').value;
     const chapter    = document.getElementById('mChapter').value;
     const difficulty = document.getElementById('mDifficulty').value;
@@ -1302,7 +1302,7 @@ document.querySelectorAll('.batch-btn').forEach(btn => {
         document.querySelectorAll('.batch-btn').forEach(b => b.classList.remove('active'));
         this.classList.add('active');
 
-        // Board buttons: reveal the class picker, defer subject loading until a class is chosen
+        // ---
         if (this.dataset.board) {
             selectedBoard = this.dataset.board;
             selectedBatch = null;
@@ -1314,19 +1314,19 @@ document.querySelectorAll('.batch-btn').forEach(btn => {
             return;
         }
 
-        // Non-board batch (competitive / school class): clear any board state
+        // ---
         selectedBoard = null;
         document.getElementById('boardClassRow').style.display = 'none';
         selectedBatch    = this.dataset.batch;
         const preSubject = this.dataset.subject || '';
         document.getElementById('batchStartBtn').classList.add('ready');
 
-        // Show filters and scroll them into view within the modal
+        // ---
         const batchFiltersEl = document.getElementById('batchFilters');
         batchFiltersEl.classList.add('visible');
         setTimeout(() => batchFiltersEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 60);
 
-        // Reset dropdowns
+        // ---
         const mSub = document.getElementById('mSubject');
         const mCh  = document.getElementById('mChapter');
         mSub.innerHTML = '<option value="">All Subjects</option>';
@@ -1337,7 +1337,7 @@ document.querySelectorAll('.batch-btn').forEach(btn => {
             const CLASS_DB_MAP = {};
             const dbCls = CLASS_DB_MAP[selectedBatch] || selectedBatch;
 
-            // Fetch subjects + chapters from both Supabases for this class
+            // ---
             const [resA, resB] = await Promise.allSettled([
                 fetch(SUPABASE_URL + '/rest/v1/questions?select=subject,chapter&class=eq.' + encodeURIComponent(dbCls) + '&limit=10000', { headers: { 'apikey': SUPABASE_KEY } }),
                 fetch(SUPA_B_URL   + '/rest/v1/questions?select=subject,chapter&class=eq.' + encodeURIComponent(dbCls) + '&limit=10000', { headers: { 'apikey': SUPA_B_PUB  } })
@@ -1348,7 +1348,7 @@ document.querySelectorAll('.batch-btn').forEach(btn => {
             if (resB.status === 'fulfilled' && resB.value.ok) { try { rowsB = await resB.value.json(); } catch(_){} }
             const allRows = [...rowsA, ...rowsB];
 
-            // Populate subject dropdown with all subjects for this class
+            // ---
             const subjects = [...new Set(allRows.map(q => q.subject).filter(Boolean))].sort();
             subjects.forEach(s => {
                 const o = document.createElement('option');
@@ -1356,11 +1356,11 @@ document.querySelectorAll('.batch-btn').forEach(btn => {
                 mSub.appendChild(o);
             });
 
-            // Pre-select subject (if a subject button was clicked) and load chapters from syllabus
+            // ---
             if (preSubject) mSub.value = preSubject;
             await loadModalChapters(mSub.value, selectedBatch, null);
 
-            // Re-populate chapters whenever subject changes
+            // ---
             mSub.onchange = () => loadModalChapters(mSub.value, selectedBatch, null);
 
         } catch(err) {
@@ -1372,7 +1372,7 @@ document.querySelectorAll('.batch-btn').forEach(btn => {
     });
 });
 
-// Load chapters for the schedule modal from the syllabus (jee_syllabus, board-aware)
+// ---
 async function loadModalChapters(subject, examCtx, board) {
     const mCh = document.getElementById('mChapter');
     mCh.innerHTML = '<option value="">All Chapters</option>';
@@ -1387,7 +1387,7 @@ async function loadModalChapters(subject, examCtx, board) {
     } catch(_) {}
 }
 
-// Board selected â†’ class chosen: subjects from board_subjects, chapters from syllabus
+// ---
 async function onModalBoardClassChange() {
     const cls   = document.getElementById('mBoardClass').value;
     const board = selectedBoard;
@@ -1405,7 +1405,7 @@ async function onModalBoardClassChange() {
     setTimeout(() => bf.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 60);
 
     try {
-        // Standard subject list for this board+class
+        // ---
         let subjects = [];
         const subRes = await fetch(
             SUPABASE_URL + '/rest/v1/board_subjects?select=subject&board=eq.' + encodeURIComponent(board) + '&class=eq.' + encodeURIComponent(cls) + '&is_active=eq.true&order=subject.asc',
@@ -1413,7 +1413,7 @@ async function onModalBoardClassChange() {
         );
         if (subRes.ok) subjects = (await subRes.json()).map(r => r.subject);
 
-        // Fallback: also include subjects that already have questions for this board+class
+        // ---
         try {
             const [qa, qb] = await Promise.allSettled([
                 fetch(SUPABASE_URL + '/rest/v1/questions?select=subject&class=eq.' + encodeURIComponent(cls) + '&board=eq.' + encodeURIComponent(board) + '&limit=10000', { headers: { 'apikey': SUPABASE_KEY } }),
@@ -1427,7 +1427,7 @@ async function onModalBoardClassChange() {
         if (!subjects.length) { mSub.innerHTML = '<option value="">No subjects found</option>'; }
         subjects.forEach(s => { const o = document.createElement('option'); o.value = s; o.textContent = s; mSub.appendChild(o); });
 
-        // Chapters from the syllabus (board-aware), refreshed when subject changes
+        // ---
         await loadModalChapters(mSub.value, cls, board);
         mSub.onchange = () => loadModalChapters(mSub.value, cls, board);
     } catch (err) {
@@ -1436,12 +1436,12 @@ async function onModalBoardClassChange() {
     }
 }
 
-// â”€â”€ Filter bar â€” load subjects + chapters from Supabase â”€â”€
-let _filterAllRows = []; // cached rows for the active class (subject+chapter only)
-let _fbClass = '';       // exam/class context for the on-page filter bar
-let _fbBoard = '';       // board context for the on-page filter bar
+// ---
+let _filterAllRows = []; // ---
+let _fbClass = '';       // ---
+let _fbBoard = '';       // ---
 
-// Load chapters into the on-page filter bar from the syllabus (board-aware)
+// ---
 async function loadFilterChapters(subj) {
     const selCh = document.getElementById('filterChapter');
     selCh.innerHTML = '<option value="">All Chapters</option>';
@@ -1475,7 +1475,7 @@ async function loadFilterBar(cls, preSubject, board) {
     const boardQ = board ? '&board=eq.' + encodeURIComponent(board) : '';
     let subjects = [];
 
-    // Boards: standard subjects from board_subjects
+    // ---
     if (board) {
         try {
             const sr = await fetch(SUPABASE_URL + '/rest/v1/board_subjects?select=subject&board=eq.' + encodeURIComponent(board) + '&class=eq.' + encodeURIComponent(dbCls) + '&is_active=eq.true&order=subject.asc', { headers: { 'apikey': SUPABASE_KEY } });
@@ -1483,7 +1483,7 @@ async function loadFilterBar(cls, preSubject, board) {
         } catch(_) {}
     }
 
-    // Also include any subjects that already have questions for this class/board
+    // ---
     try {
         const [resA, resB] = await Promise.allSettled([
             fetch(SUPABASE_URL + '/rest/v1/questions?select=subject&class=eq.' + encodeURIComponent(dbCls) + boardQ + '&limit=10000', { headers: { 'apikey': SUPABASE_KEY } }),
@@ -1493,7 +1493,7 @@ async function loadFilterBar(cls, preSubject, board) {
         if (resB.status === 'fulfilled' && resB.value.ok) { try { subjects = subjects.concat((await resB.value.json()).map(r => r.subject)); } catch(_){} }
     } catch(_) {}
 
-    // JEE/NEET: fall back to syllabus subjects if nothing found
+    // ---
     if (!subjects.length && !board) {
         try {
             const sy = await fetch(SUPABASE_URL + '/rest/v1/jee_syllabus?select=subject&exam=eq.' + encodeURIComponent(cls), { headers: { 'apikey': SUPABASE_KEY } });
@@ -1522,7 +1522,7 @@ function onFilterChapterChange() {
     refresh();
 }
 
-// â”€â”€ Quick-load a subject directly from sidebar â”€â”€â”€â”€â”€â”€â”€â”€
+// ---
 async function quickLoad(batch, subject, board) {
     activeClass      = batch;
     activeSubject    = subject;
@@ -1530,7 +1530,7 @@ async function quickLoad(batch, subject, board) {
     activeDifficulty = '';
     activeBoard      = board || '';
 
-    // Highlight active subject in sidebar
+    // ---
     document.querySelectorAll('.qb-subjects li[onclick]').forEach(li => li.classList.remove('active-subject'));
     document.querySelectorAll('#jeeSubjectList li, #neetSubjectList li').forEach(li => {
         if (li.getAttribute('onclick') === `quickLoad('${batch}','${subject}')`) {
@@ -1557,7 +1557,7 @@ function clearSubjectFilter() {
     refresh();
 }
 
-// â”€â”€ Sidebar stats â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ---
 async function loadSidebarStats() {
     try {
         const [resA, resB] = await Promise.allSettled([
@@ -1588,12 +1588,12 @@ async function loadSubjectCounts() {
             const key = `${q.class}-${q.subject || ''}`;
             counts[key] = (counts[key] || 0) + 1;
             
-            // Also count total per class
+            // ---
             const classKey = `${q.class}-total`;
             counts[classKey] = (counts[classKey] || 0) + 1;
         });
 
-        // Update JEE subjects
+        // ---
         ['Physics', 'Chemistry', 'Maths'].forEach(subject => {
             const count = counts[`JEE-${subject}`] || 0;
             const li = document.querySelector(`#jeeSubjectList li[onclick*="JEE','${subject}'"]`);
@@ -1604,7 +1604,7 @@ async function loadSubjectCounts() {
             }
         });
 
-        // Update NEET subjects
+        // ---
         ['Physics', 'Chemistry', 'Botany', 'Zoology'].forEach(subject => {
             const count = counts[`NEET-${subject}`] || 0;
             const li = document.querySelector(`#neetSubjectList li[onclick*="NEET','${subject}'"]`);
@@ -1615,7 +1615,7 @@ async function loadSubjectCounts() {
             }
         });
 
-        // Update School classes
+        // ---
         ['6', '7', '8', '9', '10', '11', '12'].forEach(cls => {
             const count = counts[`${cls}-total`] || 0;
             const label = document.getElementById(`class${cls}Toggle`);
@@ -1630,7 +1630,7 @@ async function loadSubjectCounts() {
     }
 }
 
-// â”€â”€ Navigation Functions â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ---
 function showDashboard(e) {
     if (e) e.preventDefault();
     hideAllViews();
@@ -1665,7 +1665,7 @@ function hideAllViews() {
     document.querySelectorAll('.qb-nav a').forEach(a => a.classList.remove('active'));
 }
 
-// â”€â”€ My Quizzes â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ---
 async function loadMyQuizzes() {
     const container = document.getElementById('myQuizzesContainer');
     if (!container) return;
@@ -1724,16 +1724,16 @@ function getQuizStatus(status, scheduledDate) {
 }
 
 function viewQuizDetails(id) {
-    // Placeholder for quiz details view
+    // ---
     alert('Quiz details view not implemented yet. Quiz ID: ' + id);
 }
 
 function editQuiz(id) {
-    // Placeholder for quiz editing
+    // ---
     alert('Quiz editing not implemented yet. Quiz ID: ' + id);
 }
 
-// â”€â”€ Question Bank â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ---
 let allQBQuestions = [];
 let filteredQBQuestions = [];
 
@@ -1770,11 +1770,11 @@ function renderQuestionBank() {
 }
 
 function toggleQBFilter() {
-    // Placeholder for advanced filtering
+    // ---
     alert('Advanced filtering not implemented yet');
 }
 
-// Search functionality
+// ---
 document.addEventListener('DOMContentLoaded', function() {
     const searchInput = document.getElementById('qbSearchInput');
     if (searchInput) {
@@ -1790,7 +1790,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 
-// â”€â”€ Settings â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ---
 function openSettingsModal(e) {
     if (e) e.preventDefault();
     document.getElementById('settingsModal').classList.add('show');
@@ -1803,7 +1803,7 @@ function closeSettingsModal() {
 }
 
 function loadSettings() {
-    // Load saved settings from localStorage
+    // ---
     const theme = localStorage.getItem('qb_theme') || 'auto';
     const notifications = localStorage.getItem('qb_notifications') || 'all';
     const defaultClass = localStorage.getItem('qb_default_class') || '';
@@ -1822,7 +1822,7 @@ function saveSettings() {
     localStorage.setItem('qb_notifications', notifications);
     localStorage.setItem('qb_default_class', defaultClass);
 
-    // Apply theme
+    // ---
     applyTheme(theme);
 
     closeSettingsModal();
@@ -1836,15 +1836,15 @@ function applyTheme(theme) {
     } else if (theme === 'light') {
         root.setAttribute('data-theme', 'light');
     } else {
-        // Auto theme based on system preference
+        // ---
         const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
         root.setAttribute('data-theme', prefersDark ? 'dark' : 'light');
     }
 }
 
-// â”€â”€ Enhanced Quick Load â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ---
 async function quickLoad(batch, subject) {
-    // Show loading state
+    // ---
     const li = document.querySelector(`li[onclick="quickLoad('${batch}','${subject || ''}')"]`) || 
                document.querySelector(`.qb-subjects-sublist li[onclick*="${batch}'], '${subject}')"]`);
     if (li) li.classList.add('subject-loading');
@@ -1856,11 +1856,11 @@ async function quickLoad(batch, subject) {
         activeChapter    = '';
         activeDifficulty = '';
 
-        // Highlight active subject in sidebar
+        // ---
         document.querySelectorAll('.qb-subjects li[onclick]').forEach(li => li.classList.remove('active-subject'));
         document.querySelectorAll('.qb-subjects-sublist li').forEach(li => li.classList.remove('active-subject'));
         
-        // Find the active li by checking onclick content
+        // ---
         const allLis = [...document.querySelectorAll('.qb-subjects li'), ...document.querySelectorAll('.qb-subjects-sublist li')];
         const activeLi = allLis.find(li => li.onclick && li.onclick.toString().includes(`quickLoad('${batch}','${subject}')`));
         if (activeLi) activeLi.classList.add('active-subject');
@@ -1873,7 +1873,7 @@ async function quickLoad(batch, subject) {
     }
 }
 
-// â”€â”€ Logout with Confirmation â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ---
 function confirmLogout(e) {
     if (e) e.preventDefault();
     if (confirm('Are you sure you want to logout?')) {
@@ -1881,7 +1881,7 @@ function confirmLogout(e) {
     }
 }
 
-// â”€â”€ Section Toggle â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ---
 function toggleSection(sectionId) {
     const label = document.getElementById(sectionId + 'Toggle');
     const list = document.getElementById(sectionId + 'SubjectList');
@@ -1921,22 +1921,22 @@ function findSchoolSubjectItem(cls, subject) {
     return Array.from(document.querySelectorAll(`#class${cls}Subjects li`)).find(li => li.dataset.subject === subject);
 }
 
-// â”€â”€ School Class Subjects â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ---
 async function loadSchoolClassSubjects(cls) {
     const selectedLi = document.getElementById(`class${cls}Toggle`);
     const existingSubList = document.getElementById(`class${cls}Subjects`);
 
-    // If this class is already expanded, collapse it
+    // ---
     if (existingSubList) {
         existingSubList.remove();
         if (selectedLi) selectedLi.classList.add('collapsed');
         return;
     }
 
-    // Highlight the selected class (don't remove highlighting from others)
+    // ---
     if (selectedLi) selectedLi.classList.remove('collapsed');
 
-    // Load subjects for this class
+    // ---
     try {
         const CLASS_DB_MAP = {};
         const dbCls = CLASS_DB_MAP[cls] || cls;
@@ -1950,7 +1950,7 @@ async function loadSchoolClassSubjects(cls) {
         const questions = await res.json();
         const subjects = [...new Set(questions.map(q => q.subject).filter(Boolean))].sort();
 
-        // Create subject sub-list
+        // ---
         const subList = document.createElement('ul');
         subList.className = 'qb-subjects-sublist';
         subList.id = `class${cls}Subjects`;
@@ -1974,16 +1974,16 @@ async function loadSchoolClassSubjects(cls) {
             });
         }
 
-        // Add the sublist after the selected class item
+        // ---
         if (selectedLi) {
             selectedLi.insertAdjacentElement('afterend', subList);
         }
 
     } catch (err) {
         console.error('Failed to load subjects for class', cls, err);
-        // Don't show error for missing data, just show empty list
-        // showErr('Failed to load subjects for Class ' + cls);
-        // Reset state on error
+        // ---
+        // ---
+        // ---
         if (selectedLi) selectedLi.classList.add('collapsed');
     }
 }
@@ -1993,18 +1993,18 @@ async function toggleSchoolSubject(cls, subject) {
     const questionListId = `subject${cls}${sanitizeId(subject)}Questions`;
     const existingQuestionList = document.getElementById(questionListId);
 
-    // If this subject is already expanded, collapse it
+    // ---
     if (existingQuestionList) {
         existingQuestionList.remove();
         if (subjectLi) subjectLi.classList.remove('active-subject');
         return;
     }
 
-    // Highlight the selected subject and clear existing active subject for this class
+    // ---
     document.querySelectorAll(`#class${cls}Subjects li.active-subject`).forEach(li => li.classList.remove('active-subject'));
     if (subjectLi) subjectLi.classList.add('active-subject');
 
-    // Load questions for this subject
+    // ---
     try {
         const CLASS_DB_MAP = {};
         const dbCls = CLASS_DB_MAP[cls] || cls;
@@ -2017,7 +2017,7 @@ async function toggleSchoolSubject(cls, subject) {
 
         const questions = await res.json();
 
-        // Create question sub-list
+        // ---
         const questionList = document.createElement('ul');
         questionList.className = 'qb-subjects-sublist';
         questionList.id = questionListId;
@@ -2041,24 +2041,24 @@ async function toggleSchoolSubject(cls, subject) {
             });
         }
 
-        // Add the question list after the selected subject li
+        // ---
         if (subjectLi) {
             subjectLi.insertAdjacentElement('afterend', questionList);
         }
 
     } catch (err) {
         console.error('Failed to load questions for subject', subject, err);
-        // Don't show error for missing data, just show empty list
-        // showErr('Failed to load questions for ' + subject);
-        // Reset state on error
+        // ---
+        // ---
+        // ---
         if (subjectLi) subjectLi.classList.remove('active-subject');
     }
 }
 
-// â”€â”€ Board (CBSE / ICSE / UP Board) Class Subjects â”€â”€â”€â”€â”€
+// ---
 function boardKey(board) { return board.replace(/[^a-z0-9]/gi, '').toLowerCase(); }
 
-// Classes 11 & 12 split into streams; each stream maps to a board_subjects class key (e.g. 11-PCM)
+// ---
 function loadBoardClassStreams(board, baseCls) {
     const bk = boardKey(board);
     const selectedLi = document.getElementById(`${bk}Class${baseCls}Toggle`);
@@ -2098,7 +2098,7 @@ async function loadBoardClassSubjects(board, cls) {
         );
         if (!res.ok) throw new Error('Failed to load subjects');
         const questions = await res.json();
-        // Standard subject list comes from the board_subjects reference table
+        // ---
         let fixed = [];
         try {
             const subRes = await fetch(
@@ -2106,7 +2106,7 @@ async function loadBoardClassSubjects(board, cls) {
                 { headers: { 'apikey': SUPABASE_KEY } }
             );
             if (subRes.ok) fixed = (await subRes.json()).map(r => r.subject);
-        } catch (e) { /* fall back to whatever subjects have questions */ }
+        } catch (e) { /* --- */ }
         const subjects = [...new Set([...fixed, ...questions.map(q => q.subject).filter(Boolean)])].sort();
         const subList = document.createElement('ul');
         subList.className = 'qb-subjects-sublist';
@@ -2175,19 +2175,19 @@ async function toggleBoardSubject(board, cls, subject) {
     }
 }
 
-// â”€â”€ Load Single Question Details â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ---
 function loadQuestionDetails(question) {
-    // Set active filters to match this question
+    // ---
     activeClass = question.class || '';
     activeBoard = question.board || '';
     activeSubject = question.subject || '';
     activeChapter = question.chapter || '';
     activeDifficulty = question.difficulty_level || question.difficulty || '';
 
-    // Load questions for this subject/chapter/difficulty combination
+    // ---
     quickLoad(activeClass, activeSubject, activeBoard);
     
-    // After loading, scroll to and highlight the specific question
+    // ---
     setTimeout(() => {
         const questionRow = document.querySelector(`.question-row[data-id="${question.id}"]`);
         if (questionRow) {
@@ -2198,14 +2198,14 @@ function loadQuestionDetails(question) {
     }, 1000);
 }
 
-// â”€â”€ Init â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ---
 async function init() {
     if (!checkAuth()) return;
 
     const today = new Date().toISOString().split('T')[0];
     document.getElementById('quizDate').min = today;
 
-    // Apply saved theme
+    // ---
     const savedTheme = localStorage.getItem('qb_theme') || 'auto';
     applyTheme(savedTheme);
 
@@ -2213,13 +2213,13 @@ async function init() {
 
     loadSidebarStats();
 
-    // Show dashboard by default
+    // ---
     showDashboard();
 
-    // Load section collapsed states
+    // ---
     loadSectionStates();
 
-    // Set up keyboard navigation
+    // ---
     setupKeyboardNavigation();
 }
 
