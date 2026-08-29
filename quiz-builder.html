@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Quiz Builder — Pitthugram</title>
+    <title>Quiz Builder â€” Pitthugram</title>
     <link rel="icon" type="image/png" href="./favicon.png">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -11,21 +11,21 @@
     <script src="https://unpkg.com/@phosphor-icons/web" defer></script>
     <link rel="stylesheet" href="./pitthugram.css">
     <style>
-        /* ── Desktop sidebar (721px+) ── */
+        /* â”€â”€ Desktop sidebar (721px+) â”€â”€ */
         @media(min-width:721px){
             #qbSidebar{display:flex!important;flex-direction:column!important;position:fixed!important;top:72px!important;left:0!important;width:260px!important;height:calc(100vh - 72px)!important;max-height:none!important;border-radius:0!important;transform:none!important;visibility:visible!important;opacity:1!important;z-index:50!important;}
             #qbPage.qb-page{margin-left:260px!important;}
             #qbPage .qb-layout{display:block!important;}
         }
 
-        /* ── Schedule fields ── */
+        /* â”€â”€ Schedule fields â”€â”€ */
         .schedule-fields select,.schedule-fields input{width:100%;padding:0.7rem 2.25rem 0.7rem 0.875rem;background:var(--bg-input);border:1.5px solid var(--border-light);border-radius:var(--radius);font-family:var(--font-body);font-size:0.9rem;color:var(--text-primary);color-scheme:dark;transition:var(--transition);appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24'%3E%3Cpath fill='%23888' d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 0.75rem center;cursor:pointer;}
         .schedule-fields select:focus,.schedule-fields input:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-glow);background-color:var(--bg-elevated);}
         .schedule-fields select option{background:var(--bg-elevated);}
         @media(min-width:560px){.schedule-fields{grid-template-columns:repeat(2,1fr)!important;}}
         @media(min-width:900px){.schedule-fields{grid-template-columns:repeat(4,1fr)!important;}}
 
-        /* ── Settings Modal ── */
+        /* â”€â”€ Settings Modal â”€â”€ */
         .settings-modal-bg{position:fixed;inset:0;background:rgba(0,0,0,0.65);backdrop-filter:blur(4px);z-index:2000;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity 0.25s;}
         .settings-modal-bg.show{opacity:1;pointer-events:all;}
         .settings-modal-box{background:var(--bg-elevated);border:1px solid var(--border);border-radius:var(--radius-lg);padding:2rem 1.75rem 1.75rem;width:min(500px,94vw);max-height:88vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,0.5);transform:translateY(16px) scale(0.97);transition:transform 0.25s,opacity 0.25s;}
@@ -41,7 +41,7 @@
         .settings-actions{display:flex;justify-content:flex-end;gap:0.65rem;margin-top:1.5rem;border-top:1px solid var(--border-light);padding-top:1.1rem;}
         @media(max-width:400px){.settings-actions{flex-direction:column;} .settings-save-btn,.settings-cancel-btn{width:100%;justify-content:center;}}
 
-        /* ── My Quizzes View ── */
+        /* â”€â”€ My Quizzes View â”€â”€ */
         .my-quizzes-view{display:none;flex-direction:column;gap:1rem;}
         .my-quizzes-view.show{display:flex;}
         .quiz-item{background:var(--bg-surface);border:1px solid var(--border);border-radius:var(--radius);padding:1rem;margin-bottom:0.5rem;}
@@ -54,7 +54,7 @@
         .quiz-details{font-size:0.9rem;color:var(--text-muted);}
         .quiz-actions{display:flex;gap:0.5rem;margin-top:0.5rem;}
 
-        /* ── Question Bank View ── */
+        /* â”€â”€ Question Bank View â”€â”€ */
         .question-bank-view{display:none;flex-direction:column;gap:1rem;}
         .question-bank-view.show{display:flex;}
         .qb-search-bar{display:flex;gap:0.5rem;margin-bottom:1rem;}
@@ -65,24 +65,24 @@
         .qb-question-meta{font-size:0.8rem;color:var(--text-muted);}
         .q-thumb{display:block;max-width:160px;max-height:120px;margin-top:6px;border-radius:6px;border:1px solid var(--border-light);object-fit:contain;}
 
-        /* ── Loading states ── */
+        /* â”€â”€ Loading states â”€â”€ */
         .sidebar-loading{opacity:0.6;pointer-events:none;}
         .subject-loading::after{content:'...';color:var(--text-muted);}
 
-        /* ── Accessibility ── */
+        /* â”€â”€ Accessibility â”€â”€ */
         .qb-nav a:focus,.qb-subjects li:focus,.sidebar-link:focus{outline:2px solid var(--primary);outline-offset:2px;}
         .qb-subjects li{cursor:pointer;}
         .qb-subjects li[aria-label]{position:relative;}
         .qb-subjects li[aria-label]::after{content:attr(aria-label);position:absolute;left:100%;top:50%;transform:translateY(-50%);background:var(--bg-elevated);color:var(--text-primary);padding:0.25rem 0.5rem;border-radius:var(--radius);font-size:0.8rem;white-space:nowrap;z-index:100;opacity:0;pointer-events:none;transition:opacity 0.2s;}
         .qb-subjects li:hover::after{opacity:1;}
 
-        /* ── Question counts ── */
+        /* â”€â”€ Question counts â”€â”€ */
         .subject-count{font-size:0.8rem;color:var(--text-muted);font-weight:500;}
 
-        /* ── Highlight effect for selected questions ── */
+        /* â”€â”€ Highlight effect for selected questions â”€â”€ */
         .question-row.highlight{background:var(--primary-light);border-left:4px solid var(--primary);}
 
-        /* ── Settings buttons ── */
+        /* â”€â”€ Settings buttons â”€â”€ */
         .settings-cancel-btn,.settings-save-btn{padding:0.5rem 1.1rem;background:transparent;border:1.5px solid var(--border-light);border-radius:var(--radius);font-family:var(--font-body);font-size:0.875rem;font-weight:600;color:var(--text-muted);cursor:pointer;transition:var(--transition);}
         .settings-cancel-btn:hover{border-color:var(--text-muted);color:var(--text-primary);}
         .settings-save-btn{background:var(--primary);border-color:var(--primary);color:#fff;}
@@ -121,7 +121,7 @@
         .batch-filter-select option{background:var(--bg-elevated);}
         .batch-filters-row{display:grid;grid-template-columns:1fr 1fr;gap:0.65rem;}
         @media(max-width:380px){.batch-filters-row{grid-template-columns:1fr;}}
-        /* ── Collapsible sections ── */
+        /* â”€â”€ Collapsible sections â”€â”€ */
         .comp-exam-group{position:relative;}
         .comp-exam-label{cursor:pointer;display:flex;align-items:center;gap:0.35rem;padding:0.5rem 0;transition:var(--transition);}
         .comp-exam-label:hover{background:var(--primary-light);color:var(--primary);border-radius:var(--radius-sm);}
@@ -136,12 +136,12 @@
         .qb-subjects-sublist li{display:flex;align-items:center;justify-content:space-between;gap:0.75rem;padding:0.7rem 0.95rem;border-radius:var(--radius);background:var(--bg-surface);color:var(--text-secondary);font-size:0.9rem;}
         .qb-subjects-sublist li:hover{background:var(--primary-light);color:var(--primary);}
 
-        /* ── Class groups (expandable classes) ── */
+        /* â”€â”€ Class groups (expandable classes) â”€â”€ */
         .class-item{cursor:pointer;}
         .class-item:hover{background:var(--primary-light);color:var(--primary);}
-        .class-item::after{content:'▾';margin-left:auto;font-size:0.8rem;}
-        .class-item.collapsed::after{content:'▸';}
-        /* ── Chapter / Filter bar ── */
+        .class-item::after{content:'â–¾';margin-left:auto;font-size:0.8rem;}
+        .class-item.collapsed::after{content:'â–¸';}
+        /* â”€â”€ Chapter / Filter bar â”€â”€ */
         .chapter-bar{background:var(--bg-surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:1rem 1.25rem;}
         .chapter-bar-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:0.75rem;flex-wrap:wrap;gap:0.5rem;}
         .chapter-bar-title{font-size:0.875rem;font-weight:700;color:var(--text-primary);display:flex;align-items:center;gap:0.45rem;}
@@ -152,11 +152,11 @@
         @media(max-width:480px){.filter-dropdowns-row{grid-template-columns:1fr;}}
         @media(max-width:720px){.chapter-bar{padding:0.85rem 1rem;}}
 
-        /* ── New Quiz button in top bar (mobile only) ── */
+        /* â”€â”€ New Quiz button in top bar (mobile only) â”€â”€ */
         .new-quiz-mobile-btn { display:none; align-items:center; gap:0.4rem; padding:0.5rem 1rem; background:var(--primary); border:none; border-radius:var(--radius); font-family:var(--font-body); font-size:0.85rem; font-weight:700; color:#fff; cursor:pointer; transition:var(--transition); white-space:nowrap; }
         .new-quiz-mobile-btn:hover { background:var(--primary-dark,#c8000a); }
 
-        /* ── Navbar Home btn visible on all sizes ── */
+        /* â”€â”€ Navbar Home btn visible on all sizes â”€â”€ */
         .nav-actions{display:flex!important;}
 
         @media(max-width:720px){
@@ -251,7 +251,7 @@
                 <div class="qb-section">
                     <div class="comp-exam-group">
                         <div class="comp-exam-label" onclick="toggleSection('jee')" id="jeeToggle">
-                            <span class="comp-exam-icon">🏆</span>
+                            <span class="comp-exam-icon">ðŸ†</span>
                             JEE
                         </div>
                         <ul class="qb-subjects" id="jeeSubjectList">
@@ -262,7 +262,7 @@
                     </div>
                     <div class="comp-exam-group">
                         <div class="comp-exam-label" onclick="toggleSection('neet')" id="neetToggle">
-                            <span class="comp-exam-icon">🌿</span>
+                            <span class="comp-exam-icon">ðŸŒ¿</span>
                             NEET
                         </div>
                         <ul class="qb-subjects" id="neetSubjectList">
@@ -274,7 +274,7 @@
                     </div>
                     <div class="comp-exam-group">
                         <div class="comp-exam-label collapsed" onclick="toggleSection('cbse')" id="cbseToggle">
-                            <span class="comp-exam-icon">📘</span>
+                            <span class="comp-exam-icon">ðŸ“˜</span>
                             CBSE
                         </div>
                         <ul class="qb-subjects collapsed" id="cbseSubjectList">
@@ -289,7 +289,7 @@
                     </div>
                     <div class="comp-exam-group">
                         <div class="comp-exam-label collapsed" onclick="toggleSection('icse')" id="icseToggle">
-                            <span class="comp-exam-icon">📗</span>
+                            <span class="comp-exam-icon">ðŸ“—</span>
                             ICSE
                         </div>
                         <ul class="qb-subjects collapsed" id="icseSubjectList">
@@ -304,7 +304,7 @@
                     </div>
                     <div class="comp-exam-group">
                         <div class="comp-exam-label collapsed" onclick="toggleSection('upboard')" id="upboardToggle">
-                            <span class="comp-exam-icon">📙</span>
+                            <span class="comp-exam-icon">ðŸ“™</span>
                             UP Board
                         </div>
                         <ul class="qb-subjects collapsed" id="upboardSubjectList">
@@ -391,7 +391,7 @@
         <!-- Meta -->
         <div class="qb-meta">
             <div>
-                Showing <strong id="totalCount">0</strong> questions &nbsp;·&nbsp;
+                Showing <strong id="totalCount">0</strong> questions &nbsp;Â·&nbsp;
                 <strong id="selCount">0</strong> selected
             </div>
             <button class="btn-clear-sel" onclick="clearSel()" id="clearBtn" style="display:none;">
@@ -445,7 +445,7 @@
                 </div>
                 <div>
                     <label>Moodle Course</label>
-                    <select id="quizCourse"><option value="">Loading…</option></select>
+                    <select id="quizCourse"><option value="">Loadingâ€¦</option></select>
                 </div>
                 <div>
                     <label>Time limit (min, 0 = none)</label>
@@ -493,11 +493,11 @@
                     </select>
                 </div>
                 <div>
-                    <label>Closes — Date (optional)</label>
+                    <label>Closes â€” Date (optional)</label>
                     <input type="date" id="quizCloseDate">
                 </div>
                 <div>
-                    <label>Closes — Time (optional)</label>
+                    <label>Closes â€” Time (optional)</label>
                     <input type="time" id="quizCloseTime">
                 </div>
                 <div>
@@ -529,15 +529,15 @@
         <div id="reviewList" style="max-height:52vh;overflow-y:auto;margin:0.5rem 0 0.25rem;"></div>
         <div class="batch-modal-actions">
             <button class="batch-cancel-btn" onclick="closeReview()"><i class="ph ph-plus-circle"></i> Add more</button>
-            <button class="batch-start-btn" onclick="proceedToSchedule()"><i class="ph ph-arrow-right"></i> Proceed to Schedule</button>
+            <button class="batch-start-btn ready" onclick="proceedToSchedule()"><i class="ph ph-arrow-right"></i> Proceed to Schedule</button>
         </div>
     </div>
 </div>
 
-<!-- New Quiz — Batch Selection Modal -->
+<!-- New Quiz â€” Batch Selection Modal -->
 <div class="batch-modal-bg" id="batchModal">
     <div class="batch-modal-box">
-        <p class="batch-modal-title"><i class="ph ph-plus-circle"></i> Schedule Quiz — Select Batch</p>
+        <p class="batch-modal-title"><i class="ph ph-plus-circle"></i> Schedule Quiz â€” Select Batch</p>
         <p class="batch-modal-sub">Choose the class or competitive batch you want to create a quiz for.</p>
 
         <p class="batch-section-label"><i class="ph ph-trophy"></i> Exam / Board</p>
@@ -559,20 +559,20 @@
                 <option value="8">Class 8</option>
                 <option value="9">Class 9</option>
                 <option value="10">Class 10</option>
-                <option value="11-PCM">Class 11 — Science (PCM)</option>
-                <option value="11-PCB">Class 11 — Science (PCB)</option>
-                <option value="11-Commerce">Class 11 — Commerce</option>
-                <option value="12-PCM">Class 12 — Science (PCM)</option>
-                <option value="12-PCB">Class 12 — Science (PCB)</option>
-                <option value="12-Commerce">Class 12 — Commerce</option>
-                <option value="11-Arts">Class 11 – Arts</option>
-                <option value="11-Agriculture">Class 11 – Agriculture</option>
-                <option value="12-Arts">Class 12 – Arts</option>
-                <option value="12-Agriculture">Class 12 – Agriculture</option>
+                <option value="11-PCM">Class 11 â€” Science (PCM)</option>
+                <option value="11-PCB">Class 11 â€” Science (PCB)</option>
+                <option value="11-Commerce">Class 11 â€” Commerce</option>
+                <option value="12-PCM">Class 12 â€” Science (PCM)</option>
+                <option value="12-PCB">Class 12 â€” Science (PCB)</option>
+                <option value="12-Commerce">Class 12 â€” Commerce</option>
+                <option value="11-Arts">Class 11 â€“ Arts</option>
+                <option value="11-Agriculture">Class 11 â€“ Agriculture</option>
+                <option value="12-Arts">Class 12 â€“ Arts</option>
+                <option value="12-Agriculture">Class 12 â€“ Agriculture</option>
             </select>
         </div>
 
-        <!-- Filters appear HERE — below the selected exam/board (and class, for boards) -->
+        <!-- Filters appear HERE â€” below the selected exam/board (and class, for boards) -->
         <div class="batch-filters" id="batchFilters">
             <p class="batch-filters-label" style="font-size:0.75rem;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.07em;margin-bottom:0.5rem;">
                 <i class="ph ph-funnel"></i> &nbsp;Subject &amp; Chapter
@@ -719,7 +719,7 @@ const SUPABASE_URL  = 'https://qnqcysdeolnooxxcafwz.supabase.co';
 const SUPABASE_KEY  = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFucWN5c2Rlb2xub294eGNhZnd6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYzNTc0NjUsImV4cCI6MjA5MTkzMzQ2NX0.hOuPKv1zqQup7JfEpe-SJWT9Duz0RUwcCPwJb0zE_0Q';
 const SUPA_B_URL    = 'https://zqrswemxmhjaylsuulyu.supabase.co';
 const SUPA_B_PUB    = 'sb_publishable_8Y62WSnJwGidHS591ofDiw_gbzmTGAQ';
-const N8N_WEBHOOK   = 'YOUR_N8N_WEBHOOK_URL'; // (legacy, unused — Moodle push now via worker)
+const N8N_WEBHOOK   = 'YOUR_N8N_WEBHOOK_URL'; // (legacy, unused â€” Moodle push now via worker)
 const API_BASE      = 'https://api.pitthugram.com';
 let   teacherInstituteId = null;
 
@@ -734,7 +734,7 @@ let activeSubject      = '';
 let activeChapter      = '';
 let activeDifficulty   = '';
 
-// ── Auth ──────────────────────────────────────────────
+// â”€â”€ Auth â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function checkAuth() {
     const token = localStorage.getItem('pg_access_token');
     const user  = localStorage.getItem('pg_user');
@@ -764,7 +764,7 @@ function logout() {
     window.location.href = './index.html';
 }
 
-// ── Fetch questions (Supabase A central + Supabase B institute, merged) ──
+// â”€â”€ Fetch questions (Supabase A central + Supabase B institute, merged) â”€â”€
 async function fetchQuestions() {
     const cls        = activeClass;
     const subject    = activeSubject;
@@ -834,7 +834,7 @@ function getConnectionHint() {
     return '';
 }
 
-// ── Render ────────────────────────────────────────────
+// â”€â”€ Render â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function render(questions) {
     allQuestions = questions;
     document.getElementById('totalCount').textContent = questions.length;
@@ -900,7 +900,7 @@ function clearSel() {
     updateUI();
 }
 
-// ── Review selected questions (across all subjects/classes) ──
+// â”€â”€ Review selected questions (across all subjects/classes) â”€â”€
 function openReview() {
     if (!selected.size) return;
     renderReview();
@@ -910,6 +910,10 @@ function closeReview() {
     document.getElementById('reviewModal').classList.remove('show');
 }
 function renderReview() {
+    setTimeout(() => {
+        const btn = document.querySelector('#reviewModal .batch-start-btn');
+        if (btn) { btn.classList.add('ready'); btn.style.pointerEvents = 'all'; btn.style.opacity = '1'; }
+    }, 50);
     const list = document.getElementById('reviewList');
     if (!selectedQuestions.size) {
         list.innerHTML = '<div class="empty-state" style="padding:1.5rem;"><i class="ph ph-tray"></i><p>No questions selected.</p></div>';
@@ -917,7 +921,7 @@ function renderReview() {
     }
     list.innerHTML = '';
     selectedQuestions.forEach((q, id) => {
-        const meta = [q.board, q.class, q.subject, q.chapter].filter(Boolean).join(' · ');
+        const meta = [q.board, q.class, q.subject, q.chapter].filter(Boolean).join(' Â· ');
         const correctLetter = (q.correct_answer || '').trim().toUpperCase();
         const optionsHtml = [['A', q.option_a], ['B', q.option_b], ['C', q.option_c], ['D', q.option_d]]
             .filter(([, text]) => text)
@@ -957,7 +961,7 @@ function proceedToSchedule() {
     bar.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
-// ── Moodle course list (per institute, via worker) ────
+// â”€â”€ Moodle course list (per institute, via worker) â”€â”€â”€â”€
 async function loadMoodleCourses() {
     const sel = document.getElementById('quizCourse');
     if (!sel || !currentUser) return;
@@ -990,7 +994,7 @@ function toSchedQuestion(q) {
     return { questiontext: q.question_text || '', image: q.question_image || '', answers };
 }
 
-// ── Schedule ──────────────────────────────────────────
+// â”€â”€ Schedule â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 async function scheduleQuiz() {
     if (!currentUser) {
         return showErr('Please sign in to schedule quizzes.');
@@ -1124,7 +1128,7 @@ if (sidebarBackdrop) sidebarBackdrop.addEventListener('click', closeSidebar);
 // Remove a class from this set once you've added its questions in Supabase
 const EMPTY_CLASSES = new Set([]);
 
-// ── Refresh ───────────────────────────────────────────
+// â”€â”€ Refresh â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 async function refresh() {
     const cls = activeClass;
     if (!cls) {
@@ -1150,7 +1154,7 @@ async function refresh() {
 
 
 
-// ── New Quiz Batch Modal ──────────────────────────────
+// â”€â”€ New Quiz Batch Modal â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 let selectedBatch = null;
 let selectedBoard = null;
 
@@ -1278,7 +1282,7 @@ document.querySelectorAll('.batch-btn').forEach(btn => {
         } catch(err) {
             console.error('Failed to load filters:', err);
             mSub.innerHTML = '<option value="">Error loading subjects</option>';
-            mCh.innerHTML  = '<option value="">—</option>';
+            mCh.innerHTML  = '<option value="">â€”</option>';
             showErr('Could not load subjects: ' + err.message);
         }
     });
@@ -1299,7 +1303,7 @@ async function loadModalChapters(subject, examCtx, board) {
     } catch(_) {}
 }
 
-// Board selected → class chosen: subjects from board_subjects, chapters from syllabus
+// Board selected â†’ class chosen: subjects from board_subjects, chapters from syllabus
 async function onModalBoardClassChange() {
     const cls   = document.getElementById('mBoardClass').value;
     const board = selectedBoard;
@@ -1348,7 +1352,7 @@ async function onModalBoardClassChange() {
     }
 }
 
-// ── Filter bar — load subjects + chapters from Supabase ──
+// â”€â”€ Filter bar â€” load subjects + chapters from Supabase â”€â”€
 let _filterAllRows = []; // cached rows for the active class (subject+chapter only)
 let _fbClass = '';       // exam/class context for the on-page filter bar
 let _fbBoard = '';       // board context for the on-page filter bar
@@ -1375,12 +1379,12 @@ async function loadFilterBar(cls, preSubject, board) {
     const selCh   = document.getElementById('filterChapter');
 
     const clsLabel = isNaN(cls) ? cls : 'Class ' + cls;
-    title.textContent = board ? (board + ' · ' + clsLabel) : clsLabel;
+    title.textContent = board ? (board + ' Â· ' + clsLabel) : clsLabel;
     bar.style.display = 'block';
     _fbClass = cls;
     _fbBoard = board || '';
 
-    selSub.innerHTML = '<option value="">Loading…</option>';
+    selSub.innerHTML = '<option value="">Loadingâ€¦</option>';
     selCh.innerHTML  = '<option value="">All Chapters</option>';
 
     const dbCls = cls;
@@ -1434,7 +1438,7 @@ function onFilterChapterChange() {
     refresh();
 }
 
-// ── Quick-load a subject directly from sidebar ────────
+// â”€â”€ Quick-load a subject directly from sidebar â”€â”€â”€â”€â”€â”€â”€â”€
 async function quickLoad(batch, subject, board) {
     activeClass      = batch;
     activeSubject    = subject;
@@ -1469,7 +1473,7 @@ function clearSubjectFilter() {
     refresh();
 }
 
-// ── Sidebar stats ─────────────────────────────────────
+// â”€â”€ Sidebar stats â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 async function loadSidebarStats() {
     try {
         const [resA, resB] = await Promise.allSettled([
@@ -1542,7 +1546,7 @@ async function loadSubjectCounts() {
     }
 }
 
-// ── Navigation Functions ───────────────────────────────
+// â”€â”€ Navigation Functions â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function showDashboard(e) {
     if (e) e.preventDefault();
     hideAllViews();
@@ -1577,7 +1581,7 @@ function hideAllViews() {
     document.querySelectorAll('.qb-nav a').forEach(a => a.classList.remove('active'));
 }
 
-// ── My Quizzes ────────────────────────────────────────
+// â”€â”€ My Quizzes â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 async function loadMyQuizzes() {
     if (!currentUser) return;
 
@@ -1609,7 +1613,7 @@ async function loadMyQuizzes() {
                         <span class="quiz-status ${status.class}">${status.text}</span>
                     </div>
                     <div class="quiz-details">
-                        ${quiz.class} • ${quiz.question_ids.length} questions • ${date.toLocaleDateString()} at ${date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                        ${quiz.class} â€¢ ${quiz.question_ids.length} questions â€¢ ${date.toLocaleDateString()} at ${date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
                     </div>
                     <div class="quiz-actions">
                         <button class="btn btn-sm" onclick="viewQuizDetails(${quiz.id})">View Details</button>
@@ -1642,7 +1646,7 @@ function editQuiz(id) {
     alert('Quiz editing not implemented yet. Quiz ID: ' + id);
 }
 
-// ── Question Bank ─────────────────────────────────────
+// â”€â”€ Question Bank â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 let allQBQuestions = [];
 let filteredQBQuestions = [];
 
@@ -1671,7 +1675,7 @@ function renderQuestionBank() {
         <div class="qb-question-item">
             <div class="qb-question-text">${q.question_text}</div>
             ${q.question_image ? `<img class="q-thumb" src="${q.question_image}" alt="figure" loading="lazy">` : ''}
-            <div class="qb-question-meta">${q.class} • ${q.subject} • ${q.chapter} • ${q.difficulty_level}</div>
+            <div class="qb-question-meta">${q.class} â€¢ ${q.subject} â€¢ ${q.chapter} â€¢ ${q.difficulty_level}</div>
         </div>
     `).join('');
 
@@ -1699,7 +1703,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 
-// ── Settings ──────────────────────────────────────────
+// â”€â”€ Settings â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function openSettingsModal(e) {
     if (e) e.preventDefault();
     document.getElementById('settingsModal').classList.add('show');
@@ -1751,7 +1755,7 @@ function applyTheme(theme) {
     }
 }
 
-// ── Enhanced Quick Load ───────────────────────────────
+// â”€â”€ Enhanced Quick Load â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 async function quickLoad(batch, subject) {
     // Show loading state
     const li = document.querySelector(`li[onclick="quickLoad('${batch}','${subject || ''}')"]`) || 
@@ -1782,7 +1786,7 @@ async function quickLoad(batch, subject) {
     }
 }
 
-// ── Logout with Confirmation ──────────────────────────
+// â”€â”€ Logout with Confirmation â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function confirmLogout(e) {
     if (e) e.preventDefault();
     if (confirm('Are you sure you want to logout?')) {
@@ -1790,7 +1794,7 @@ function confirmLogout(e) {
     }
 }
 
-// ── Section Toggle ───────────────────────────────────
+// â”€â”€ Section Toggle â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function toggleSection(sectionId) {
     const label = document.getElementById(sectionId + 'Toggle');
     const list = document.getElementById(sectionId + 'SubjectList');
@@ -1830,7 +1834,7 @@ function findSchoolSubjectItem(cls, subject) {
     return Array.from(document.querySelectorAll(`#class${cls}Subjects li`)).find(li => li.dataset.subject === subject);
 }
 
-// ── School Class Subjects ────────────────────────────
+// â”€â”€ School Class Subjects â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 async function loadSchoolClassSubjects(cls) {
     const selectedLi = document.getElementById(`class${cls}Toggle`);
     const existingSubList = document.getElementById(`class${cls}Subjects`);
@@ -1964,7 +1968,7 @@ async function toggleSchoolSubject(cls, subject) {
     }
 }
 
-// ── Board (CBSE / ICSE / UP Board) Class Subjects ─────
+// â”€â”€ Board (CBSE / ICSE / UP Board) Class Subjects â”€â”€â”€â”€â”€
 function boardKey(board) { return board.replace(/[^a-z0-9]/gi, '').toLowerCase(); }
 
 // Classes 11 & 12 split into streams; each stream maps to a board_subjects class key (e.g. 11-PCM)
@@ -2084,7 +2088,7 @@ async function toggleBoardSubject(board, cls, subject) {
     }
 }
 
-// ── Load Single Question Details ──────────────────────
+// â”€â”€ Load Single Question Details â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function loadQuestionDetails(question) {
     // Set active filters to match this question
     activeClass = question.class || '';
@@ -2107,7 +2111,7 @@ function loadQuestionDetails(question) {
     }, 1000);
 }
 
-// ── Init ──────────────────────────────────────────────
+// â”€â”€ Init â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 async function init() {
     if (!checkAuth()) return;
 
@@ -2169,4 +2173,5 @@ init();
 </script>
 </body>
 </html>
+
 
