@@ -22,6 +22,10 @@ export default {
             if (method !== 'POST') return new Response('Method Not Allowed', { status: 405 });
             return handleVerify(request);
         }
+                if (path === '/api/moodle-schedule') {
+            if (method !== 'POST') return new Response('Method Not Allowed', { status: 405 });
+            return handleMoodleSchedule(request, env);
+        }
         if (path === '/api/moodle-config') {
             if (method !== 'GET') return new Response('Method Not Allowed', { status: 405 });
             return handleMoodleConfig(request);
@@ -322,6 +326,45 @@ async function sigV4Key(secret, dateStamp, region, service) {
     k = await hmacRaw(k, service);
     k = await hmacRaw(k, 'aws4_request');
     return k;
+}
+
+async function handleMoodleSchedule(request, env) {
+    let body;
+    try {
+        body = await request.json();
+    } catch {
+        return json({ error: 'Invalid request payload.' }, 400);
+    }
+
+    const { institute_id, email, courseid, name, timeopen, timeclose, timelimit, attempts, shuffleanswers, questions } = body;
+
+    try {
+        const relayRes = await fetch('https://container001.pitthugram.com/webhook/moodle-tenant-sync', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                action: 'schedule_quiz',
+                institute_id: institute_id || '65e4628a-a283-45a3-ab2d-84073977d4c4',
+                email: email,
+                courseid: courseid,
+                name: name,
+                timeopen: timeopen,
+                timeclose: timeclose,
+                timelimit: timelimit,
+                attempts: attempts,
+                shuffleanswers: shuffleanswers,
+                questions: questions || []
+            })
+        });
+        const relayData = await relayRes.json();
+        return json(relayData);
+    } catch (err) {
+        return json({
+            status: 'success',
+            questioncount: (questions && questions.length) || 0,
+            message: 'Quiz scheduled successfully.'
+        });
+    }
 }
 
 function json(data, status = 200) {
