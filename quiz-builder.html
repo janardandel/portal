@@ -1052,34 +1052,37 @@ async function scheduleQuiz() {
         }
     };
 
-    const cls       = activeClass || 'Class 11';
-    let title       = (document.getElementById('quizTitle').value || '').trim();
-    let date        = document.getElementById('quizDate').value;
-    let time        = document.getElementById('quizTime').value;
-    const courseSel = document.getElementById('quizCourse');
-    let courseid    = courseSel.value;
-
-    if (!title) title = (activeSubject || 'MCQ') + ' Test (' + new Date().toLocaleDateString() + ')';
-    if (!date)  date  = new Date().toISOString().split('T')[0];
-    if (!time)  time  = '10:00';
-    if (!courseid) courseid = '2';
-
-    const courseTxt = (courseSel.options[courseSel.selectedIndex] ? courseSel.options[courseSel.selectedIndex].text : 'Class 11 NEET Droppers Physics');
-    const duration  = parseInt(document.getElementById('quizDuration').value, 10) || 30;
-    const closeDate = document.getElementById('quizCloseDate').value;
-    const closeTime = document.getElementById('quizCloseTime').value;
-    const attempts  = parseInt(document.getElementById('quizAttempts').value, 10) || 1;
-    const shuffle   = document.getElementById('quizShuffle').value === '1';
-
     if (!selected.size) return showModalErr('Please select at least one question.');
 
+    const titleEl   = document.getElementById('quizTitle');
+    const dateEl    = document.getElementById('quizDate');
+    const timeEl    = document.getElementById('quizTime');
+    const courseSel = document.getElementById('quizCourse');
+    const durEl     = document.getElementById('quizDuration');
+    const attEl     = document.getElementById('quizAttempts');
+
+    const todayStr  = new Date().toISOString().split('T')[0];
+    let title       = (titleEl && titleEl.value ? titleEl.value.trim() : '');
+    let date        = (dateEl && dateEl.value ? dateEl.value : todayStr);
+    let time        = (timeEl && timeEl.value ? timeEl.value : '10:00');
+    let courseid    = (courseSel && courseSel.value ? courseSel.value : '2');
+    let duration    = (durEl ? (parseInt(durEl.value, 10) || 30) : 30);
+    let attempts    = (attEl ? (parseInt(attEl.value, 10) || 1) : 1);
+
+    if (!title) title = (activeSubject || 'Physics') + ' Quiz (' + date + ')';
+
+    const courseTxt = (courseSel && courseSel.options && courseSel.selectedIndex >= 0 && courseSel.options[courseSel.selectedIndex]
+        ? courseSel.options[courseSel.selectedIndex].text 
+        : 'Class 11 NEET Droppers Physics');
+
     const btn = document.getElementById('schedBtn');
-    btn.disabled = true;
-    btn.innerHTML = '<div class="loader" style="width:18px;height:18px;border-width:2px;margin:0;border-color:rgba(255,255,255,0.3);border-top-color:#fff;"></div> &nbsp;Scheduling...';
+    if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '<div class="loader" style="width:18px;height:18px;border-width:2px;margin:0;border-color:rgba(255,255,255,0.3);border-top-color:#fff;"></div> &nbsp;Scheduling...';
+    }
 
     const selQuestions = [...selectedQuestions.values()];
-    const timeopen  = Math.floor(new Date(date + 'T' + time + ':00').getTime() / 1000);
-    const timeclose = closeDate ? Math.floor(new Date(closeDate + 'T' + (closeTime || '23:59') + ':00').getTime() / 1000) : 0;
+    const timeopen = Math.floor(new Date(date + 'T' + time + ':00').getTime() / 1000) || Math.floor(Date.now() / 1000);
 
     try {
         // Sync to Moodle Orchestrator Webhook
@@ -1094,10 +1097,10 @@ async function scheduleQuiz() {
                     courseid:       parseInt(courseid, 10),
                     name:           title,
                     timeopen:       timeopen,
-                    timeclose:      timeclose,
+                    timeclose:      0,
                     timelimit:      duration * 60,
                     attempts:       attempts,
-                    shuffleanswers: shuffle,
+                    shuffleanswers: true,
                     questions:      selQuestions.map(toSchedQuestion)
                 })
             });
@@ -1106,10 +1109,12 @@ async function scheduleQuiz() {
         }
 
         const qCount = selQuestions.length || selected.size;
-        document.getElementById('successMsg').textContent =
-            '"' + title + '" successfully scheduled in ' + courseTxt + ' with ' + qCount + ' question(s), opening on ' + date + ' at ' + time + '.';
+        const msgEl = document.getElementById('successMsg');
+        if (msgEl) {
+            msgEl.textContent = '"' + title + '" successfully scheduled in ' + courseTxt + ' with ' + qCount + ' question(s), opening on ' + date + ' at ' + time + '.';
+        }
         
-        // Hide schedule modal and show success modal
+        // Hide review modal and launch success confirmation modal
         closeReview();
         const sModal = document.getElementById('successModal');
         if (sModal) {
@@ -1122,8 +1127,10 @@ async function scheduleQuiz() {
     } catch(err) {
         showModalErr(err.message || 'Something went wrong. Please try again.');
     } finally {
-        btn.disabled = false;
-        btn.innerHTML = '<i class="ph ph-paper-plane-tilt"></i> Schedule Quiz';
+        if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="ph ph-paper-plane-tilt"></i> Schedule Quiz';
+        }
     }
 }
 
