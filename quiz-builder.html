@@ -1035,7 +1035,7 @@ async function scheduleQuiz() {
     try {
         // Sync via Orchestrator Webhook
         try {
-            await fetch('https://container001.pitthugram.com/webhook/moodle-tenant-sync', {
+            await fetch('/api/moodle-schedule', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -1062,6 +1062,9 @@ async function scheduleQuiz() {
         
         // Show success modal
         const modal = document.getElementById('successModal');
+        modal.style.display = 'flex';
+        modal.style.opacity = '1';
+        modal.style.pointerEvents = 'all';
         modal.classList.add('show');
         document.getElementById('scheduleBar').style.display = 'none';
 
@@ -1074,7 +1077,13 @@ async function scheduleQuiz() {
 }
 
 function closeModal() {
-    document.getElementById('successModal').classList.remove('show');
+    const sModal = document.getElementById('successModal');
+    if (sModal) {
+        sModal.style.display = 'none';
+        sModal.style.opacity = '0';
+        sModal.style.pointerEvents = 'none';
+        sModal.classList.remove('show');
+    }
     selected.clear();
     selectedQuestions.clear();
     document.getElementById('scheduleBar').style.display = 'none';
