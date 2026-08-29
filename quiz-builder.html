@@ -88,7 +88,7 @@
         .settings-save-btn{background:var(--primary);border-color:var(--primary);color:#fff;}
         .settings-save-btn:hover{background:var(--primary-dark,#c8000a);}
         .batch-modal-bg{position:fixed;inset:0;background:rgba(0,0,0,0.65);backdrop-filter:blur(4px);z-index:2000;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity 0.25s;}
-        .batch-modal-bg.show{opacity:1;pointer-events:all;}
+        .batch-modal-bg.show{opacity:1;pointer-events:all;display:flex!important;}
         .batch-modal-box{background:var(--bg-elevated);border:1px solid var(--border);border-radius:var(--radius-lg);padding:2rem 1.75rem 1.75rem;width:min(500px,94vw);max-height:88vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,0.5);transform:translateY(16px) scale(0.97);transition:transform 0.25s,opacity 0.25s;}
         .batch-modal-bg.show .batch-modal-box{transform:translateY(0) scale(1);}
         /* Bottom-sheet on phones */
@@ -526,6 +526,19 @@
     </div><!-- /qb-wrap -->
 </div><!-- /qbPage -->
 
+<!-- Success Modal -->
+<div class="batch-modal-bg" id="successModal" style="z-index:99999;">
+    <div class="batch-modal-box" style="text-align:center;max-width:460px;padding:2rem 1.75rem;">
+        <div style="font-size:3.5rem;color:#198754;margin-bottom:0.75rem;line-height:1;">
+            <i class="ph-fill ph-check-circle"></i>
+        </div>
+        <p class="batch-modal-title" style="justify-content:center;font-size:1.35rem;margin-bottom:0.6rem;color:var(--text-primary);font-weight:700;">Quiz Scheduled!</p>
+        <p class="batch-modal-sub" id="successMsg" style="font-size:0.95rem;line-height:1.55;margin-bottom:1.75rem;color:var(--text-secondary);">Your quiz has been scheduled successfully.</p>
+        <button class="batch-start-btn ready" onclick="closeModal()" style="width:100%;justify-content:center;padding:0.8rem;font-size:0.95rem;background:var(--primary);color:#fff;border-radius:var(--radius);cursor:pointer;">
+            <i class="ph ph-arrow-clockwise"></i> Schedule Another
+        </button>
+    </div>
+</div>
 <!-- Review Selected Questions Modal -->
 <div class="batch-modal-bg" id="reviewModal">
     <div class="batch-modal-box" style="max-width:680px;">
@@ -706,18 +719,7 @@
         </div>
     </div>
 </div>
-<div class="batch-modal-bg" id="successModal">
-    <div class="batch-modal-box" style="text-align:center;max-width:460px;">
-        <div style="font-size:3.25rem;color:#198754;margin-bottom:0.75rem;">
-            <i class="ph-fill ph-check-circle"></i>
-        </div>
-        <p class="batch-modal-title" style="justify-content:center;font-size:1.35rem;margin-bottom:0.5rem;color:var(--text-primary);">Quiz Scheduled!</p>
-        <p class="batch-modal-sub" id="successMsg" style="font-size:0.95rem;line-height:1.5;margin-bottom:1.5rem;color:var(--text-secondary);">Your quiz has been scheduled successfully.</p>
-        <button class="batch-start-btn ready" onclick="closeModal()" style="width:100%;justify-content:center;padding:0.75rem;font-size:0.95rem;">
-            <i class="ph ph-arrow-clockwise"></i> Schedule Another
-        </button>
-    </div>
-</div>
+
 
 <script>
 const SUPABASE_URL  = 'https://qnqcysdeolnooxxcafwz.supabase.co';
@@ -1035,7 +1037,7 @@ async function scheduleQuiz() {
     try {
         // Sync via Orchestrator Webhook
         try {
-            await fetch('/api/moodle-schedule', {
+            await fetch('https://container001.pitthugram.com/webhook/moodle-tenant-sync', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -1062,9 +1064,6 @@ async function scheduleQuiz() {
         
         // Show success modal
         const modal = document.getElementById('successModal');
-        modal.style.display = 'flex';
-        modal.style.opacity = '1';
-        modal.style.pointerEvents = 'all';
         modal.classList.add('show');
         document.getElementById('scheduleBar').style.display = 'none';
 
@@ -1077,13 +1076,7 @@ async function scheduleQuiz() {
 }
 
 function closeModal() {
-    const sModal = document.getElementById('successModal');
-    if (sModal) {
-        sModal.style.display = 'none';
-        sModal.style.opacity = '0';
-        sModal.style.pointerEvents = 'none';
-        sModal.classList.remove('show');
-    }
+    document.getElementById('successModal').classList.remove('show');
     selected.clear();
     selectedQuestions.clear();
     document.getElementById('scheduleBar').style.display = 'none';
@@ -2173,6 +2166,7 @@ init();
 </script>
 </body>
 </html>
+
 
 
 
