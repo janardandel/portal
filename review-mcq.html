@@ -1,3 +1,4 @@
+const SUPA_WRITE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFucWN5c2Rlb2xub294eGNhZnd6Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3NjM1NzQ2NSwiZXhwIjoyMDkxOTMzNDY1fQ.Co7aXPihbAn56b2BE2rh4q6wgqlVEbzp3C6wAZz1V8s';
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -99,16 +100,39 @@
 <header class="navbar">
   <div class="container nav-inner">
     <a href="./quiz-builder.html" class="logo"><img src="./logo.png" alt="Pitthugram"></a>
-    <div class="nav-actions">
-      <a href="./create-mcq.html" class="btn btn-outline btn-sm"><i class="ph ph-plus"></i> Add MCQ</a>
-      <a href="./quiz-builder.html" class="btn btn-outline btn-sm"><i class="ph ph-house"></i> Dashboard</a>
+    <div class="nav-actions" style="display:flex;align-items:center;gap:0.5rem;">
+      <button id="tabBtnScheduled" class="btn btn-sm" onclick="switchReviewTab('scheduled')" style="background:var(--primary);color:#fff;border-radius:var(--radius-md);font-weight:700;display:flex;align-items:center;gap:0.4rem;">
+        <i class="ph ph-calendar-check"></i> Scheduled Tests
+      </button>
+      <button id="tabBtnOcr" class="btn btn-outline btn-sm" onclick="switchReviewTab('ocr')" style="display:flex;align-items:center;gap:0.4rem;">
+        <i class="ph ph-file-text"></i> OCR Paper Review
+      </button>
+      <a href="./quiz-builder.html" class="btn btn-outline btn-sm"><i class="ph ph-plus-circle"></i> Quiz Builder</a>
       <button class="btn btn-outline btn-sm" onclick="logout()"><i class="ph ph-sign-out"></i> Logout</button>
     </div>
   </div>
 </header>
 
-<div id="mainContent" style="display:none;">
-  <div class="review-layout">
+<div id="mainContent" style="display:none;padding:1.5rem 2rem;">
+  <!-- Scheduled Tests View -->
+  <div id="scheduledTestsView" style="display:block;max-width:1000px;margin:0 auto;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem;flex-wrap:wrap;gap:1rem;">
+      <div>
+        <h1 style="font-size:1.5rem;font-weight:800;color:var(--text-primary);margin-bottom:0.25rem;display:flex;align-items:center;gap:0.6rem;">
+          <i class="ph-fill ph-calendar-check" style="color:var(--primary);"></i> Scheduled Moodle Tests
+        </h1>
+        <p style="font-size:0.88rem;color:var(--text-secondary);">All scheduled diagnostic quizzes and tests queued for your students.</p>
+      </div>
+      <div style="display:flex;gap:0.65rem;">
+        <button onclick="loadScheduledQuizzes()" class="btn btn-outline btn-sm"><i class="ph ph-arrows-clockwise"></i> Refresh</button>
+        <a href="./quiz-builder.html" class="btn btn-primary btn-sm"><i class="ph ph-plus"></i> Schedule New Quiz</a>
+      </div>
+    </div>
+    <div id="scheduledListContainer"><p style="color:var(--text-secondary);font-size:0.9rem;"><i class="ph ph-spinner-gap spinner"></i> Loading scheduled tests...</p></div>
+  </div>
+
+  <!-- OCR Paper Review View -->
+  <div id="ocrReviewView" style="display:none;" class="review-layout">
 
     <!-- Job list -->
     <aside class="job-panel">
@@ -129,6 +153,7 @@
       <div id="reviewContent" style="display:none;"></div>
     </main>
 
+  </div>
   </div>
 </div>
 
@@ -532,7 +557,71 @@ function showToast(type, msg) {
 }
 
 // ── Init ─────────────────────────────────────────────────────────
-if (checkAuth()) loadJobs();
+
+function switchReviewTab(tab) {
+  const schedView = document.getElementById('scheduledTestsView');
+  const ocrView   = document.getElementById('ocrReviewView');
+  const schedBtn  = document.getElementById('tabBtnScheduled');
+  const ocrBtn    = document.getElementById('tabBtnOcr');
+
+  if (tab === 'scheduled') {
+    if (schedView) schedView.style.display = 'block';
+    if (ocrView)   ocrView.style.display   = 'none';
+    if (schedBtn) { schedBtn.className = 'btn btn-sm'; schedBtn.style.background = 'var(--primary)'; schedBtn.style.color = '#fff'; }
+    if (ocrBtn)   { ocrBtn.className = 'btn btn-outline btn-sm'; ocrBtn.style.background = 'transparent'; }
+    loadScheduledQuizzes();
+  } else {
+    if (schedView) schedView.style.display = 'none';
+    if (ocrView)   ocrView.style.display   = 'grid';
+    if (ocrBtn)   { ocrBtn.className = 'btn btn-sm'; ocrBtn.style.background = 'var(--primary)'; ocrBtn.style.color = '#fff'; }
+    if (schedBtn) { schedBtn.className = 'btn btn-outline btn-sm'; schedBtn.style.background = 'transparent'; }
+    loadJobs();
+  }
+}
+
+async function loadScheduledQuizzes() {
+  const el = document.getElementById('scheduledListContainer');
+  if (!el) return;
+  el.innerHTML = '<p style="color:var(--text-secondary);font-size:0.9rem;"><i class="ph ph-spinner-gap spinner"></i> Loading scheduled tests...</p>';
+
+  try {
+    const res = await fetch(SUPA_A_URL + '/rest/v1/scheduled_quizzes?order=created_at.desc', {
+      headers: { 'apikey': SUPA_WRITE_KEY, 'Authorization': 'Bearer ' + SUPA_WRITE_KEY }
+    });
+    const list = await res.json();
+    if (!list || !list.length) {
+      el.innerHTML = '<div style="text-align:center;padding:3rem 1rem;border:1.5px dashed var(--border-light);border-radius:var(--radius-lg);color:var(--text-secondary);"><i class="ph ph-calendar-x" style="font-size:2.5rem;margin-bottom:0.5rem;display:block;"></i><p style="font-weight:600;">No scheduled tests found.</p><a href="./quiz-builder.html" class="btn btn-primary btn-sm" style="margin-top:0.75rem;display:inline-flex;"><i class="ph ph-plus"></i> Schedule a Quiz</a></div>';
+      return;
+    }
+
+    el.innerHTML = list.map(q => {
+      const dateStr = q.scheduled_date || '2026-08-30';
+      const timeStr = q.scheduled_time || '10:00:00';
+      const qCount  = (q.question_ids && Array.isArray(q.question_ids)) ? q.question_ids.length : 1;
+      const statusClass = q.status === 'completed' ? 'approved' : (q.status === 'processing' ? 'processing' : 'draft');
+      const statusText  = q.status === 'completed' ? 'Completed' : (q.status === 'processing' ? 'In Progress' : 'Scheduled / Pending');
+
+      return `<div style="background:var(--bg-elevated);border:1.5px solid var(--border-light);border-radius:var(--radius-lg);padding:1.25rem 1.5rem;margin-bottom:1rem;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:1rem;">
+        <div>
+          <div style="font-size:1.1rem;font-weight:700;color:var(--text-primary);margin-bottom:0.35rem;">${escHtml(q.quiz_title || 'Scheduled Quiz')}</div>
+          <div style="font-size:0.85rem;color:var(--text-secondary);display:flex;gap:1.25rem;flex-wrap:wrap;">
+            <span><i class="ph ph-graduation-cap"></i> Class ${escHtml(q.class || '11')}</span>
+            <span><i class="ph ph-list-checks"></i> ${qCount} Question(s)</span>
+            <span><i class="ph ph-calendar"></i> ${dateStr} at ${timeStr}</span>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:0.75rem;">
+          <span class="status-badge ${statusClass}">${statusText}</span>
+          <a href="https://cx001.pitthugram.com" target="_blank" class="btn btn-outline btn-sm" style="font-size:0.8rem;"><i class="ph ph-arrow-square-out"></i> Moodle</a>
+        </div>
+      </div>`;
+    }).join('');
+  } catch(e) {
+    el.innerHTML = '<p style="color:var(--primary);font-size:0.9rem;">Failed to load scheduled tests: ' + e.message + '</p>';
+  }
+}
+
+if (checkAuth()) { loadScheduledQuizzes(); }
 </script>
 </body>
 </html>
