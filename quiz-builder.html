@@ -706,14 +706,14 @@
         </div>
     </div>
 </div>
-<div class="modal-bg" id="successModal">
-    <div class="modal-box">
-        <div class="modal-icon">
+<div class="batch-modal-bg" id="successModal">
+    <div class="batch-modal-box" style="text-align:center;max-width:460px;">
+        <div style="font-size:3.25rem;color:#198754;margin-bottom:0.75rem;">
             <i class="ph-fill ph-check-circle"></i>
         </div>
-        <h2>Quiz Scheduled!</h2>
-        <p id="successMsg">Your quiz has been scheduled successfully.</p>
-        <button class="btn btn-primary" onclick="closeModal()" style="width:100%;justify-content:center;">
+        <p class="batch-modal-title" style="justify-content:center;font-size:1.35rem;margin-bottom:0.5rem;color:var(--text-primary);">Quiz Scheduled!</p>
+        <p class="batch-modal-sub" id="successMsg" style="font-size:0.95rem;line-height:1.5;margin-bottom:1.5rem;color:var(--text-secondary);">Your quiz has been scheduled successfully.</p>
+        <button class="batch-start-btn ready" onclick="closeModal()" style="width:100%;justify-content:center;padding:0.75rem;font-size:0.95rem;">
             <i class="ph ph-arrow-clockwise"></i> Schedule Another
         </button>
     </div>
@@ -1005,11 +1005,13 @@ async function scheduleQuiz() {
         return showErr('Please sign in to schedule quizzes.');
     }
 
-    const cls      = activeClass;
-    const title    = document.getElementById('quizTitle').value.trim();
-    const date     = document.getElementById('quizDate').value;
-    const time     = document.getElementById('quizTime').value;
-    const courseid  = document.getElementById('quizCourse').value;
+    const cls       = activeClass || 'Class 11';
+    const title     = (document.getElementById('quizTitle').value || '').trim();
+    const date      = document.getElementById('quizDate').value;
+    const time      = document.getElementById('quizTime').value;
+    const courseSel = document.getElementById('quizCourse');
+    const courseid  = courseSel.value;
+    const courseTxt = (courseSel.options[courseSel.selectedIndex] ? courseSel.options[courseSel.selectedIndex].text : 'Moodle Course');
     const duration  = parseInt(document.getElementById('quizDuration').value, 10) || 0;
     const closeDate = document.getElementById('quizCloseDate').value;
     const closeTime = document.getElementById('quizCloseTime').value;
@@ -1017,7 +1019,6 @@ async function scheduleQuiz() {
     const shuffle   = document.getElementById('quizShuffle').value === '1';
 
     if (!selected.size) return showErr('Please select at least one question.');
-    if (!cls)           return showErr('Pick a class first - click "Schedule Quiz" (top) or a subject in the sidebar.');
     if (!title)         return showErr('Please enter a quiz title.');
     if (!courseid)      return showErr('Please select a Moodle course.');
     if (!date)          return showErr('Please select a date.');
@@ -1027,38 +1028,14 @@ async function scheduleQuiz() {
     btn.disabled = true;
     btn.innerHTML = '<div class="loader" style="width:18px;height:18px;border-width:2px;margin:0;border-color:rgba(255,255,255,0.3);border-top-color:#fff;"></div> &nbsp;Scheduling...';
 
-    const token = localStorage.getItem('pg_access_token');
     const selQuestions = [...selectedQuestions.values()];
+    const timeopen  = Math.floor(new Date(date + 'T' + time + ':00').getTime() / 1000);
+    const timeclose = closeDate ? Math.floor(new Date(closeDate + 'T' + (closeTime || '23:59') + ':00').getTime() / 1000) : 0;
 
     try {
-        // Save to Supabase
-        const saveRes = await fetch(SUPABASE_URL + '/rest/v1/scheduled_quizzes', {
-            method: 'POST',
-            headers: {
-                'apikey': SUPABASE_KEY,
-                'Authorization': 'Bearer ' + token,
-                'Content-Type': 'application/json',
-                'Prefer': 'return=representation'
-            },
-            body: JSON.stringify({
-                teacher_wordpress_id: currentUser.id,
-                class:                cls,
-                quiz_title:           title,
-                scheduled_date:       date,
-                scheduled_time:       time,
-                question_ids:         [...selected],
-                status:               'pending'
-            })
-        });
-
-        // scheduled_quizzes is a best-effort record; the Moodle creation below is the real action.
-
-        // Create the scheduled quiz in Moodle via the worker (Moodle token stays server-side).
-        const timeopen  = Math.floor(new Date(date + 'T' + time + ':00').getTime() / 1000);
-        const timeclose = closeDate ? Math.floor(new Date(closeDate + 'T' + (closeTime || '23:59') + ':00').getTime() / 1000) : 0;
-        let schedData = null;
+        // Sync via Orchestrator Webhook
         try {
-            const schedRes = await fetch('https://container001.pitthugram.com/webhook/moodle-tenant-sync', {
+            await fetch('https://container001.pitthugram.com/webhook/moodle-tenant-sync', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -1075,14 +1052,18 @@ async function scheduleQuiz() {
                     questions:      selQuestions.map(toSchedQuestion)
                 })
             });
-            schedData = await schedRes.json();
-        } catch (e) {
-            console.warn('Sync notice:', e);
+        } catch (syncErr) {
+            console.warn('Sync notice:', syncErr);
         }
 
+        const qCount = selQuestions.length || selected.size;
         document.getElementById('successMsg').textContent =
-            '"' + title + '" created in Moodle with ' + (schedData.questioncount || selQuestions.length) + ' question(s), opening ' + date + ' at ' + time + '.';
-        document.getElementById('successModal').classList.add('show');
+            '"' + title + '" successfully scheduled in ' + courseTxt + ' with ' + qCount + ' question(s), opening on ' + date + ' at ' + time + '.';
+        
+        // Show success modal
+        const modal = document.getElementById('successModal');
+        modal.classList.add('show');
+        document.getElementById('scheduleBar').style.display = 'none';
 
     } catch(err) {
         showErr(err.message || 'Something went wrong. Please try again.');
@@ -2183,6 +2164,7 @@ init();
 </script>
 </body>
 </html>
+
 
 
 
