@@ -450,24 +450,34 @@
         </button>
     </div>
 </div>
-<!-- Schedule Modal -->
-<div class="batch-modal-bg" id="scheduleModal" style="z-index:10000;">
-    <div class="batch-modal-box" onclick="event.stopPropagation()" style="max-width:580px;padding:2rem 1.75rem;">
-        <p class="batch-modal-title" style="font-size:1.2rem;margin-bottom:0.35rem;display:flex;align-items:center;gap:0.5rem;">
-            <i class="ph-fill ph-calendar-check" style="color:var(--primary);"></i> Schedule Quiz
-            <span class="count-pill" id="schedCount">0</span>
-        </p>
-        <p class="batch-modal-sub" style="margin-bottom:1.25rem;color:var(--text-secondary);">Configure schedule timing and target Moodle course for selected MCQs.</p>
-        <div id="schedModalErr" style="display:none;color:#dc3545;background:rgba(220,53,69,0.12);padding:0.6rem 0.85rem;border-radius:8px;font-size:0.85rem;margin-bottom:1rem;font-weight:600;"></div>
+<!-- Review Selected Questions Modal -->
+<div class="batch-modal-bg" id="reviewModal" style="z-index:10000;">
+    <div class="batch-modal-box" onclick="event.stopPropagation()" style="max-width:680px;max-height:90vh;display:flex;flex-direction:column;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.4rem;">
+            <p class="batch-modal-title" style="margin-bottom:0;">
+                <i class="ph-fill ph-calendar-check" style="color:var(--primary);"></i> Review &amp; Schedule Quiz
+                <span class="count-pill" id="reviewCount">0</span>
+            </p>
+            <button onclick="closeReview()" style="background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:1.4rem;line-height:1;padding:0.2rem;">&times;</button>
+        </div>
+        <p class="batch-modal-sub" style="margin-bottom:0.85rem;">Review your selected questions and configure the schedule for Moodle.</p>
         
-        <div class="schedule-fields" style="display:grid;gap:0.85rem;grid-template-columns:1fr 1fr;margin-bottom:1.25rem;">
+        <div id="schedModalErr" style="display:none;color:#dc3545;background:rgba(220,53,69,0.12);padding:0.6rem 0.85rem;border-radius:8px;font-size:0.85rem;margin-bottom:0.75rem;font-weight:600;"></div>
+
+        <!-- Selected Questions Scroll Area -->
+        <div style="font-size:0.75rem;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:0.35rem;">Selected MCQs</div>
+        <div id="reviewList" style="max-height:28vh;overflow-y:auto;margin-bottom:1rem;border:1px solid var(--border);border-radius:var(--radius);padding:0.3rem 0.6rem;background:var(--bg-base);"></div>
+
+        <!-- Schedule Settings Section -->
+        <div style="font-size:0.75rem;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:0.45rem;">Moodle Schedule Settings</div>
+        <div class="schedule-fields" style="display:grid;gap:0.75rem;grid-template-columns:1fr 1fr;margin-bottom:0.5rem;">
             <div style="grid-column: 1 / -1;">
-                <label style="display:block;font-size:0.78rem;font-weight:600;margin-bottom:0.3rem;color:var(--text-muted);">Quiz Title</label>
-                <input type="text" id="quizTitle" placeholder="e.g. Kinematics Chapter Test" style="width:100%;padding:0.65rem 0.85rem;background:var(--bg-input);border:1.5px solid var(--border-light);border-radius:var(--radius);color:var(--text-primary);font-size:0.9rem;">
+                <label style="display:block;font-size:0.78rem;font-weight:600;margin-bottom:0.25rem;color:var(--text-muted);">Quiz Title</label>
+                <input type="text" id="quizTitle" placeholder="e.g. Kinematics Chapter Test" style="width:100%;padding:0.6rem 0.8rem;background:var(--bg-input);border:1.5px solid var(--border-light);border-radius:var(--radius);color:var(--text-primary);font-size:0.9rem;">
             </div>
             <div style="grid-column: 1 / -1;">
-                <label style="display:block;font-size:0.78rem;font-weight:600;margin-bottom:0.3rem;color:var(--text-muted);">Moodle Course</label>
-                <select id="quizCourse" style="width:100%;padding:0.7rem 0.875rem;background:var(--bg-input);border:1.5px solid var(--border-light);border-radius:var(--radius);color:var(--text-primary);font-size:0.9rem;">
+                <label style="display:block;font-size:0.78rem;font-weight:600;margin-bottom:0.25rem;color:var(--text-muted);">Moodle Course</label>
+                <select id="quizCourse" style="width:100%;padding:0.6rem 0.8rem;background:var(--bg-input);border:1.5px solid var(--border-light);border-radius:var(--radius);color:var(--text-primary);font-size:0.9rem;">
                     <option value="">Select Moodle Course</option>
                     <option value="2">Class 11 NEET Droppers Physics</option>
                     <option value="3">Class 12 Mathematics &amp; Calculus</option>
@@ -477,40 +487,28 @@
                 </select>
             </div>
             <div>
-                <label style="display:block;font-size:0.78rem;font-weight:600;margin-bottom:0.3rem;color:var(--text-muted);">Start Date</label>
-                <input type="date" id="quizDate" style="width:100%;padding:0.65rem 0.85rem;background:var(--bg-input);border:1.5px solid var(--border-light);border-radius:var(--radius);color:var(--text-primary);font-size:0.9rem;">
+                <label style="display:block;font-size:0.78rem;font-weight:600;margin-bottom:0.25rem;color:var(--text-muted);">Start Date</label>
+                <input type="date" id="quizDate" style="width:100%;padding:0.6rem 0.8rem;background:var(--bg-input);border:1.5px solid var(--border-light);border-radius:var(--radius);color:var(--text-primary);font-size:0.9rem;">
             </div>
             <div>
-                <label style="display:block;font-size:0.78rem;font-weight:600;margin-bottom:0.3rem;color:var(--text-muted);">Start Time</label>
-                <input type="time" id="quizTime" value="10:00" style="width:100%;padding:0.65rem 0.85rem;background:var(--bg-input);border:1.5px solid var(--border-light);border-radius:var(--radius);color:var(--text-primary);font-size:0.9rem;cursor:pointer;" onclick="event.stopPropagation()" onchange="event.stopPropagation()">
+                <label style="display:block;font-size:0.78rem;font-weight:600;margin-bottom:0.25rem;color:var(--text-muted);">Start Time</label>
+                <input type="time" id="quizTime" value="10:00" style="width:100%;padding:0.6rem 0.8rem;background:var(--bg-input);border:1.5px solid var(--border-light);border-radius:var(--radius);color:var(--text-primary);font-size:0.9rem;">
             </div>
             <div>
-                <label style="display:block;font-size:0.78rem;font-weight:600;margin-bottom:0.3rem;color:var(--text-muted);">Duration (minutes, 0=none)</label>
-                <input type="number" id="quizDuration" min="0" value="30" style="width:100%;padding:0.65rem 0.85rem;background:var(--bg-input);border:1.5px solid var(--border-light);border-radius:var(--radius);color:var(--text-primary);font-size:0.9rem;">
+                <label style="display:block;font-size:0.78rem;font-weight:600;margin-bottom:0.25rem;color:var(--text-muted);">Duration (min, 0=none)</label>
+                <input type="number" id="quizDuration" min="0" value="30" style="width:100%;padding:0.6rem 0.8rem;background:var(--bg-input);border:1.5px solid var(--border-light);border-radius:var(--radius);color:var(--text-primary);font-size:0.9rem;">
             </div>
             <div>
-                <label style="display:block;font-size:0.78rem;font-weight:600;margin-bottom:0.3rem;color:var(--text-muted);">Attempts allowed</label>
-                <input type="number" id="quizAttempts" min="0" value="1" style="width:100%;padding:0.65rem 0.85rem;background:var(--bg-input);border:1.5px solid var(--border-light);border-radius:var(--radius);color:var(--text-primary);font-size:0.9rem;">
+                <label style="display:block;font-size:0.78rem;font-weight:600;margin-bottom:0.25rem;color:var(--text-muted);">Attempts Allowed</label>
+                <input type="number" id="quizAttempts" min="0" value="1" style="width:100%;padding:0.6rem 0.8rem;background:var(--bg-input);border:1.5px solid var(--border-light);border-radius:var(--radius);color:var(--text-primary);font-size:0.9rem;">
             </div>
         </div>
 
-        <div class="batch-modal-actions" style="margin-top:1.25rem;padding-top:1rem;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:0.65rem;">
-            <button class="batch-cancel-btn" onclick="closeScheduleModal()">Cancel</button>
-            <button class="batch-start-btn ready" id="schedBtn" onclick="scheduleQuiz()">
+        <div class="batch-modal-actions" style="margin-top:auto;padding-top:0.85rem;border-top:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;">
+            <button class="batch-cancel-btn" onclick="closeReview()"><i class="ph ph-plus-circle"></i> Pick More MCQs</button>
+            <button class="batch-start-btn ready" id="schedBtn" onclick="scheduleQuiz()" style="background:var(--primary);color:#fff;border-radius:var(--radius);font-weight:700;padding:0.65rem 1.25rem;cursor:pointer;">
                 <i class="ph ph-paper-plane-tilt"></i> Schedule Quiz
             </button>
-        </div>
-    </div>
-</div>
-<!-- Review Selected Questions Modal -->
-<div class="batch-modal-bg" id="reviewModal">
-    <div class="batch-modal-box" onclick="event.stopPropagation()" style="max-width:680px;">
-        <p class="batch-modal-title"><i class="ph ph-list-checks"></i> Review Selected <span class="count-pill" id="reviewCount">0</span></p>
-        <p class="batch-modal-sub">Questions you picked across all subjects &amp; classes. Remove any, add more, or proceed to schedule.</p>
-        <div id="reviewList" style="max-height:52vh;overflow-y:auto;margin:0.5rem 0 0.25rem;"></div>
-        <div class="batch-modal-actions">
-            <button class="batch-cancel-btn" onclick="closeReview()"><i class="ph ph-plus-circle"></i> Add more</button>
-            <button class="batch-start-btn ready" onclick="proceedToSchedule()"><i class="ph ph-arrow-right"></i> Proceed to Schedule</button>
         </div>
     </div>
 </div>
@@ -859,21 +857,42 @@ function updateUI() {
     if (top) top.style.display = visible ? 'flex' : 'none';
     if (bot) bot.style.display = visible ? 'flex' : 'none';
     document.getElementById('clearBtn').style.display = visible ? 'inline' : 'none';
-    if (!visible) closeScheduleModal();
+    if (!visible) closeReview();
 }
 
 function clearSel() {
     selected.clear();
     selectedQuestions.clear();
     document.querySelectorAll('.question-row.selected').forEach(c => { c.classList.remove('selected'); const cb = c.querySelector('.q-checkbox'); if (cb) cb.checked = false; });
-    closeScheduleModal();
+    closeReview();
     updateUI();
 }
 
 // â”€â”€ Review selected questions (across all subjects/classes) â”€â”€
 function openReview() {
-    if (!selected.size) return;
     renderReview();
+    loadMoodleCourses();
+
+    // Auto-prefill smart schedule defaults
+    const today = new Date().toISOString().split('T')[0];
+    const dateInput = document.getElementById('quizDate');
+    if (dateInput && !dateInput.value) dateInput.value = today;
+
+    const timeInput = document.getElementById('quizTime');
+    if (timeInput && !timeInput.value) timeInput.value = '10:00';
+
+    const titleInput = document.getElementById('quizTitle');
+    if (titleInput && !titleInput.value) {
+        const sub = activeSubject || 'Physics';
+        titleInput.value = sub + ' Quiz (' + today + ')';
+    }
+
+    const courseInput = document.getElementById('quizCourse');
+    if (courseInput && !courseInput.value) courseInput.value = '2';
+
+    const errBox = document.getElementById('schedModalErr');
+    if (errBox) errBox.style.display = 'none';
+
     document.getElementById('reviewModal').classList.add('show');
 }
 function closeReview() {
@@ -1091,7 +1110,7 @@ async function scheduleQuiz() {
             '"' + title + '" successfully scheduled in ' + courseTxt + ' with ' + qCount + ' question(s), opening on ' + date + ' at ' + time + '.';
         
         // Hide schedule modal and show success modal
-        closeScheduleModal();
+        closeReview();
         const sModal = document.getElementById('successModal');
         if (sModal) {
             sModal.style.display = 'flex';
@@ -1112,7 +1131,7 @@ function closeModal() {
     document.getElementById('successModal').classList.remove('show');
     selected.clear();
     selectedQuestions.clear();
-    closeScheduleModal();
+    closeReview();
     document.getElementById('quizTitle').value = '';
     document.getElementById('quizDate').value  = '';
     document.getElementById('quizTime').value  = '';
