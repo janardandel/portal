@@ -458,6 +458,7 @@
             <span class="count-pill" id="schedCount">0</span>
         </p>
         <p class="batch-modal-sub" style="margin-bottom:1.25rem;color:var(--text-secondary);">Configure schedule timing and target Moodle course for selected MCQs.</p>
+        <div id="schedModalErr" style="display:none;color:#dc3545;background:rgba(220,53,69,0.12);padding:0.6rem 0.85rem;border-radius:8px;font-size:0.85rem;margin-bottom:1rem;font-weight:600;"></div>
         
         <div class="schedule-fields" style="display:grid;gap:0.85rem;grid-template-columns:1fr 1fr;margin-bottom:1.25rem;">
             <div style="grid-column: 1 / -1;">
@@ -964,6 +965,27 @@ function removeFromReview(id) {
 function proceedToSchedule() {
     closeReview();
     loadMoodleCourses();
+
+    // Smart prefill defaults
+    const today = new Date().toISOString().split('T')[0];
+    const dateInput = document.getElementById('quizDate');
+    if (dateInput && !dateInput.value) dateInput.value = today;
+
+    const timeInput = document.getElementById('quizTime');
+    if (timeInput && !timeInput.value) timeInput.value = '10:00';
+
+    const titleInput = document.getElementById('quizTitle');
+    if (titleInput && !titleInput.value) {
+        const sub = activeSubject || 'Physics';
+        titleInput.value = sub + ' Quiz (' + today + ')';
+    }
+
+    const courseInput = document.getElementById('quizCourse');
+    if (courseInput && !courseInput.value) courseInput.value = '2';
+
+    const errBox = document.getElementById('schedModalErr');
+    if (errBox) errBox.style.display = 'none';
+
     const modal = document.getElementById('scheduleModal');
     if (modal) {
         modal.style.display = 'flex';
@@ -1037,24 +1059,38 @@ async function scheduleQuiz() {
         return showErr('Please sign in to schedule quizzes.');
     }
 
+    const errBox = document.getElementById('schedModalErr');
+    if (errBox) errBox.style.display = 'none';
+
+    const showModalErr = (msg) => {
+        if (errBox) {
+            errBox.textContent = msg;
+            errBox.style.display = 'block';
+        } else {
+            showErr(msg);
+        }
+    };
+
     const cls       = activeClass || 'Class 11';
-    const title     = (document.getElementById('quizTitle').value || '').trim();
-    const date      = document.getElementById('quizDate').value;
-    const time      = document.getElementById('quizTime').value;
+    let title       = (document.getElementById('quizTitle').value || '').trim();
+    let date        = document.getElementById('quizDate').value;
+    let time        = document.getElementById('quizTime').value;
     const courseSel = document.getElementById('quizCourse');
-    const courseid  = courseSel.value;
-    const courseTxt = (courseSel.options[courseSel.selectedIndex] ? courseSel.options[courseSel.selectedIndex].text : 'Moodle Course');
-    const duration  = parseInt(document.getElementById('quizDuration').value, 10) || 0;
+    let courseid    = courseSel.value;
+
+    if (!title) title = (activeSubject || 'MCQ') + ' Test (' + new Date().toLocaleDateString() + ')';
+    if (!date)  date  = new Date().toISOString().split('T')[0];
+    if (!time)  time  = '10:00';
+    if (!courseid) courseid = '2';
+
+    const courseTxt = (courseSel.options[courseSel.selectedIndex] ? courseSel.options[courseSel.selectedIndex].text : 'Class 11 NEET Droppers Physics');
+    const duration  = parseInt(document.getElementById('quizDuration').value, 10) || 30;
     const closeDate = document.getElementById('quizCloseDate').value;
     const closeTime = document.getElementById('quizCloseTime').value;
-    const attempts  = parseInt(document.getElementById('quizAttempts').value, 10) || 0;
+    const attempts  = parseInt(document.getElementById('quizAttempts').value, 10) || 1;
     const shuffle   = document.getElementById('quizShuffle').value === '1';
 
-    if (!selected.size) return showErr('Please select at least one question.');
-    if (!title)         return showErr('Please enter a quiz title.');
-    if (!courseid)      return showErr('Please select a Moodle course.');
-    if (!date)          return showErr('Please select a date.');
-    if (!time)          return showErr('Please select a time.');
+    if (!selected.size) return showModalErr('Please select at least one question.');
 
     const btn = document.getElementById('schedBtn');
     btn.disabled = true;
@@ -1065,7 +1101,7 @@ async function scheduleQuiz() {
     const timeclose = closeDate ? Math.floor(new Date(closeDate + 'T' + (closeTime || '23:59') + ':00').getTime() / 1000) : 0;
 
     try {
-        // Sync via Orchestrator Webhook
+        // Sync to Moodle Orchestrator Webhook
         try {
             await fetch('https://container001.pitthugram.com/webhook/moodle-tenant-sync', {
                 method: 'POST',
@@ -1078,7 +1114,7 @@ async function scheduleQuiz() {
                     name:           title,
                     timeopen:       timeopen,
                     timeclose:      timeclose,
-                    timelimit:      duration ? duration * 60 : 0,
+                    timelimit:      duration * 60,
                     attempts:       attempts,
                     shuffleanswers: shuffle,
                     questions:      selQuestions.map(toSchedQuestion)
@@ -1092,13 +1128,18 @@ async function scheduleQuiz() {
         document.getElementById('successMsg').textContent =
             '"' + title + '" successfully scheduled in ' + courseTxt + ' with ' + qCount + ' question(s), opening on ' + date + ' at ' + time + '.';
         
-        // Show success modal
-        const modal = document.getElementById('successModal');
-        modal.classList.add('show');
+        // Hide schedule modal and show success modal
         closeScheduleModal();
+        const sModal = document.getElementById('successModal');
+        if (sModal) {
+            sModal.style.display = 'flex';
+            sModal.style.opacity = '1';
+            sModal.style.pointerEvents = 'all';
+            sModal.classList.add('show');
+        }
 
     } catch(err) {
-        showErr(err.message || 'Something went wrong. Please try again.');
+        showModalErr(err.message || 'Something went wrong. Please try again.');
     } finally {
         btn.disabled = false;
         btn.innerHTML = '<i class="ph ph-paper-plane-tilt"></i> Schedule Quiz';
