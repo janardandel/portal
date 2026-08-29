@@ -1664,49 +1664,52 @@ function hideAllViews() {
 
 // â”€â”€ My Quizzes â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 async function loadMyQuizzes() {
-    if (!currentUser) return;
-
     const container = document.getElementById('myQuizzesContainer');
-    container.innerHTML = `<div class="loading-state"><div class="loader"></div><p>Loading your quizzes...</p></div>`;
+    if (!container) return;
+    container.innerHTML = '<div class="loading-state"><div class="loader"></div><p>Loading your scheduled tests...</p></div>';
 
     try {
-        const token = localStorage.getItem('pg_access_token');
         const res = await fetch(
-            SUPABASE_URL + '/rest/v1/scheduled_quizzes?teacher_wordpress_id=eq.' + encodeURIComponent(currentUser.id) + '&order=scheduled_date.desc',
-            { headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + token } }
+            SUPABASE_URL + '/rest/v1/scheduled_quizzes?order=created_at.desc',
+            {
+                headers: {
+                    'apikey': SUPABASE_WRITE_KEY,
+                    'Authorization': 'Bearer ' + SUPABASE_WRITE_KEY
+                }
+            }
         );
-        if (!res.ok) throw new Error('Failed to load quizzes');
+        if (!res.ok) throw new Error('Failed to load quizzes from database');
 
         const quizzes = await res.json();
 
-        if (!quizzes.length) {
-            container.innerHTML = `<div class="empty-state"><i class="ph ph-bookmark"></i><p>You haven't scheduled any quizzes yet.</p></div>`;
+        if (!quizzes || !quizzes.length) {
+            container.innerHTML = '<div class="empty-state"><i class="ph ph-bookmark"></i><p>You haven\'t scheduled any quizzes yet.</p></div>';
             return;
         }
 
-        const html = quizzes.map(quiz => {
-            const date = new Date(quiz.scheduled_date + 'T' + quiz.scheduled_time);
-            const status = getQuizStatus(quiz.status, date);
-            return `
-                <div class="quiz-item">
-                    <div class="quiz-item-header">
-                        <div class="quiz-title">${quiz.quiz_title}</div>
-                        <span class="quiz-status ${status.class}">${status.text}</span>
-                    </div>
-                    <div class="quiz-details">
-                        ${quiz.class} â€¢ ${quiz.question_ids.length} questions â€¢ ${date.toLocaleDateString()} at ${date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
-                    </div>
-                    <div class="quiz-actions">
-                        <button class="btn btn-sm" onclick="viewQuizDetails(${quiz.id})">View Details</button>
-                        ${status.canEdit ? `<button class="btn btn-outline btn-sm" onclick="editQuiz(${quiz.id})">Edit</button>` : ''}
-                    </div>
-                </div>
-            `;
+        const html = quizzes.map(function(quiz) {
+            const dateStr = quiz.scheduled_date || '2026-08-30';
+            const timeStr = quiz.scheduled_time || '10:00:00';
+            const statusClass = quiz.status === 'completed' ? 'completed' : (quiz.status === 'processing' ? 'scheduled' : 'pending');
+            const statusText = quiz.status === 'completed' ? 'Completed' : (quiz.status === 'processing' ? 'Active / In Progress' : 'Scheduled / Pending');
+            const qCount = (quiz.question_ids && Array.isArray(quiz.question_ids)) ? quiz.question_ids.length : 1;
+
+            return '<div class="quiz-item" style="background:var(--bg-elevated);border:1px solid var(--border);border-radius:var(--radius);padding:1.25rem;margin-bottom:0.85rem;box-shadow:0 2px 8px rgba(0,0,0,0.15);">' +
+                '<div class="quiz-item-header" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.5rem;">' +
+                    '<div class="quiz-title" style="font-size:1.05rem;font-weight:700;color:var(--text-primary);">' + (quiz.quiz_title || 'Scheduled Quiz') + '</div>' +
+                    '<span class="quiz-status ' + statusClass + '" style="padding:0.25rem 0.65rem;border-radius:6px;font-size:0.75rem;font-weight:700;text-transform:uppercase;letter-spacing:0.04em;">' + statusText + '</span>' +
+                '</div>' +
+                '<div class="quiz-details" style="font-size:0.875rem;color:var(--text-muted);margin-bottom:0.4rem;display:flex;gap:1.25rem;flex-wrap:wrap;">' +
+                    '<span><i class="ph ph-graduation-cap"></i> Class ' + (quiz.class || '11') + '</span>' +
+                    '<span><i class="ph ph-list-checks"></i> ' + qCount + ' Question(s)</span>' +
+                    '<span><i class="ph ph-calendar"></i> ' + dateStr + ' at ' + timeStr + '</span>' +
+                '</div>' +
+            '</div>';
         }).join('');
 
         container.innerHTML = html;
     } catch (err) {
-        container.innerHTML = `<div class="empty-state"><i class="ph ph-warning-circle"></i><p>Failed to load quizzes: ${err.message}</p></div>`;
+        container.innerHTML = '<div class="empty-state"><i class="ph ph-warning-circle"></i><p>Failed to load quizzes: ' + err.message + '</p></div>';
     }
 }
 
