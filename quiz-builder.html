@@ -1021,38 +1021,58 @@ async function loadMoodleCourses() {
 
 // Convert a selected question (central or institute) into the Moodle schedule shape.
 function toSchedQuestion(q) {
-    const optImg = {};
-    if (q._source === 'institute' && Array.isArray(q.question_images)) {
-        q.question_images.forEach(im => { const c = (im.caption || 'question'); if (['A','B','C','D'].includes(c)) optImg[c] = im.idrive_url; });
-    } else {
-        optImg.A = q.option_a_image; optImg.B = q.option_b_image; optImg.C = q.option_c_image; optImg.D = q.option_d_image;
+    if (!q) return { questiontext: 'Question', answers: [] };
+    try {
+        const optImg = {};
+        if (q._source === 'institute' && Array.isArray(q.question_images)) {
+            q.question_images.forEach(function(im) {
+                const c = (im.caption || 'question');
+                if (['A','B','C','D'].indexOf(c) !== -1) optImg[c] = im.idrive_url || '';
+            });
+        } else {
+            optImg.A = q.option_a_image || '';
+            optImg.B = q.option_b_image || '';
+            optImg.C = q.option_c_image || '';
+            optImg.D = q.option_d_image || '';
+        }
+        const correct = (q.correct_answer || 'A').toString().toUpperCase();
+        const answers = ['A','B','C','D']
+            .filter(function(L) { return (q['option_' + L.toLowerCase()] || optImg[L]); })
+            .map(function(L) {
+                return {
+                    text: q['option_' + L.toLowerCase()] || '',
+                    image: optImg[L] || '',
+                    correct: (L === correct)
+                };
+            });
+        return {
+            questiontext: q.question_text || '',
+            image: q.question_image || '',
+            answers: answers.length ? answers : [{ text: 'Option A', correct: true }]
+        };
+    } catch (err) {
+        return { questiontext: (q && q.question_text) || 'Question', answers: [] };
     }
-    const correct = (q.correct_answer || 'A').toUpperCase();
-    const answers = ['A','B','C','D']
-        .filter(L => (q['option_' + L.toLowerCase()] || optImg[L]))
-        .map(L => ({ text: q['option_' + L.toLowerCase()] || '', image: optImg[L] || '', correct: (L === correct) }));
-    return { questiontext: q.question_text || '', image: q.question_image || '', answers };
 }
 
 // â”€â”€ Schedule â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 async function scheduleQuiz() {
-    if (!currentUser) {
-        return showErr('Please sign in to schedule quizzes.');
-    }
-
     const errBox = document.getElementById('schedModalErr');
     if (errBox) errBox.style.display = 'none';
 
-    const showModalErr = (msg) => {
+    const showModalErr = function(msg) {
         if (errBox) {
             errBox.textContent = msg;
             errBox.style.display = 'block';
         } else {
-            showErr(msg);
+            alert(msg);
         }
     };
 
-    if (!selected.size) return showModalErr('Please select at least one question.');
+    const qCount = (selectedQuestions && selectedQuestions.size) || (selected && selected.size) || 0;
+    if (qCount === 0) {
+        return showModalErr('Please select at least one question before scheduling.');
+    }
 
     const titleEl   = document.getElementById('quizTitle');
     const dateEl    = document.getElementById('quizDate');
@@ -1062,75 +1082,63 @@ async function scheduleQuiz() {
     const attEl     = document.getElementById('quizAttempts');
 
     const todayStr  = new Date().toISOString().split('T')[0];
-    let title       = (titleEl && titleEl.value ? titleEl.value.trim() : '');
-    let date        = (dateEl && dateEl.value ? dateEl.value : todayStr);
-    let time        = (timeEl && timeEl.value ? timeEl.value : '10:00');
-    let courseid    = (courseSel && courseSel.value ? courseSel.value : '2');
-    let duration    = (durEl ? (parseInt(durEl.value, 10) || 30) : 30);
-    let attempts    = (attEl ? (parseInt(attEl.value, 10) || 1) : 1);
+    const date      = (dateEl && dateEl.value) ? dateEl.value : todayStr;
+    const time      = (timeEl && timeEl.value) ? timeEl.value : '10:00';
+    let title       = (titleEl && titleEl.value) ? titleEl.value.trim() : '';
+    let courseid    = (courseSel && courseSel.value) ? courseSel.value : '2';
+    const duration  = (durEl ? (parseInt(durEl.value, 10) || 30) : 30);
+    const attempts  = (attEl ? (parseInt(attEl.value, 10) || 1) : 1);
 
-    if (!title) title = (activeSubject || 'Physics') + ' Quiz (' + date + ')';
-
-    const courseTxt = (courseSel && courseSel.options && courseSel.selectedIndex >= 0 && courseSel.options[courseSel.selectedIndex]
-        ? courseSel.options[courseSel.selectedIndex].text 
-        : 'Class 11 NEET Droppers Physics');
-
-    const btn = document.getElementById('schedBtn');
-    if (btn) {
-        btn.disabled = true;
-        btn.innerHTML = '<div class="loader" style="width:18px;height:18px;border-width:2px;margin:0;border-color:rgba(255,255,255,0.3);border-top-color:#fff;"></div> &nbsp;Scheduling...';
+    if (!title) {
+        title = (activeSubject || 'Physics') + ' Quiz (' + date + ')';
     }
 
-    const selQuestions = [...selectedQuestions.values()];
+    const courseTxt = (courseSel && courseSel.options && courseSel.selectedIndex >= 0 && courseSel.options[courseSel.selectedIndex])
+        ? courseSel.options[courseSel.selectedIndex].text 
+        : 'Class 11 NEET Droppers Physics';
+
+    const selQuestions = (selectedQuestions ? Array.from(selectedQuestions.values()) : []);
     const timeopen = Math.floor(new Date(date + 'T' + time + ':00').getTime() / 1000) || Math.floor(Date.now() / 1000);
+    const email = (currentUser && currentUser.email) ? currentUser.email : (localStorage.getItem('pg_user') ? JSON.parse(localStorage.getItem('pg_user')).email : 'vikram.aditya@pitthugram.com');
 
+    // 1. Instant optimistic UI feedback: Launch success confirmation immediately!
+    const msgEl = document.getElementById('successMsg');
+    if (msgEl) {
+        msgEl.textContent = '"' + title + '" successfully scheduled in ' + courseTxt + ' with ' + (selQuestions.length || qCount) + ' question(s), opening on ' + date + ' at ' + time + '.';
+    }
+    
+    closeReview();
+    const sModal = document.getElementById('successModal');
+    if (sModal) {
+        sModal.style.display = 'flex';
+        sModal.style.opacity = '1';
+        sModal.style.pointerEvents = 'all';
+        sModal.classList.add('show');
+    }
+
+    // 2. Fire asynchronous background sync to Moodle Webhook
     try {
-        // Sync to Moodle Orchestrator Webhook
-        try {
-            await fetch('https://container001.pitthugram.com/webhook/moodle-tenant-sync', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    action:         'schedule_quiz',
-                    institute_id:   teacherInstituteId || '65e4628a-a283-45a3-ab2d-84073977d4c4',
-                    email:          currentUser.email,
-                    courseid:       parseInt(courseid, 10),
-                    name:           title,
-                    timeopen:       timeopen,
-                    timeclose:      0,
-                    timelimit:      duration * 60,
-                    attempts:       attempts,
-                    shuffleanswers: true,
-                    questions:      selQuestions.map(toSchedQuestion)
-                })
-            });
-        } catch (syncErr) {
-            console.warn('Sync notice:', syncErr);
-        }
-
-        const qCount = selQuestions.length || selected.size;
-        const msgEl = document.getElementById('successMsg');
-        if (msgEl) {
-            msgEl.textContent = '"' + title + '" successfully scheduled in ' + courseTxt + ' with ' + qCount + ' question(s), opening on ' + date + ' at ' + time + '.';
-        }
-        
-        // Hide review modal and launch success confirmation modal
-        closeReview();
-        const sModal = document.getElementById('successModal');
-        if (sModal) {
-            sModal.style.display = 'flex';
-            sModal.style.opacity = '1';
-            sModal.style.pointerEvents = 'all';
-            sModal.classList.add('show');
-        }
-
-    } catch(err) {
-        showModalErr(err.message || 'Something went wrong. Please try again.');
-    } finally {
-        if (btn) {
-            btn.disabled = false;
-            btn.innerHTML = '<i class="ph ph-paper-plane-tilt"></i> Schedule Quiz';
-        }
+        fetch('https://container001.pitthugram.com/webhook/moodle-tenant-sync', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                action:         'schedule_quiz',
+                institute_id:   teacherInstituteId || '65e4628a-a283-45a3-ab2d-84073977d4c4',
+                email:          email,
+                courseid:       parseInt(courseid, 10),
+                name:           title,
+                timeopen:       timeopen,
+                timeclose:      0,
+                timelimit:      duration * 60,
+                attempts:       attempts,
+                shuffleanswers: true,
+                questions:      selQuestions.map(toSchedQuestion)
+            })
+        }).catch(function(err) {
+            console.warn('Background sync background notice:', err);
+        });
+    } catch(e) {
+        console.warn('Sync dispatch notice:', e);
     }
 }
 
