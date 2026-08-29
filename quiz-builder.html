@@ -431,96 +431,7 @@
             </span>
         </div>
 
-        <!-- Schedule bar -->
-        <div class="schedule-bar" id="scheduleBar" style="display:none;">
-            <h3>
-                <i class="ph-fill ph-calendar-check"></i>
-                Schedule Quiz
-                <span class="count-pill" id="schedCount">0</span>
-            </h3>
-            <div class="schedule-fields">
-                <div>
-                    <label>Quiz Title</label>
-                    <input type="text" id="quizTitle" placeholder="e.g. Chapter 3 Test">
-                </div>
-                <div>
-                    <label>Moodle Course</label>
-                    <select id="quizCourse"><option value="">Loadingâ€¦</option></select>
-                </div>
-                <div>
-                    <label>Time limit (min, 0 = none)</label>
-                    <input type="number" id="quizDuration" min="0" value="0">
-                </div>
-                <div>
-                    <label>Date</label>
-                    <input type="date" id="quizDate">
-                </div>
-                <div>
-                    <label>Time</label>
-                    <select id="quizTime">
-                        <option value="">Select Time</option>
-                        <option value="06:00">6:00 AM</option>
-                        <option value="06:30">6:30 AM</option>
-                        <option value="07:00">7:00 AM</option>
-                        <option value="07:30">7:30 AM</option>
-                        <option value="08:00">8:00 AM</option>
-                        <option value="08:30">8:30 AM</option>
-                        <option value="09:00">9:00 AM</option>
-                        <option value="09:30">9:30 AM</option>
-                        <option value="10:00">10:00 AM</option>
-                        <option value="10:30">10:30 AM</option>
-                        <option value="11:00">11:00 AM</option>
-                        <option value="11:30">11:30 AM</option>
-                        <option value="12:00">12:00 PM</option>
-                        <option value="12:30">12:30 PM</option>
-                        <option value="13:00">1:00 PM</option>
-                        <option value="13:30">1:30 PM</option>
-                        <option value="14:00">2:00 PM</option>
-                        <option value="14:30">2:30 PM</option>
-                        <option value="15:00">3:00 PM</option>
-                        <option value="15:30">3:30 PM</option>
-                        <option value="16:00">4:00 PM</option>
-                        <option value="16:30">4:30 PM</option>
-                        <option value="17:00">5:00 PM</option>
-                        <option value="17:30">5:30 PM</option>
-                        <option value="18:00">6:00 PM</option>
-                        <option value="18:30">6:30 PM</option>
-                        <option value="19:00">7:00 PM</option>
-                        <option value="19:30">7:30 PM</option>
-                        <option value="20:00">8:00 PM</option>
-                        <option value="20:30">8:30 PM</option>
-                        <option value="21:00">9:00 PM</option>
-                        <option value="21:30">9:30 PM</option>
-                        <option value="22:00">10:00 PM</option>
-                        <option value="22:30">10:30 PM</option>
-                        <option value="23:00">11:00 PM</option>
-                        <option value="23:30">11:30 PM</option>
-                    </select>
-                </div>
-                <div>
-                    <label>Closes â€” Date (optional)</label>
-                    <input type="date" id="quizCloseDate">
-                </div>
-                <div>
-                    <label>Closes â€” Time (optional)</label>
-                    <input type="time" id="quizCloseTime">
-                </div>
-                <div>
-                    <label>Attempts (0 = unlimited)</label>
-                    <input type="number" id="quizAttempts" min="0" value="1">
-                </div>
-                <div>
-                    <label>Shuffle answers</label>
-                    <select id="quizShuffle"><option value="1">Yes</option><option value="0">No</option></select>
-                </div>
-            </div>
-            <button class="btn-schedule" id="schedBtn" onclick="scheduleQuiz()">
-                <i class="ph ph-paper-plane-tilt"></i>
-                Schedule Quiz
-            </button>
-        </div>
-
-                </div><!-- /qbContent -->
+        </div><!-- /qbContent -->
             </div><!-- /qb-main -->
         </div><!-- /qb-layout -->
     </div><!-- /qb-wrap -->
@@ -555,7 +466,14 @@
             </div>
             <div style="grid-column: 1 / -1;">
                 <label style="display:block;font-size:0.78rem;font-weight:600;margin-bottom:0.3rem;color:var(--text-muted);">Moodle Course</label>
-                <select id="quizCourse" style="width:100%;padding:0.65rem 0.85rem;background:var(--bg-input);border:1.5px solid var(--border-light);border-radius:var(--radius);color:var(--text-primary);font-size:0.9rem;"><option value="">Loading courses...</option></select>
+                <select id="quizCourse" style="width:100%;padding:0.7rem 0.875rem;background:var(--bg-input);border:1.5px solid var(--border-light);border-radius:var(--radius);color:var(--text-primary);font-size:0.9rem;">
+                    <option value="">Select Moodle Course</option>
+                    <option value="2">Class 11 NEET Droppers Physics</option>
+                    <option value="3">Class 12 Mathematics &amp; Calculus</option>
+                    <option value="4">Class 10 Foundation Math &amp; Science</option>
+                    <option value="5">Class 12 Advanced JEE Physics</option>
+                    <option value="6">Class 11 NEET Chemistry FastTrack</option>
+                </select>
             </div>
             <div>
                 <label style="display:block;font-size:0.78rem;font-weight:600;margin-bottom:0.3rem;color:var(--text-muted);">Start Date</label>
