@@ -1116,8 +1116,28 @@ async function scheduleQuiz() {
         sModal.classList.add('show');
     }
 
-    // 2. Fire asynchronous background sync to Moodle Webhook
+        // 2. Fire asynchronous background sync to Moodle Webhook & Supabase Queue
     try {
+        const qIds = selQuestions.map(function(q) { return q.id; }).filter(Boolean);
+        fetch(SUPABASE_URL + '/rest/v1/scheduled_quizzes', {
+            method: 'POST',
+            headers: {
+                'apikey': SUPABASE_KEY,
+                'Authorization': 'Bearer ' + SUPABASE_KEY,
+                'Content-Type': 'application/json',
+                'Prefer': 'return=minimal'
+            },
+            body: JSON.stringify({
+                teacher_wordpress_id: (currentUser && currentUser.id) || '1edca830-a871-4ed6-830b-1fa60273ec91',
+                class: activeClass || '11',
+                quiz_title: title,
+                scheduled_date: date,
+                scheduled_time: time + ':00',
+                question_ids: qIds,
+                status: 'pending'
+            })
+        }).catch(function(e) { console.warn('Supabase queue notice:', e); });
+
         fetch('https://container001.pitthugram.com/webhook/moodle-tenant-sync', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -1135,7 +1155,7 @@ async function scheduleQuiz() {
                 questions:      selQuestions.map(toSchedQuestion)
             })
         }).catch(function(err) {
-            console.warn('Background sync background notice:', err);
+            console.warn('Background sync notice:', err);
         });
     } catch(e) {
         console.warn('Sync dispatch notice:', e);
