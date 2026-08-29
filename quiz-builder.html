@@ -439,7 +439,7 @@
 
 <!-- Success Modal -->
 <div class="batch-modal-bg" id="successModal" style="z-index:99999;">
-    <div class="batch-modal-box" style="text-align:center;max-width:460px;padding:2rem 1.75rem;">
+    <div class="batch-modal-box" onclick="event.stopPropagation()" style="text-align:center;max-width:460px;padding:2rem 1.75rem;">
         <div style="font-size:3.5rem;color:#198754;margin-bottom:0.75rem;line-height:1;">
             <i class="ph-fill ph-check-circle"></i>
         </div>
@@ -452,7 +452,7 @@
 </div>
 <!-- Schedule Modal -->
 <div class="batch-modal-bg" id="scheduleModal" style="z-index:10000;">
-    <div class="batch-modal-box" style="max-width:580px;padding:2rem 1.75rem;">
+    <div class="batch-modal-box" onclick="event.stopPropagation()" style="max-width:580px;padding:2rem 1.75rem;">
         <p class="batch-modal-title" style="font-size:1.2rem;margin-bottom:0.35rem;display:flex;align-items:center;gap:0.5rem;">
             <i class="ph-fill ph-calendar-check" style="color:var(--primary);"></i> Schedule Quiz
             <span class="count-pill" id="schedCount">0</span>
@@ -482,45 +482,7 @@
             </div>
             <div>
                 <label style="display:block;font-size:0.78rem;font-weight:600;margin-bottom:0.3rem;color:var(--text-muted);">Start Time</label>
-                <select id="quizTime" style="width:100%;padding:0.65rem 0.85rem;background:var(--bg-input);border:1.5px solid var(--border-light);border-radius:var(--radius);color:var(--text-primary);font-size:0.9rem;">
-                    <option value="">Select Time</option>
-                    <option value="06:00">6:00 AM</option>
-                    <option value="06:30">6:30 AM</option>
-                    <option value="07:00">7:00 AM</option>
-                    <option value="07:30">7:30 AM</option>
-                    <option value="08:00">8:00 AM</option>
-                    <option value="08:30">8:30 AM</option>
-                    <option value="09:00">9:00 AM</option>
-                    <option value="09:30">9:30 AM</option>
-                    <option value="10:00">10:00 AM</option>
-                    <option value="10:30">10:30 AM</option>
-                    <option value="11:00">11:00 AM</option>
-                    <option value="11:30">11:30 AM</option>
-                    <option value="12:00">12:00 PM</option>
-                    <option value="12:30">12:30 PM</option>
-                    <option value="13:00">1:00 PM</option>
-                    <option value="13:30">1:30 PM</option>
-                    <option value="14:00">2:00 PM</option>
-                    <option value="14:30">2:30 PM</option>
-                    <option value="15:00">3:00 PM</option>
-                    <option value="15:30">3:30 PM</option>
-                    <option value="16:00">4:00 PM</option>
-                    <option value="16:30">4:30 PM</option>
-                    <option value="17:00">5:00 PM</option>
-                    <option value="17:30">5:30 PM</option>
-                    <option value="18:00">6:00 PM</option>
-                    <option value="18:30">6:30 PM</option>
-                    <option value="19:00">7:00 PM</option>
-                    <option value="19:30">7:30 PM</option>
-                    <option value="20:00">8:00 PM</option>
-                    <option value="20:30">8:30 PM</option>
-                    <option value="21:00">9:00 PM</option>
-                    <option value="21:30">9:30 PM</option>
-                    <option value="22:00">10:00 PM</option>
-                    <option value="22:30">10:30 PM</option>
-                    <option value="23:00">11:00 PM</option>
-                    <option value="23:30">11:30 PM</option>
-                </select>
+                <input type="time" id="quizTime" value="10:00" style="width:100%;padding:0.65rem 0.85rem;background:var(--bg-input);border:1.5px solid var(--border-light);border-radius:var(--radius);color:var(--text-primary);font-size:0.9rem;cursor:pointer;" onclick="event.stopPropagation()" onchange="event.stopPropagation()">
             </div>
             <div>
                 <label style="display:block;font-size:0.78rem;font-weight:600;margin-bottom:0.3rem;color:var(--text-muted);">Duration (minutes, 0=none)</label>
@@ -542,7 +504,7 @@
 </div>
 <!-- Review Selected Questions Modal -->
 <div class="batch-modal-bg" id="reviewModal">
-    <div class="batch-modal-box" style="max-width:680px;">
+    <div class="batch-modal-box" onclick="event.stopPropagation()" style="max-width:680px;">
         <p class="batch-modal-title"><i class="ph ph-list-checks"></i> Review Selected <span class="count-pill" id="reviewCount">0</span></p>
         <p class="batch-modal-sub">Questions you picked across all subjects &amp; classes. Remove any, add more, or proceed to schedule.</p>
         <div id="reviewList" style="max-height:52vh;overflow-y:auto;margin:0.5rem 0 0.25rem;"></div>
@@ -555,7 +517,7 @@
 
 <!-- New Quiz â€” Batch Selection Modal -->
 <div class="batch-modal-bg" id="batchModal">
-    <div class="batch-modal-box">
+    <div class="batch-modal-box" onclick="event.stopPropagation()">
         <p class="batch-modal-title"><i class="ph ph-plus-circle"></i> Schedule Quiz â€” Select Batch</p>
         <p class="batch-modal-sub">Choose the class or competitive batch you want to create a quiz for.</p>
 
