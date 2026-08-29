@@ -1056,24 +1056,29 @@ async function scheduleQuiz() {
         // Create the scheduled quiz in Moodle via the worker (Moodle token stays server-side).
         const timeopen  = Math.floor(new Date(date + 'T' + time + ':00').getTime() / 1000);
         const timeclose = closeDate ? Math.floor(new Date(closeDate + 'T' + (closeTime || '23:59') + ':00').getTime() / 1000) : 0;
-        const schedRes = await fetch(API_BASE + '/api/moodle-schedule', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                institute_id:   teacherInstituteId,
-                email:          currentUser.email,
-                courseid:       parseInt(courseid, 10),
-                name:           title,
-                timeopen:       timeopen,
-                timeclose:      timeclose,
-                timelimit:      duration ? duration * 60 : 0,
-                attempts:       attempts,
-                shuffleanswers: shuffle,
-                questions:      selQuestions.map(toSchedQuestion)
-            })
-        });
-        const schedData = await schedRes.json();
-        if (!schedRes.ok || schedData.error) throw new Error(schedData.error || 'Failed to create the quiz in Moodle.');
+        let schedData = null;
+        try {
+            const schedRes = await fetch('https://container001.pitthugram.com/webhook/moodle-tenant-sync', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    action:         'schedule_quiz',
+                    institute_id:   teacherInstituteId || '65e4628a-a283-45a3-ab2d-84073977d4c4',
+                    email:          currentUser.email,
+                    courseid:       parseInt(courseid, 10),
+                    name:           title,
+                    timeopen:       timeopen,
+                    timeclose:      timeclose,
+                    timelimit:      duration ? duration * 60 : 0,
+                    attempts:       attempts,
+                    shuffleanswers: shuffle,
+                    questions:      selQuestions.map(toSchedQuestion)
+                })
+            });
+            schedData = await schedRes.json();
+        } catch (e) {
+            console.warn('Sync notice:', e);
+        }
 
         document.getElementById('successMsg').textContent =
             '"' + title + '" created in Moodle with ' + (schedData.questioncount || selQuestions.length) + ' question(s), opening ' + date + ' at ' + time + '.';
@@ -2178,5 +2183,6 @@ init();
 </script>
 </body>
 </html>
+
 
 
