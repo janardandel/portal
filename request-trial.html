@@ -346,13 +346,36 @@
             <!-- Success State -->
             <div class="success-box" id="successBox">
                 <i class="ph-fill ph-check-circle"></i>
-                <h3>Trial Request Confirmed!</h3>
-                <p>Your coaching institute has been registered in our system. Our onboarding specialist will connect with you on WhatsApp (<span id="confirmedPhone" style="color:#fff;font-weight:600;"></span>) within 2 business hours to activate your trial LMS instance.</p>
-                <div style="margin-top:1.5rem;display:flex;gap:0.75rem;justify-content:center;flex-wrap:wrap;">
-                    <a id="waDirectBtn" href="https://wa.me/919876543210" target="_blank" class="btn btn-sm" style="background:#25D366;color:#fff;display:inline-flex;align-items:center;gap:0.4rem;padding:0.65rem 1.25rem;border-radius:var(--radius-md);font-weight:700;text-decoration:none;">
-                        <i class="ph-fill ph-whatsapp-logo" style="font-size:1.2rem;"></i> Open WhatsApp Chat
+                <h3 style="color:#10b981;">Trial Request Confirmed!</h3>
+                <p style="margin-bottom:1.25rem;">Your coaching institute is registered in our system. Tap below to send your request directly to our team on WhatsApp for instant activation:</p>
+
+                <div style="margin-bottom:1.5rem;">
+                    <a id="waDirectBtn" href="https://wa.me/919876543210" target="_blank" class="btn btn-sm" style="background:#25D366;color:#fff;display:inline-flex;align-items:center;gap:0.5rem;padding:0.8rem 1.5rem;border-radius:var(--radius-md);font-weight:800;font-size:0.95rem;text-decoration:none;box-shadow:0 8px 24px rgba(37,211,102,0.35);transition:all 0.2s;">
+                        <i class="ph-fill ph-whatsapp-logo" style="font-size:1.35rem;"></i> Send on WhatsApp &amp; Get LMS Logins
                     </a>
-                    <a href="./index.html" class="btn btn-outline btn-sm" style="display:inline-flex;padding:0.65rem 1.25rem;border-radius:var(--radius-md);">Return to Home</a>
+                </div>
+
+                <!-- WhatsApp Message Preview Card -->
+                <div style="background:rgba(37,211,102,0.06);border:1.5px solid rgba(37,211,102,0.25);border-radius:var(--radius-md);padding:1.15rem 1.25rem;text-align:left;margin-bottom:1.5rem;">
+                    <div style="font-size:0.75rem;font-weight:700;color:#25D366;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:0.65rem;display:flex;align-items:center;gap:0.4rem;">
+                        <i class="ph-fill ph-chat-circle-dots"></i> Message You Will Receive on WhatsApp:
+                    </div>
+                    <div id="waPreviewText" style="font-size:0.85rem;color:var(--text-primary);line-height:1.6;background:var(--bg-input);padding:0.9rem 1rem;border-radius:8px;border-left:3px solid #25D366;font-family:monospace;white-space:pre-wrap;">
+🎓 Welcome to Pitthugram, <span id="prevName">Educator</span>!
+
+Your 14-Day Free LMS &amp; Quiz Trial for <span id="prevInstitute">your institute</span> has been registered.
+
+📋 Trial Details:
+• LMS Portal: https://portal.classes.institute
+• Question Bank: 10,000+ JEE &amp; NEET MCQs
+• Automated WhatsApp Student Reports: Enabled
+
+Our onboarding team will share your teacher login credentials shortly.
+                    </div>
+                </div>
+
+                <div>
+                    <a href="./index.html" class="btn btn-outline btn-sm" style="display:inline-flex;padding:0.55rem 1.15rem;border-radius:var(--radius-md);"><i class="ph ph-house"></i> Return to Sign In</a>
                 </div>
             </div>
         </div>
@@ -460,10 +483,20 @@ document.getElementById('trialForm').addEventListener('submit', async function(e
             }).catch(function(e) { console.warn('AiSensy notice:', e); });
         } catch(e) { console.warn('AiSensy dispatch notice:', e); }
 
-        // 4. Render Success Confirmation
+        // 4. Update Dynamic WhatsApp Pre-filled message & Preview
+        const waMsg = 'Hi Pitthugram Team, I am ' + firstname + ' from ' + (company || 'Coaching Academy') + '. I just submitted my 14-day free trial request for ' + exam_target + '. Please send my Moodle LMS trial login credentials!';
+        const waLink = 'https://wa.me/919876543210?text=' + encodeURIComponent(waMsg);
+        const waBtn = document.getElementById('waDirectBtn');
+        if (waBtn) waBtn.href = waLink;
+
+        const prevName = document.getElementById('prevName');
+        if (prevName) prevName.textContent = firstname;
+        const prevInst = document.getElementById('prevInstitute');
+        if (prevInst) prevInst.textContent = company || 'your coaching institute';
+
+        // Render Success Confirmation
         spinner.style.display = 'none';
         document.getElementById('formContainer').style.display = 'none';
-        document.getElementById('confirmedPhone').textContent = phone;
         document.getElementById('successBox').style.display = 'block';
 
     } catch (err) {
