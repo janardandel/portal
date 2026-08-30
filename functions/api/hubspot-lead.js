@@ -5,18 +5,12 @@ export async function onRequestPost(context) {
     try {
         data = await request.json();
     } catch {
-        return new Response(JSON.stringify({ error: 'Invalid JSON payload.' }), {
-            status: 400,
-            headers: { 'Content-Type': 'application/json' }
-        });
+        return json({ error: 'Invalid JSON payload.' }, 400);
     }
 
     const { email, firstname, lastname, phone, company, city, batch_size, exam_target } = data;
     if (!email) {
-        return new Response(JSON.stringify({ error: 'Email address is required.' }), {
-            status: 400,
-            headers: { 'Content-Type': 'application/json' }
-        });
+        return json({ error: 'Email address is required.' }, 400);
     }
 
     const hsToken = (env && env.HUBSPOT_TOKEN) || atob('cGF0LW5hMi1iNGE4MjY0YS0xZDJlLTRlNzEtOWMxOC1jMjQwZWYyYmFmYzc=');
@@ -26,7 +20,7 @@ export async function onRequestPost(context) {
     };
 
     try {
-        // 1. Create / Update Contact
+        // 1. Create Contact
         const contactPayload = {
             properties: {
                 email: email.trim(),
@@ -90,19 +84,24 @@ export async function onRequestPost(context) {
             body: JSON.stringify(taskPayload)
         });
 
-        return new Response(JSON.stringify({
+        return json({
             success: true,
             message: 'Lead registered in HubSpot CRM successfully.',
             contactId: contactId,
             companyId: companyId
-        }), {
-            status: 200,
-            headers: { 'Content-Type': 'application/json' }
         });
     } catch (err) {
-        return new Response(JSON.stringify({ error: err.message || 'HubSpot sync error' }), {
-            status: 500,
-            headers: { 'Content-Type': 'application/json' }
-        });
+        return json({ error: err.message || 'HubSpot sync error' }, 500);
     }
+}
+
+export function onRequestGet() {
+    return new Response('Method Not Allowed', { status: 405 });
+}
+
+function json(data, status = 200) {
+    return new Response(JSON.stringify(data), {
+        status,
+        headers: { 'Content-Type': 'application/json' }
+    });
 }
