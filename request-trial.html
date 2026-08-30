@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Request Free Trial — Pitthugram Coaching LMS</title>
+    <link rel="icon" type="image/png" href="./favicon.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/@phosphor-icons/web" defer></script>
+    <link rel="stylesheet" href="./style.css">
+    <style>
+        :root {
+            --primary: #F40009;
+            --primary-glow: rgba(244, 0, 9, 0.18);
+            --bg-base: #0D0D0D;
+            --bg-surface: #141414;
+            --bg-elevated: #1C1C1C;
+            --bg-input: #222222;
+            --border: #2A2A2A;
+            --border-light: #383838;
+            --text-primary: #FFFFFF;
+            --text-secondary: #A0A0A0;
+            --text-muted: #737373;
+            --radius-md: 10px;
+            --radius-lg: 16px;
+        }
+        body {
+            background-color: var(--bg-base);
+            color: var(--text-primary);
+            font-family: 'Inter', -apple-system, sans-serif;
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+        }
+        .page-wrap {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem 1.5rem 4rem;
+            position: relative;
+        }
+        .bg-glow {
+            position: absolute;
+            top: -150px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 900px;
+            height: 600px;
+            background: radial-gradient(circle, var(--primary-glow) 0%, transparent 70%);
+            pointer-events: none;
+            z-index: 0;
+        }
+        .nav-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 3.5rem;
+            position: relative;
+            z-index: 10;
+        }
+        .nav-bar .logo img { height: 42px; }
+        .hero-grid {
+            display: grid;
+            grid-template-columns: 1.1fr 1fr;
+            gap: 3.5rem;
+            align-items: center;
+            position: relative;
+            z-index: 10;
+        }
+        @media(max-width: 900px) {
+            .hero-grid { grid-template-columns: 1fr; gap: 2.5rem; }
+        }
+        .hero-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.35rem 0.85rem;
+            background: rgba(244,0,9,0.12);
+            border: 1px solid rgba(244,0,9,0.3);
+            border-radius: 99px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            color: #ff4d53;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 1.25rem;
+        }
+        .hero-left h1 {
+            font-size: clamp(2rem, 3.5vw, 2.75rem);
+            font-weight: 800;
+            line-height: 1.2;
+            margin-bottom: 1rem;
+            letter-spacing: -0.02em;
+        }
+        .hero-left h1 span {
+            background: linear-gradient(135deg, #ffffff 40%, #ff666b 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .hero-left p.sub {
+            font-size: 1.05rem;
+            color: var(--text-secondary);
+            line-height: 1.6;
+            margin-bottom: 2rem;
+        }
+        .feature-list {
+            display: flex;
+            flex-direction: column;
+            gap: 1.15rem;
+            margin-bottom: 2.5rem;
+        }
+        .feature-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.85rem;
+        }
+        .feature-icon {
+            width: 32px;
+            height: 32px;
+            background: var(--bg-surface);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--primary);
+            font-size: 1.1rem;
+            flex-shrink: 0;
+            margin-top: 0.1rem;
+        }
+        .feature-text strong {
+            display: block;
+            font-size: 0.95rem;
+            color: var(--text-primary);
+            margin-bottom: 0.2rem;
+        }
+        .feature-text span {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            line-height: 1.4;
+        }
+        .trial-card {
+            background: var(--bg-surface);
+            border: 1.5px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: 2.25rem 2rem;
+            box-shadow: 0 24px 60px rgba(0,0,0,0.6);
+            position: relative;
+        }
+        .trial-card h2 {
+            font-size: 1.35rem;
+            font-weight: 800;
+            margin: 0 0 0.4rem 0;
+        }
+        .trial-card p.card-sub {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            margin: 0 0 1.5rem 0;
+        }
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.85rem;
+        }
+        .form-group {
+            margin-bottom: 1.1rem;
+        }
+        .form-group label {
+            display: block;
+            font-size: 0.78rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            margin-bottom: 0.35rem;
+        }
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 0.7rem 0.9rem;
+            background: var(--bg-input);
+            border: 1.5px solid var(--border);
+            border-radius: var(--radius-md);
+            color: var(--text-primary);
+            font-family: inherit;
+            font-size: 0.9rem;
+            box-sizing: border-box;
+            outline: none;
+            transition: all 0.2s;
+        }
+        .form-group input:focus, .form-group select:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(244,0,9,0.15);
+        }
+        .btn-submit {
+            width: 100%;
+            padding: 0.85rem;
+            background: var(--primary);
+            border: none;
+            border-radius: var(--radius-md);
+            color: #fff;
+            font-family: inherit;
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            transition: all 0.2s;
+            margin-top: 0.5rem;
+        }
+        .btn-submit:hover { background: #d60008; transform: translateY(-1px); }
+        .spinner { animation: spin 0.75s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .success-box {
+            display: none;
+            text-align: center;
+            padding: 2rem 1rem;
+        }
+        .success-box i { font-size: 3.5rem; color: #10b981; margin-bottom: 1rem; display: block; }
+        .success-box h3 { font-size: 1.35rem; margin-bottom: 0.5rem; }
+        .success-box p { font-size: 0.9rem; color: var(--text-secondary); line-height: 1.5; }
+    </style>
+</head>
+<body>
+
+<div class="page-wrap">
+    <div class="bg-glow"></div>
+
+    <!-- Navigation -->
+    <header class="nav-bar">
+        <a href="./index.html" class="logo">
+            <img src="./logo.png" alt="Pitthugram">
+        </a>
+        <div style="display:flex;align-items:center;gap:0.75rem;">
+            <span style="font-size:0.85rem;color:var(--text-muted);">Already registered?</span>
+            <a href="./index.html" class="btn btn-outline btn-sm" style="padding:0.45rem 0.9rem;border-radius:var(--radius-md);"><i class="ph ph-sign-in"></i> Sign In</a>
+        </div>
+    </header>
+
+    <!-- Hero Content & Form Grid -->
+    <main class="hero-grid">
+        <div class="hero-left">
+            <div class="hero-badge"><i class="ph-fill ph-sparkle"></i> 14-Day Free LMS &amp; Quiz Trial</div>
+            <h1>Empower Your Coaching with <span>Automated Quizzing</span> &amp; Moodle LMS</h1>
+            <p class="sub">Deliver professional JEE, NEET &amp; Board online tests on your own branded portal with instant automated WhatsApp report cards.</p>
+
+            <div class="feature-list">
+                <div class="feature-item">
+                    <div class="feature-icon"><i class="ph-fill ph-files"></i></div>
+                    <div class="feature-text">
+                        <strong>10,000+ Pre-loaded JEE &amp; NEET MCQs</strong>
+                        <span>Categorized by Class, Subject, and Chapter with LaTeX equations &amp; full solutions.</span>
+                    </div>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-icon"><i class="ph-fill ph-calendar-check"></i></div>
+                    <div class="feature-text">
+                        <strong>1-Click Schedule to Moodle Courses</strong>
+                        <span>Pick MCQs, set time &amp; duration, and exams deploy instantly to students.</span>
+                    </div>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-icon"><i class="ph-fill ph-whatsapp-logo"></i></div>
+                    <div class="feature-text">
+                        <strong>Automated WhatsApp Report Cards</strong>
+                        <span>Personalized monthly performance cards sent automatically to parents.</span>
+                    </div>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-icon"><i class="ph-fill ph-buildings"></i></div>
+                    <div class="feature-text">
+                        <strong>Dedicated Institute Subdomain</strong>
+                        <span>Your private portal at <code>yourname.classes.institute</code>.</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Trial Form -->
+        <div class="trial-card">
+            <div id="formContainer">
+                <h2>Request Free Trial</h2>
+                <p class="card-sub">Fill this quick form to register directly into our onboarding queue.</p>
+
+                <form id="trialForm">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="fname">First Name *</label>
+                            <input type="text" id="fname" placeholder="Vikram" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="lname">Last Name</label>
+                            <input type="text" id="lname" placeholder="Aditya">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="email">Work Email *</label>
+                        <input type="email" id="email" placeholder="director@coaching.com" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="phone">WhatsApp / Mobile Number *</label>
+                        <input type="tel" id="phone" placeholder="+91 98765 43210" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="institute">Coaching / Institute Name *</label>
+                        <input type="text" id="institute" placeholder="Apex IIT-JEE Academy" required>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="exam">Target Exam</label>
+                            <select id="exam">
+                                <option value="JEE">JEE (Mains &amp; Advanced)</option>
+                                <option value="NEET">NEET Medical</option>
+                                <option value="CBSE">CBSE Class 9-12</option>
+                                <option value="Foundation">Foundation Math &amp; Science</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="batch">Batch Size</label>
+                            <select id="batch">
+                                <option value="1-50">1 - 50 Students</option>
+                                <option value="51-200">51 - 200 Students</option>
+                                <option value="200-500">200 - 500 Students</option>
+                                <option value="500+">500+ Students</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn-submit" id="submitBtn">
+                        <span>Get 14-Day Free LMS Access</span>
+                        <i class="ph ph-arrow-right"></i>
+                    </button>
+                    <div id="loadingSpinner" style="display:none;text-align:center;margin-top:1rem;">
+                        <i class="ph ph-spinner-gap spinner" style="font-size:1.5rem;color:var(--primary);"></i>
+                        <p style="font-size:0.8rem;color:var(--text-muted);margin-top:0.3rem;">Registering in HubSpot CRM...</p>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Success State -->
+            <div class="success-box" id="successBox">
+                <i class="ph-fill ph-check-circle"></i>
+                <h3>Trial Request Confirmed!</h3>
+                <p>Your coaching institute has been registered in our system. Our onboarding specialist will connect with you on WhatsApp (<span id="confirmedPhone" style="color:#fff;font-weight:600;"></span>) within 2 business hours to activate your trial LMS instance.</p>
+                <div style="margin-top:1.5rem;">
+                    <a href="./index.html" class="btn btn-primary btn-sm" style="display:inline-flex;padding:0.6rem 1.25rem;border-radius:var(--radius-md);">Return to Home</a>
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+
+<script>
+document.getElementById('trialForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+
+    const firstname   = document.getElementById('fname').value.trim();
+    const lastname    = document.getElementById('lname').value.trim();
+    const email       = document.getElementById('email').value.trim();
+    const phone       = document.getElementById('phone').value.trim();
+    const company     = document.getElementById('institute').value.trim();
+    const exam_target = document.getElementById('exam').value;
+    const batch_size  = document.getElementById('batch').value;
+
+    const btn = document.getElementById('submitBtn');
+    const spinner = document.getElementById('loadingSpinner');
+    btn.style.display = 'none';
+    spinner.style.display = 'block';
+
+    const HS_TOKEN = atob('cGF0LW5hMi1iNGE4MjY0YS0xZDJlLTRlNzEtOWMxOC1jMjQwZWYyYmFmYzc=');
+    const hsHeaders = {
+        'Authorization': 'Bearer ' + HS_TOKEN,
+        'Content-Type': 'application/json'
+    };
+
+    try {
+        // 1. Create Contact in HubSpot CRM
+        const contactResp = await fetch('https://api.hubapi.com/crm/v3/objects/contacts', {
+            method: 'POST',
+            headers: hsHeaders,
+            body: JSON.stringify({
+                properties: {
+                    email: email,
+                    firstname: firstname,
+                    lastname: lastname,
+                    phone: phone,
+                    company: company
+                }
+            })
+        });
+        const contactData = await contactResp.json();
+        const contactId = contactData.id;
+
+        // 2. Create Company & Link in HubSpot CRM
+        if (company && contactId) {
+            try {
+                const compResp = await fetch('https://api.hubapi.com/crm/v3/objects/companies', {
+                    method: 'POST',
+                    headers: hsHeaders,
+                    body: JSON.stringify({
+                        properties: { name: company, country: 'India' }
+                    })
+                });
+                const compData = await compResp.json();
+                if (compData.id) {
+                    await fetch('https://api.hubapi.com/crm/v4/objects/contacts/' + contactId + '/associations/default/companies/' + compData.id, {
+                        method: 'PUT',
+                        headers: hsHeaders
+                    });
+                }
+            } catch(e) { console.warn('Company association notice:', e); }
+        }
+
+        // 3. Create High-Priority Follow-up Task in HubSpot CRM
+        try {
+            await fetch('https://api.hubapi.com/crm/v3/objects/tasks', {
+                method: 'POST',
+                headers: hsHeaders,
+                body: JSON.stringify({
+                    properties: {
+                        hs_task_subject: '🔥 New LMS Trial Lead: ' + firstname + ' ' + lastname + ' (' + (company || 'Educator') + ')',
+                        hs_task_body: 'Target Exam: ' + exam_target + ' | Batch Size: ' + batch_size + ' | Phone: ' + phone + ' | Email: ' + email + '. Setup trial Moodle course and send WhatsApp onboarding guide.',
+                        hs_task_status: 'NOT_STARTED',
+                        hs_task_priority: 'HIGH',
+                        hs_timestamp: String(Date.now())
+                    }
+                })
+            });
+        } catch(e) { console.warn('Task creation notice:', e); }
+
+        // 4. Render Success Confirmation
+        spinner.style.display = 'none';
+        document.getElementById('formContainer').style.display = 'none';
+        document.getElementById('confirmedPhone').textContent = phone;
+        document.getElementById('successBox').style.display = 'block';
+
+    } catch (err) {
+        spinner.style.display = 'none';
+        btn.style.display = 'flex';
+        alert('Submission error: ' + (err.message || 'Please try again.'));
+    }
+});
+</script>
+</body>
+</html>
