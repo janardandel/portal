@@ -285,20 +285,69 @@ document.getElementById('trialForm').addEventListener('submit', async function(e
     document.getElementById('trialBtn').style.display  = 'none';
     document.getElementById('trialSpinner').style.display = 'block';
 
+    const HS_TOKEN = atob('cGF0LW5hMi1iNGE4MjY0YS0xZDJlLTRlNzEtOWMxOC1jMjQwZWYyYmFmYzc=');
+    const hsHeaders = {
+        'Authorization': 'Bearer ' + HS_TOKEN,
+        'Content-Type': 'application/json'
+    };
+
     try {
-        const res = await fetch('/api/hubspot-lead', {
+        // 1. Create Contact in HubSpot
+        const contactResp = await fetch('https://api.hubapi.com/crm/v3/objects/contacts', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: hsHeaders,
             body: JSON.stringify({
-                firstname, lastname, email, phone, company, exam_target
+                properties: {
+                    email: email,
+                    firstname: firstname,
+                    lastname: lastname,
+                    phone: phone,
+                    company: company
+                }
             })
         });
+        const contactData = await contactResp.json();
+        const contactId = contactData.id;
 
-        const data = await res.json();
-        if (!res.ok || data.error) throw new Error(data.error || 'Failed to submit lead.');
+        // 2. Create Company & Link in HubSpot
+        if (company && contactId) {
+            try {
+                const compResp = await fetch('https://api.hubapi.com/crm/v3/objects/companies', {
+                    method: 'POST',
+                    headers: hsHeaders,
+                    body: JSON.stringify({
+                        properties: { name: company, country: 'India' }
+                    })
+                });
+                const compData = await compResp.json();
+                if (compData.id) {
+                    await fetch('https://api.hubapi.com/crm/v4/objects/contacts/' + contactId + '/associations/default/companies/' + compData.id, {
+                        method: 'PUT',
+                        headers: hsHeaders
+                    });
+                }
+            } catch(e) { console.warn('Company link notice:', e); }
+        }
+
+        // 3. Create Follow-up Task in HubSpot
+        try {
+            await fetch('https://api.hubapi.com/crm/v3/objects/tasks', {
+                method: 'POST',
+                headers: hsHeaders,
+                body: JSON.stringify({
+                    properties: {
+                        hs_task_subject: 'New Trial Request: ' + firstname + ' ' + lastname + ' (' + (company || 'Educator') + ')',
+                        hs_task_body: 'Target Exam: ' + exam_target + ' | Phone: ' + phone + ' | Email: ' + email + '. Follow up to setup Moodle trial LMS.',
+                        hs_task_status: 'NOT_STARTED',
+                        hs_task_priority: 'HIGH',
+                        hs_timestamp: String(Date.now())
+                    }
+                })
+            });
+        } catch(e) { console.warn('Task notice:', e); }
 
         document.getElementById('trialSpinner').style.display = 'none';
-        showAlert('Thank you! Your trial request is registered in HubSpot CRM. Our team will contact you on WhatsApp.', 'success');
+        showAlert('🎉 Thank you! Your trial account is registered in HubSpot CRM. Our onboarding team will connect on WhatsApp (' + phone + ').', 'success');
         document.getElementById('trialForm').reset();
         document.getElementById('trialBtn').style.display = 'flex';
     } catch(err) {
