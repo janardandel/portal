@@ -348,8 +348,11 @@
                 <i class="ph-fill ph-check-circle"></i>
                 <h3>Trial Request Confirmed!</h3>
                 <p>Your coaching institute has been registered in our system. Our onboarding specialist will connect with you on WhatsApp (<span id="confirmedPhone" style="color:#fff;font-weight:600;"></span>) within 2 business hours to activate your trial LMS instance.</p>
-                <div style="margin-top:1.5rem;">
-                    <a href="./index.html" class="btn btn-primary btn-sm" style="display:inline-flex;padding:0.6rem 1.25rem;border-radius:var(--radius-md);">Return to Home</a>
+                <div style="margin-top:1.5rem;display:flex;gap:0.75rem;justify-content:center;flex-wrap:wrap;">
+                    <a id="waDirectBtn" href="https://wa.me/919876543210" target="_blank" class="btn btn-sm" style="background:#25D366;color:#fff;display:inline-flex;align-items:center;gap:0.4rem;padding:0.65rem 1.25rem;border-radius:var(--radius-md);font-weight:700;text-decoration:none;">
+                        <i class="ph-fill ph-whatsapp-logo" style="font-size:1.2rem;"></i> Open WhatsApp Chat
+                    </a>
+                    <a href="./index.html" class="btn btn-outline btn-sm" style="display:inline-flex;padding:0.65rem 1.25rem;border-radius:var(--radius-md);">Return to Home</a>
                 </div>
             </div>
         </div>
@@ -433,6 +436,29 @@ document.getElementById('trialForm').addEventListener('submit', async function(e
                 })
             });
         } catch(e) { console.warn('Task creation notice:', e); }
+
+                // 3. Trigger AiSensy WhatsApp Cloud API (Free Plan Template)
+        try {
+            const rawPhone = phone.replace(/[^0-9]/g, '');
+            const cleanPhone = rawPhone.length === 10 ? '91' + rawPhone : rawPhone;
+            const aisensyKey = atob('ZXlKaGJHY2lPaUpJVXpJMk5pSXNJblI1Y0NJNklrcFhWQ0o5LmV5SnBaQ0k2SWpaaE5XSTRaak01TVRsaFpXTXlNREl5WVRZMmREVXlOQ0lzSW01aGJXVWlPaUpRYVhSMGFIVm5jbUZ0SURFeE16WWlMQ0poY0hCd1ptVnVaVzFwYldVbk9pSkJhVk5sYm5ONUlpd2lZMnhwWlc1MElVUWlPaUptWVRWaU9HWmpZemt4T1dGbFl6SXdNampoTmpaa05UQTFJaXdpWVdOMGFYWmxVR3hoYmlJNklrWlNSVlZmUms5U1JWWlZVaUlzSW1saGRDSTZNVGM0T0RBMk5EY3lPWHAuTTNSU1AzM1dnaEhaUE1CdTFSUGxGYXM3Ym83YlE0Vm9WTGFuXzJLTWE3TQ==');
+
+            fetch('https://backend.aisensy.com/campaign/t1/api/v2', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    apiKey: aisensyKey,
+                    campaignName: 'pitthugram_welcome',
+                    destination: cleanPhone,
+                    userName: firstname + (lastname ? ' ' + lastname : ''),
+                    templateParams: [
+                        firstname,
+                        company || 'Coaching Institute',
+                        'https://portal.classes.institute'
+                    ]
+                })
+            }).catch(function(e) { console.warn('AiSensy notice:', e); });
+        } catch(e) { console.warn('AiSensy dispatch notice:', e); }
 
         // 4. Render Success Confirmation
         spinner.style.display = 'none';
