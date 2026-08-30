@@ -400,8 +400,14 @@ document.getElementById('trialForm').addEventListener('submit', async function(e
     spinner.style.display = 'block';
 
     const HS_TOKEN = atob('cGF0LW5hMi1iNGE4MjY0YS0xZDJlLTRlNzEtOWMxOC1jMjQwZWYyYmFmYzc=');
+    const AT_TOKEN = atob('cGF0S0N2NWVVQmMzbjBVaHcuODZhZmRiZGU3N2UyYzY5M2JjMjhmZjVlNTI2OGJiZWM2ZmRjZGNhZTA3NTE3ZWMxOGMxYzYwOTA4OWFhZjYwMQ==');
+
     const hsHeaders = {
         'Authorization': 'Bearer ' + HS_TOKEN,
+        'Content-Type': 'application/json'
+    };
+    const atHeaders = {
+        'Authorization': 'Bearer ' + AT_TOKEN,
         'Content-Type': 'application/json'
     };
 
@@ -424,6 +430,199 @@ document.getElementById('trialForm').addEventListener('submit', async function(e
                     }]
                 })
             });
+            const searchData = await searchResp.json();
+            if (searchData.total > 0 && searchData.results && searchData.results.length > 0) {
+                isExisting = true;
+                contactId = searchData.results[0].id;
+            }
+        } catch(err) { console.warn('Deduplication search notice:', err); }
+
+        let moodleUrl = 'https://cx001.pitthugram.com';
+        let teacherUser = email;
+        let teacherPass = 'Pitthugram@2026';
+        let studentLogins = [];
+
+        // 2. IF NEW: FETCH UNUSED MOODLE CREDENTIALS FROM POOL
+        if (!isExisting) {
+            try {
+                const atFilterUrl = 'https://api.airtable.com/v0/appJUgBQPQHElMNrN/tblIbHhU3t3DYLzWE?filterByFormula=NOT({Used})&maxRecords=1';
+                const atResp = await fetch(atFilterUrl, { headers: atHeaders });
+                const atData = await atResp.json();
+
+                if (atData.records && atData.records.length > 0) {
+                    const rec = atData.records[0];
+                    const recId = rec.id;
+                    const f = rec.fields;
+
+                    if (f['Coaching URL']) moodleUrl = f['Coaching URL'];
+                    if (f['Teacher Username']) teacherUser = f['Teacher Username'];
+                    if (f['Teacher Password']) teacherPass = f['Teacher Password'];
+
+                    for (let i = 1; i <= 5; i++) {
+                        const sUser = f['Student' + i + ' Username'];
+                        const sPass = f['Student' + i + ' Password'];
+                        if (sUser && sPass) {
+                            studentLogins.push({ num: i, username: sUser, password: sPass });
+                        }
+                    }
+
+                    // Lock & Mark Used in Airtable
+                    await fetch('https://api.airtable.com/v0/appJUgBQPQHElMNrN/tblIbHhU3t3DYLzWE/' + recId, {
+                        method: 'PATCH',
+                        headers: atHeaders,
+                        body: JSON.stringify({
+                            fields: { Used: true }
+                        })
+                    });
+                }
+            } catch(e) { console.warn('Airtable pool notice:', e); }
+
+            // 3. CREATE CONTACT IN HUBSPOT WITH MOODLE PROPERTIES
+            const contactPayload = {
+                properties: {
+                    email: email,
+                    firstname: firstname,
+                    lastname: lastname,
+                    phone: phone,
+                    company: company,
+                    moodle_username: teacherUser,
+                    moodle_password: teacherPass,
+                    moodle_url: moodleUrl
+                }
+            };
+
+            const contactResp = await fetch('https://api.hubapi.com/crm/v3/objects/contacts', {
+                method: 'POST',
+                headers: hsHeaders,
+                body: JSON.stringify(contactPayload)
+            });
+            const contactData = await contactResp.json();
+            contactId = contactData.id;
+
+            // Create Company & Link
+            if (company && contactId) {
+                try {
+                    const compResp = await fetch('https://api.hubapi.com/crm/v3/objects/companies', {
+                        method: 'POST',
+                        headers: hsHeaders,
+                        body: JSON.stringify({
+                            properties: { name: company, country: 'India' }
+                        })
+                    });
+                    const compData = await compResp.json();
+                    if (compData.id) {
+                        await fetch('https://api.hubapi.com/crm/v4/objects/contacts/' + contactId + '/associations/default/companies/' + compData.id, {
+                            method: 'PUT',
+                            headers: hsHeaders
+                        });
+                    }
+                } catch(e) { console.warn('Company association notice:', e); }
+            }
+
+            // Create High-Priority Onboarding Task in HubSpot
+            try {
+                let taskBody = 'Target Exam: ' + exam_target + ' | Batch Size: ' + batch_size + ' | Phone: ' + phone + ' | Email: ' + email + '\n\n' +
+                               'MOODLE CREDENTIALS ALLOCATED:\n' +
+                               '• Moodle URL: ' + moodleUrl + '\n' +
+                               '• Teacher Login: ' + teacherUser + ' / ' + teacherPass + '\n';
+                if (studentLogins.length > 0) {
+                    taskBody += '• Student Logins: ' + studentLogins.map(s => s.username + ' (' + s.password + ')').join(', ');
+                }
+
+                await fetch('https://api.hubapi.com/crm/v3/objects/tasks', {
+                    method: 'POST',
+                    headers: hsHeaders,
+                    body: JSON.stringify({
+                        properties: {
+                            hs_task_subject: '🔥 New LMS Trial: ' + firstname + ' ' + lastname + ' (' + (company || 'Educator') + ')',
+                            hs_task_body: taskBody,
+                            hs_task_status: 'NOT_STARTED',
+                            hs_task_priority: 'HIGH',
+                            hs_timestamp: String(Date.now())
+                        }
+                    })
+                });
+            } catch(e) { console.warn('Task notice:', e); }
+
+        } else {
+            // Existing Contact - Log Reactivation Task in HubSpot
+            try {
+                await fetch('https://api.hubapi.com/crm/v3/objects/tasks', {
+                    method: 'POST',
+                    headers: hsHeaders,
+                    body: JSON.stringify({
+                        properties: {
+                            hs_task_subject: '🔁 Reactivation Request: ' + firstname + ' ' + lastname + ' (' + (company || 'Educator') + ')',
+                            hs_task_body: 'Existing contact requested trial reactivation. Phone: ' + phone + ' | Email: ' + email + '. Connect on WhatsApp to discuss plan upgrade.',
+                            hs_task_status: 'NOT_STARTED',
+                            hs_task_priority: 'HIGH',
+                            hs_timestamp: String(Date.now())
+                        }
+                    })
+                });
+            } catch(e) { console.warn('Reactivation task notice:', e); }
+        }
+
+        // 4. TRIGGER AISENSY WHATSAPP MESSAGE
+        try {
+            const rawPhone = phone.replace(/[^0-9]/g, '');
+            const cleanPhone = rawPhone.length === 10 ? '91' + rawPhone : rawPhone;
+            const aisensyKey = atob('ZXlKaGJHY2lPaUpJVXpJMk5pSXNJblI1Y0NJNklrcFhWQ0o5LmV5SnBaQ0k2SWpaaE5XSTRaak01TVRsaFpXTXlNREl5WVRZMmREVXlOQ0lzSW01aGJXVWlPaUpRYVhSMGFIVm5jbUZ0SURFeE16WWlMQ0poY0hCd1ptVnVaVzFwYldVbk9pSkJhVk5sYm5ONUlpd2lZMnhwWlc1MElVUWlPaUptWVRWaU9HWmpZemt4T1dGbFl6SXdNampoTmpaa05UQTFJaXdpWVdOMGFYWmxVR3hoYmlJNklrWlNSVlZmUms5U1JWWlZVaUlzSW1saGRDSTZNVGM0T0RBMk5EY3lPWHAuTTNSU1AzM1dnaEhaUE1CdTFSUGxGYXM3Ym83YlE0Vm9WTGFuXzJLTWE3TQ==');
+
+            fetch('https://backend.aisensy.com/campaign/t1/api/v2', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    apiKey: aisensyKey,
+                    campaignName: 'pitthugram_welcome',
+                    destination: cleanPhone,
+                    userName: firstname + (lastname ? ' ' + lastname : ''),
+                    templateParams: [
+                        firstname,
+                        company || 'Coaching Institute',
+                        moodleUrl,
+                        teacherUser,
+                        teacherPass
+                    ]
+                })
+            }).catch(function(e) { console.warn('AiSensy notice:', e); });
+        } catch(e) { console.warn('AiSensy dispatch notice:', e); }
+
+        // 5. UPDATE DYNAMIC UI BASED ON NEW VS EXISTING STATUS
+        const waMsg = isExisting
+            ? 'Hi Pitthugram Team, I am ' + firstname + ' from ' + (company || 'our academy') + '. I previously registered and would like to reactivate our coaching trial or view paid plans!'
+            : 'Hi Pitthugram Team, I am ' + firstname + ' from ' + (company || 'Coaching Academy') + '. I just submitted my 14-day free trial request for ' + exam_target + '. Please send my Moodle LMS trial login credentials!';
+
+        const waLink = 'https://wa.me/919876543210?text=' + encodeURIComponent(waMsg);
+        const waBtn = document.getElementById('waDirectBtn');
+        if (waBtn) waBtn.href = waLink;
+
+        const waPrev = document.getElementById('waPreviewText');
+        if (waPrev) {
+            if (isExisting) {
+                waPrev.textContent = '👋 Hello ' + firstname + '!\n\nWe noticed that *' + (company || 'your institute') + '* already has a registered Pitthugram account, but your trial period has expired.\n\n📋 Next Steps:\n1️⃣ Reactivate 3-Day Extended Trial\n2️⃣ View Paid Plans & Pricing\n3️⃣ Book a 10-Minute Live Demo\n\n👉 Reply directly to this WhatsApp chat to get started!';
+            } else {
+                let previewContent = '🎓 Welcome to Pitthugram, ' + firstname + '!\n\nYour 14-Day Free LMS & Quiz Portal for *' + (company || 'your academy') + '* is now active.\n\n🌐 Moodle URL: ' + moodleUrl + '\n👤 Teacher Login: ' + teacherUser + '\n🔑 Password: ' + teacherPass + '\n';
+                if (studentLogins.length > 0) {
+                    previewContent += '\n👥 Student Practice Logins (5 Accounts):\n' +
+                                      studentLogins.map(s => s.num + '️⃣ ' + s.username + ' | Pass: ' + s.password + '').join('\n');
+                }
+                previewContent += '\n\n👉 Log in now to schedule your first quiz in 1 click!';
+                waPrev.textContent = previewContent;
+            }
+        }
+
+        // Render Success Confirmation
+        spinner.style.display = 'none';
+        document.getElementById('formContainer').style.display = 'none';
+        document.getElementById('successBox').style.display = 'block';
+
+    } catch (err) {
+        spinner.style.display = 'none';
+        btn.style.display = 'flex';
+        alert('Submission error: ' + (err.message || 'Please try again.'));
+    }
+});
             const searchData = await searchResp.json();
             if (searchData.total > 0 && searchData.results && searchData.results.length > 0) {
                 isExisting = true;
