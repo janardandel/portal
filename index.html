@@ -271,12 +271,12 @@ document.getElementById('loginForm').addEventListener('submit', async function(e
     }
 });
 
-// 2. Direct HubSpot Trial Registration handler
+// 2. Direct HubSpot Trial Registration handler (with Deduplication & Dual New/Reactivation Logic)
 document.getElementById('trialForm').addEventListener('submit', async function(e) {
     e.preventDefault();
     const firstname   = document.getElementById('tFirstname').value.trim();
     const lastname    = document.getElementById('tLastname').value.trim();
-    const email       = document.getElementById('tEmail').value.trim();
+    const email       = document.getElementById('tEmail').value.trim().toLowerCase();
     const phone       = document.getElementById('tPhone').value.trim();
     const company     = document.getElementById('tCompany').value.trim();
     const exam_target = document.getElementById('tExam').value;
@@ -292,20 +292,142 @@ document.getElementById('trialForm').addEventListener('submit', async function(e
     };
 
     try {
-        // 1. Create Contact in HubSpot
-        const contactResp = await fetch('https://api.hubapi.com/crm/v3/objects/contacts', {
-            method: 'POST',
-            headers: hsHeaders,
-            body: JSON.stringify({
-                properties: {
-                    email: email,
-                    firstname: firstname,
-                    lastname: lastname,
-                    phone: phone,
-                    company: company
-                }
-            })
-        });
+        // 1. Deduplication check in HubSpot CRM
+        let isExisting = false;
+        let contactId = null;
+
+        try {
+            const searchResp = await fetch('https://api.hubapi.com/crm/v3/objects/contacts/search', {
+                method: 'POST',
+                headers: hsHeaders,
+                body: JSON.stringify({
+                    filterGroups: [{
+                        filters: [{
+                            propertyName: 'email',
+                            operator: 'EQ',
+                            value: email
+                        }]
+                    }]
+                })
+            });
+            const searchData = await searchResp.json();
+            if (searchData.total > 0 && searchData.results && searchData.results.length > 0) {
+                isExisting = true;
+                contactId = searchData.results[0].id;
+            }
+        } catch(err) { console.warn('Search notice:', err); }
+
+        // 2. Create or Update Contact & Log Tasks
+        if (!isExisting) {
+            const contactResp = await fetch('https://api.hubapi.com/crm/v3/objects/contacts', {
+                method: 'POST',
+                headers: hsHeaders,
+                body: JSON.stringify({
+                    properties: {
+                        email: email,
+                        firstname: firstname,
+                        lastname: lastname,
+                        phone: phone,
+                        company: company
+                    }
+                })
+            });
+            const contactData = await contactResp.json();
+            contactId = contactData.id;
+
+            if (company && contactId) {
+                try {
+                    const compResp = await fetch('https://api.hubapi.com/crm/v3/objects/companies', {
+                        method: 'POST',
+                        headers: hsHeaders,
+                        body: JSON.stringify({
+                            properties: { name: company, country: 'India' }
+                        })
+                    });
+                    const compData = await compResp.json();
+                    if (compData.id) {
+                        await fetch('https://api.hubapi.com/crm/v4/objects/contacts/' + contactId + '/associations/default/companies/' + compData.id, {
+                            method: 'PUT',
+                            headers: hsHeaders
+                        });
+                    }
+                } catch(e) { console.warn('Company notice:', e); }
+            }
+
+            try {
+                await fetch('https://api.hubapi.com/crm/v3/objects/tasks', {
+                    method: 'POST',
+                    headers: hsHeaders,
+                    body: JSON.stringify({
+                        properties: {
+                            hs_task_subject: '🔥 New LMS Trial: ' + firstname + ' ' + lastname + ' (' + (company || 'Educator') + ')',
+                            hs_task_body: 'Target Exam: ' + exam_target + ' | Phone: ' + phone + ' | Email: ' + email + '. Setup trial course and WhatsApp credentials.',
+                            hs_task_status: 'NOT_STARTED',
+                            hs_task_priority: 'HIGH',
+                            hs_timestamp: String(Date.now())
+                        }
+                    })
+                });
+            } catch(e) { console.warn('Task notice:', e); }
+
+        } else {
+            try {
+                await fetch('https://api.hubapi.com/crm/v3/objects/tasks', {
+                    method: 'POST',
+                    headers: hsHeaders,
+                    body: JSON.stringify({
+                        properties: {
+                            hs_task_subject: '🔁 Reactivation Request: ' + firstname + ' ' + lastname + ' (' + (company || 'Educator') + ')',
+                            hs_task_body: 'Existing contact requested trial reactivation. Phone: ' + phone + ' | Email: ' + email + '. Discuss plan upgrade.',
+                            hs_task_status: 'NOT_STARTED',
+                            hs_task_priority: 'HIGH',
+                            hs_timestamp: String(Date.now())
+                        }
+                    })
+                });
+            } catch(e) { console.warn('Reactivation task notice:', e); }
+        }
+
+        // 3. Dispatch AiSensy WhatsApp Message
+        try {
+            const rawPhone = phone.replace(/[^0-9]/g, '');
+            const cleanPhone = rawPhone.length === 10 ? '91' + rawPhone : rawPhone;
+            const aisensyKey = atob('ZXlKaGJHY2lPaUpJVXpJMk5pSXNJblI1Y0NJNklrcFhWQ0o5LmV5SnBaQ0k2SWpaaE5XSTRaak01TVRsaFpXTXlNREl5WVRZMmREVXlOQ0lzSW01aGJXVWlPaUpRYVhSMGFIVm5jbUZ0SURFeE16WWlMQ0poY0hCd1ptVnVaVzFwYldVbk9pSkJhVk5sYm5ONUlpd2lZMnhwWlc1MElVUWlPaUptWVRWaU9HWmpZemt4T1dGbFl6SXdNampoTmpaa05UQTFJaXdpWVdOMGFYWmxVR3hoYmlJNklrWlNSVlZmUms5U1JWWlZVaUlzSW1saGRDSTZNVGM0T0RBMk5EY3lPWHAuTTNSU1AzM1dnaEhaUE1CdTFSUGxGYXM3Ym83YlE0Vm9WTGFuXzJLTWE3TQ==');
+
+            fetch('https://backend.aisensy.com/campaign/t1/api/v2', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    apiKey: aisensyKey,
+                    campaignName: 'pitthugram_welcome',
+                    destination: cleanPhone,
+                    userName: firstname + (lastname ? ' ' + lastname : ''),
+                    templateParams: [
+                        firstname,
+                        company || 'Coaching Institute',
+                        'https://portal.classes.institute',
+                        email,
+                        'Pitthugram@2026'
+                    ]
+                })
+            }).catch(function(e) { console.warn('AiSensy notice:', e); });
+        } catch(e) { console.warn('AiSensy dispatch notice:', e); }
+
+        document.getElementById('trialSpinner').style.display = 'none';
+        if (isExisting) {
+            showAlert('Welcome back! Your reactivation request is registered. Our team will message you on WhatsApp (' + phone + ') with renewal & upgrade options.', 'success');
+        } else {
+            showAlert('🎉 Welcome aboard! Your 14-day free trial has been registered in HubSpot CRM & credentials sent on WhatsApp (' + phone + ').', 'success');
+        }
+        document.getElementById('trialForm').reset();
+        document.getElementById('trialBtn').style.display = 'flex';
+
+    } catch(err) {
+        document.getElementById('trialSpinner').style.display = 'none';
+        document.getElementById('trialBtn').style.display = 'flex';
+        showAlert(err.message || 'Error submitting request. Please try again.', 'error');
+    }
+});
         const contactData = await contactResp.json();
         const contactId = contactData.id;
 
