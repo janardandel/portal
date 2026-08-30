@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Portal — Pitthugram</title>
+    <title>Portal - Pitthugram</title>
     <link rel="icon" type="image/png" href="./favicon.png">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -32,6 +32,32 @@
             pointer-events: none;
             z-index: 0;
         }
+        .tab-switcher {
+            display: flex;
+            background: var(--bg-surface, #161616);
+            border: 1px solid var(--border, #2A2A2A);
+            border-radius: 8px;
+            padding: 4px;
+            margin-bottom: 1.25rem;
+            gap: 4px;
+        }
+        .tab-btn {
+            flex: 1;
+            padding: 0.6rem;
+            background: transparent;
+            border: none;
+            border-radius: 6px;
+            color: var(--text-secondary, #a0a0a0);
+            font-family: inherit;
+            font-size: 0.88rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .tab-btn.active {
+            background: var(--primary, #F40009);
+            color: #fff;
+        }
     </style>
 </head>
 <body>
@@ -39,17 +65,15 @@
 <div class="portal-page">
     <div class="portal-glow"></div>
 
-    <div class="login-card" style="position:relative;z-index:1;">
+    <div class="login-card" style="position:relative;z-index:1;max-width:440px;width:100%;">
         <a href="./index.html" class="login-logo">
             <img src="./logo.png" alt="Pitthugram">
         </a>
 
-        <div class="login-head">
-            <div class="icon-wrap">
-                <i class="ph-fill ph-lock-key"></i>
-            </div>
-            <h1>Welcome Back</h1>
-            <p>Sign in to your portal</p>
+        <!-- Tab Switcher -->
+        <div class="tab-switcher">
+            <button class="tab-btn active" id="tabSignIn" onclick="switchPortalTab('signin')">Sign In</button>
+            <button class="tab-btn" id="tabTrial" onclick="switchPortalTab('trial')">Request Free Trial</button>
         </div>
 
         <div class="alert-box" id="alertBox">
@@ -57,33 +81,103 @@
             <span id="alertMsg"></span>
         </div>
 
-        <form id="loginForm" class="login-form">
-            <div class="form-group">
-                <label for="email">Email Address</label>
-                <div class="input-wrap">
-                    <i class="ph ph-envelope input-icon"></i>
-                    <input type="email" id="email" placeholder="your@email.com" required autocomplete="email">
-                </div>
+        <!-- 1. SIGN IN FORM -->
+        <div id="signInSection">
+            <div class="login-head" style="margin-bottom:1.25rem;">
+                <h1>Welcome Back</h1>
+                <p>Sign in to your teacher / owner portal</p>
             </div>
-            <div class="form-group">
-                <label for="password">Password</label>
-                <div class="input-wrap">
-                    <i class="ph ph-lock input-icon"></i>
-                    <input type="password" id="password" placeholder="Enter your password" required autocomplete="current-password">
-                    <button type="button" class="toggle-pw" id="togglePw">
-                        <i class="ph ph-eye" id="eyeIcon"></i>
-                    </button>
+
+            <form id="loginForm" class="login-form">
+                <div class="form-group">
+                    <label for="email">Email Address</label>
+                    <div class="input-wrap">
+                        <i class="ph ph-envelope input-icon"></i>
+                        <input type="email" id="email" placeholder="your@email.com" required autocomplete="email">
+                    </div>
                 </div>
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <div class="input-wrap">
+                        <i class="ph ph-lock input-icon"></i>
+                        <input type="password" id="password" placeholder="Enter your password" required autocomplete="current-password">
+                        <button type="button" class="toggle-pw" id="togglePw">
+                            <i class="ph ph-eye" id="eyeIcon"></i>
+                        </button>
+                    </div>
+                </div>
+                <button type="submit" class="btn-login" id="loginBtn">
+                    <span>Sign In</span>
+                    <i class="ph ph-arrow-right"></i>
+                </button>
+                <div id="loginSpinner" style="display:none;width:24px;height:24px;border:2px solid rgba(244,0,9,0.25);border-top-color:#f40009;border-radius:50%;animation:spin 0.7s linear infinite;margin:.75rem auto 0;"></div>
+            </form>
+        </div>
+
+        <!-- 2. DIRECT HUBSPOT TRIAL REGISTRATION FORM -->
+        <div id="trialSection" style="display:none;">
+            <div class="login-head" style="margin-bottom:1.25rem;">
+                <h1>Start Free Trial</h1>
+                <p>Experience automated quizzing &amp; LMS for your coaching institute</p>
             </div>
-            <button type="submit" class="btn-login" id="loginBtn">
-                <span>Sign In</span>
-                <i class="ph ph-arrow-right"></i>
-            </button>
-            <div id="loginSpinner" style="display:none;width:24px;height:24px;border:2px solid rgba(244,0,9,0.25);border-top-color:#f40009;border-radius:50%;animation:spin 0.7s linear infinite;margin:.75rem auto 0;"></div>
-        </form>
+
+            <form id="trialForm" class="login-form">
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;">
+                    <div class="form-group">
+                        <label for="tFirstname">First Name</label>
+                        <div class="input-wrap">
+                            <input type="text" id="tFirstname" placeholder="Vikram" required>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="tLastname">Last Name</label>
+                        <div class="input-wrap">
+                            <input type="text" id="tLastname" placeholder="Aditya">
+                        </div>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="tEmail">Work Email Address</label>
+                    <div class="input-wrap">
+                        <i class="ph ph-envelope input-icon"></i>
+                        <input type="email" id="tEmail" placeholder="director@academy.com" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="tPhone">WhatsApp / Mobile Number</label>
+                    <div class="input-wrap">
+                        <i class="ph ph-phone input-icon"></i>
+                        <input type="tel" id="tPhone" placeholder="+91 98765 43210" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="tCompany">Coaching / Institute Name</label>
+                    <div class="input-wrap">
+                        <i class="ph ph-buildings input-icon"></i>
+                        <input type="text" id="tCompany" placeholder="Apex IIT-JEE Academy" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="tExam">Target Exam</label>
+                    <div class="input-wrap">
+                        <select id="tExam" style="width:100%;padding:0.65rem 0.85rem;background:var(--bg-input,#1a1a1a);border:1.5px solid var(--border,#2a2a2a);border-radius:var(--radius-md);color:var(--text-primary);font-family:inherit;">
+                            <option value="JEE">JEE (Mains &amp; Advanced)</option>
+                            <option value="NEET">NEET Medical</option>
+                            <option value="CBSE">CBSE Class 9-12</option>
+                            <option value="Foundation">Foundation Math &amp; Science</option>
+                        </select>
+                    </div>
+                </div>
+                <button type="submit" class="btn-login" id="trialBtn" style="background:var(--primary,#f40009);color:#fff;">
+                    <span>Submit &amp; Get Trial Access</span>
+                    <i class="ph ph-rocket-launch"></i>
+                </button>
+                <div id="trialSpinner" style="display:none;width:24px;height:24px;border:2px solid rgba(244,0,9,0.25);border-top-color:#f40009;border-radius:50%;animation:spin 0.7s linear infinite;margin:.75rem auto 0;"></div>
+            </form>
+        </div>
 
         <div class="login-footer-note">
-            Having trouble? <a href="mailto:support@pitthugram.com">Contact Support</a>
+            Need help? <a href="mailto:support@pitthugram.com">Contact Pitthugram Support</a>
         </div>
     </div>
 </div>
@@ -97,6 +191,26 @@ const existingToken = localStorage.getItem('pg_access_token');
 const existingRole  = localStorage.getItem('pg_role');
 if (existingToken) {
     window.location.href = existingRole === 'owner' ? 'owner-dashboard.html' : 'quiz-builder.html';
+}
+
+function switchPortalTab(tab) {
+    const sSection = document.getElementById('signInSection');
+    const tSection = document.getElementById('trialSection');
+    const sBtn = document.getElementById('tabSignIn');
+    const tBtn = document.getElementById('tabTrial');
+    document.getElementById('alertBox').className = 'alert-box';
+
+    if (tab === 'signin') {
+        sSection.style.display = 'block';
+        tSection.style.display = 'none';
+        sBtn.className = 'tab-btn active';
+        tBtn.className = 'tab-btn';
+    } else {
+        sSection.style.display = 'none';
+        tSection.style.display = 'block';
+        tBtn.className = 'tab-btn active';
+        sBtn.className = 'tab-btn';
+    }
 }
 
 document.getElementById('togglePw').addEventListener('click', function() {
@@ -117,6 +231,7 @@ function showAlert(msg, type) {
     document.getElementById('alertMsg').textContent = msg;
 }
 
+// 1. Sign in handler
 document.getElementById('loginForm').addEventListener('submit', async function(e) {
     e.preventDefault();
     const email    = document.getElementById('email').value.trim();
@@ -143,7 +258,7 @@ document.getElementById('loginForm').addEventListener('submit', async function(e
         localStorage.setItem('pg_role',          role);
 
         document.getElementById('loginSpinner').style.display = 'none';
-        showAlert('Login successful! Redirecting…', 'success');
+        showAlert('Login successful! Redirecting...', 'success');
 
         setTimeout(() => {
             window.location.href = role === 'owner' ? 'owner-dashboard.html' : 'quiz-builder.html';
@@ -153,6 +268,43 @@ document.getElementById('loginForm').addEventListener('submit', async function(e
         document.getElementById('loginSpinner').style.display = 'none';
         document.getElementById('loginBtn').style.display = 'flex';
         showAlert(err.message || 'Something went wrong. Please try again.', 'error');
+    }
+});
+
+// 2. Direct HubSpot Trial Registration handler
+document.getElementById('trialForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const firstname   = document.getElementById('tFirstname').value.trim();
+    const lastname    = document.getElementById('tLastname').value.trim();
+    const email       = document.getElementById('tEmail').value.trim();
+    const phone       = document.getElementById('tPhone').value.trim();
+    const company     = document.getElementById('tCompany').value.trim();
+    const exam_target = document.getElementById('tExam').value;
+
+    document.getElementById('alertBox').className = 'alert-box';
+    document.getElementById('trialBtn').style.display  = 'none';
+    document.getElementById('trialSpinner').style.display = 'block';
+
+    try {
+        const res = await fetch('/api/hubspot-lead', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                firstname, lastname, email, phone, company, exam_target
+            })
+        });
+
+        const data = await res.json();
+        if (!res.ok || data.error) throw new Error(data.error || 'Failed to submit lead.');
+
+        document.getElementById('trialSpinner').style.display = 'none';
+        showAlert('Thank you! Your trial request is registered in HubSpot CRM. Our team will contact you on WhatsApp.', 'success');
+        document.getElementById('trialForm').reset();
+        document.getElementById('trialBtn').style.display = 'flex';
+    } catch(err) {
+        document.getElementById('trialSpinner').style.display = 'none';
+        document.getElementById('trialBtn').style.display = 'flex';
+        showAlert(err.message || 'Error submitting request. Please try again.', 'error');
     }
 });
 </script>
