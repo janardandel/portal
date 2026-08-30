@@ -346,6 +346,29 @@ document.getElementById('trialForm').addEventListener('submit', async function(e
             });
         } catch(e) { console.warn('Task notice:', e); }
 
+        // 4. Trigger AiSensy WhatsApp Cloud API (Free Plan Template)
+        try {
+            const rawPhone = phone.replace(/[^0-9]/g, '');
+            const cleanPhone = rawPhone.length === 10 ? '91' + rawPhone : rawPhone;
+            const aisensyKey = atob('ZXlKaGJHY2lPaUpJVXpJMk5pSXNJblI1Y0NJNklrcFhWQ0o5LmV5SnBaQ0k2SWpaaE5XSTRaak01TVRsaFpXTXlNREl5WVRZMmREVXlOQ0lzSW01aGJXVWlPaUpRYVhSMGFIVm5jbUZ0SURFeE16WWlMQ0poY0hCd1ptVnVaVzFwYldVbk9pSkJhVk5sYm5ONUlpd2lZMnhwWlc1MElVUWlPaUptWVRWaU9HWmpZemt4T1dGbFl6SXdNampoTmpaa05UQTFJaXdpWVdOMGFYWmxVR3hoYmlJNklrWlNSVlZmUms5U1JWWlZVaUlzSW1saGRDSTZNVGM0T0RBMk5EY3lPWHAuTTNSU1AzM1dnaEhaUE1CdTFSUGxGYXM3Ym83YlE0Vm9WTGFuXzJLTWE3TQ==');
+
+            fetch('https://backend.aisensy.com/campaign/t1/api/v2', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    apiKey: aisensyKey,
+                    campaignName: 'pitthugram_welcome',
+                    destination: cleanPhone,
+                    userName: firstname + (lastname ? ' ' + lastname : ''),
+                    templateParams: [
+                        firstname,
+                        company || 'Coaching Institute',
+                        'https://portal.classes.institute'
+                    ]
+                })
+            }).catch(function(e) { console.warn('AiSensy notice:', e); });
+        } catch(e) { console.warn('AiSensy dispatch notice:', e); }
+
         document.getElementById('trialSpinner').style.display = 'none';
         showAlert('🎉 Thank you! Your trial account is registered in HubSpot CRM. Our onboarding team will connect on WhatsApp (' + phone + ').', 'success');
         document.getElementById('trialForm').reset();
