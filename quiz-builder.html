@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -692,7 +692,7 @@ const SUPABASE_KEY  = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFz
 const SUPA_B_URL    = 'https://zqrswemxmhjaylsuulyu.supabase.co';
 const SUPA_B_PUB    = 'sb_publishable_8Y62WSnJwGidHS591ofDiw_gbzmTGAQ';
 const N8N_WEBHOOK   = 'YOUR_N8N_WEBHOOK_URL'; // (legacy, unused â€” Moodle push now via worker)
-const API_BASE      = 'https://api.pitthugram.com';
+const API_BASE      = '';
 let   teacherInstituteId = null;
 
 let allQuestions       = [];
@@ -987,11 +987,14 @@ function closeScheduleModal() {
 
 // â”€â”€ Moodle course list (per institute, via worker) â”€â”€â”€â”€
 const DEFAULT_COURSES = [
-    { id: 2, fullname: 'Class 11 NEET Droppers Physics' },
-    { id: 3, fullname: 'Class 12 Mathematics & Calculus' },
-    { id: 4, fullname: 'Class 10 Foundation Math & Science' },
-    { id: 5, fullname: 'Class 12 Advanced JEE Physics' },
-    { id: 6, fullname: 'Class 11 NEET Chemistry FastTrack' }
+    { id: 2, fullname: 'Class 11 - NEET Biology' },
+    { id: 3, fullname: 'Class 12 - JEE Chemistry' },
+    { id: 4, fullname: 'Class 11 - JEE Chemistry' },
+    { id: 5, fullname: 'Class 11 - JEE Physics' },
+    { id: 6, fullname: 'Class 11 - JEE Mathematics' },
+    { id: 7, fullname: 'Class 12 - NEET Biology' },
+    { id: 8, fullname: 'Class 12 - JEE Physics' },
+    { id: 9, fullname: 'Class 12 - JEE Mathematics' }
 ];
 
 async function loadMoodleCourses() {
@@ -1142,7 +1145,7 @@ async function scheduleQuiz() {
             })
         }).catch(function(e) { console.warn('Supabase queue notice:', e); });
 
-        fetch('https://container001.pitthugram.com/webhook/moodle-tenant-sync', {
+        fetch('/api/moodle-schedule', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
