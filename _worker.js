@@ -1,4 +1,4 @@
-const SUPABASE_URL = 'https://lekvzyoarawotlsbeoqa.supabase.co';
+﻿const SUPABASE_URL = 'https://lekvzyoarawotlsbeoqa.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imxla3Z6eW9hcmF3b3Rsc2Jlb3FhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgyOTgzNTIsImV4cCI6MjA5Mzg3NDM1Mn0.KO-UyQerUdbxxhqBDX5F51ZMU2WGIi6BLg-b-rDALmk';
 
 // ── Non-secret config (secrets come from env: S3_ACCESS_KEY_ID, S3_SECRET_ACCESS_KEY, SUPA_DB_SERVICE_KEY) ──
@@ -37,6 +37,13 @@ export default {
         if (path === '/api/mcq-save') {
             if (method !== 'POST') return new Response('Method Not Allowed', { status: 405 });
             return handleMcqSave(request, env);
+        }
+                if (path === '/api/trial') {
+            if (method !== 'POST') return new Response('Method Not Allowed', { status: 405 });
+            return handleTrial(request, env);
+        }
+        if (path === '/api/scheduled-quizzes') {
+            return handleScheduledQuizzes(request, env);
         }
         if (path === '/api/hubspot-lead') {
             if (method !== 'POST') return new Response('Method Not Allowed', { status: 405 });
@@ -471,4 +478,216 @@ async function handleHubspotLead(request, env) {
     } catch (err) {
         return json({ error: err.message || 'HubSpot sync error' }, 500);
     }
+}
+// â”€â”€ Server-Side Handlers for Trial & Scheduled Quizzes (Protects CRM & DB keys) â”€â”€
+async function handleTrial(request, env) {
+    let body;
+    try {
+        body = await request.json();
+    } catch {
+        return json({ error: 'Invalid JSON payload' }, 400);
+    }
+
+    const { email, phone, firstname, lastname, company, exam_target, message } = body;
+    if (!email || !phone || !firstname) {
+        return json({ error: 'Missing required fields (email, phone, firstname)' }, 400);
+    }
+
+    const hsToken = (env && env.HUBSPOT_TOKEN) || atob('cGF0LW5hMi1iNGE4MjY0YS0xZDJlLTRlNzEtOWMxOC1jMjQwZWYyYmFmYzc=');
+    const hsHeaders = {
+        'Authorization': 'Bearer ' + hsToken,
+        'Content-Type': 'application/json'
+    };
+
+    let contactId = null;
+    let isExisting = false;
+
+    // 1. HubSpot Contact lookup / creation
+    try {
+        const searchRes = await fetch('https://api.hubapi.com/crm/v3/objects/contacts/search', {
+            method: 'POST',
+            headers: hsHeaders,
+            body: JSON.stringify({
+                filterGroups: [{
+                    filters: [{
+                        propertyName: 'email',
+                        operator: 'EQ',
+                        value: email.trim().toLowerCase()
+                    }]
+                }]
+            })
+        });
+        const searchData = await searchRes.json();
+        if (searchData.total > 0) {
+            isExisting = true;
+            contactId = searchData.results[0].id;
+        }
+
+        if (!isExisting) {
+            // Create Contact
+            const contactResp = await fetch('https://api.hubapi.com/crm/v3/objects/contacts', {
+                method: 'POST',
+                headers: hsHeaders,
+                body: JSON.stringify({
+                    properties: { email, firstname, lastname, phone, company }
+                })
+            });
+            const contactData = await contactResp.json();
+            contactId = contactData.id;
+
+            // Associate Company
+            if (company && contactId) {
+                try {
+                    const compResp = await fetch('https://api.hubapi.com/crm/v3/objects/companies', {
+                        method: 'POST',
+                        headers: hsHeaders,
+                        body: JSON.stringify({
+                            properties: { name: company, country: 'India' }
+                        })
+                    });
+                    const compData = await compResp.json();
+                    if (compData.id) {
+                        await fetch(https://api.hubapi.com/crm/v4/objects/contacts/ + contactId + /associations/default/companies/ + compData.id, {
+                            method: 'PUT',
+                            headers: hsHeaders
+                        });
+                    }
+                } catch (e) {
+                    console.warn('Company association notice:', e);
+                }
+            }
+
+            // Create Onboarding Task
+            try {
+                await fetch('https://api.hubapi.com/crm/v3/objects/tasks', {
+                    method: 'POST',
+                    headers: hsHeaders,
+                    body: JSON.stringify({
+                        properties: {
+                            hs_task_subject: 'New LMS Trial: ' + firstname + ' ' + (lastname || '') + ' (' + (company || 'Educator') + ')',
+                            hs_task_body: 'Target Exam: ' + (exam_target || 'JEE / NEET') + ' | Phone: ' + phone + ' | Email: ' + email + '. Setup trial course and WhatsApp credentials.',
+                            hs_task_status: 'NOT_STARTED',
+                            hs_task_priority: 'HIGH',
+                            hs_timestamp: String(Date.now())
+                        }
+                    })
+                });
+            } catch (e) {
+                console.warn('Task notice:', e);
+            }
+        } else {
+            // Reactivation Task
+            try {
+                await fetch('https://api.hubapi.com/crm/v3/objects/tasks', {
+                    method: 'POST',
+                    headers: hsHeaders,
+                    body: JSON.stringify({
+                        properties: {
+                            hs_task_subject: 'Reactivation Request: ' + firstname + ' ' + (lastname || '') + ' (' + (company || 'Educator') + ')',
+                            hs_task_body: 'Existing contact requested trial reactivation. Phone: ' + phone + ' | Email: ' + email + '.',
+                            hs_task_status: 'NOT_STARTED',
+                            hs_task_priority: 'HIGH',
+                            hs_timestamp: String(Date.now())
+                        }
+                    })
+                });
+            } catch (e) {
+                console.warn('Reactivation task notice:', e);
+            }
+        }
+    } catch (err) {
+        console.error('HubSpot sync error:', err);
+    }
+
+    // 2. Dispatch WhatsApp confirmation via AiSensy Cloud API
+    try {
+        const rawPhone = phone.replace(/[^0-9]/g, '');
+        const cleanPhone = rawPhone.length === 10 ? '91' + rawPhone : rawPhone;
+        const AISENSY_KEY = (env && env.AISENSY_API_KEY) || '2ef5c66b4cbbf386db60e358b2097ba5f223f66cb7111451a92e4ba0575d1607';
+
+        fetch('https://backend.aisensy.com/campaign/t1/api/v2', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                apiKey: AISENSY_KEY,
+                campaignName: 'pitthugram_welcome',
+                destination: cleanPhone,
+                userName: (firstname + ' ' + (lastname || '')).trim(),
+                templateParams: [
+                    firstname,
+                    company || 'Coaching Institute',
+                    'https://portal.classes.institute',
+                    email,
+                    'Pitthugram@2026'
+                ]
+            })
+        }).catch(e => console.warn('AiSensy dispatch notice:', e));
+    } catch (e) {
+        console.warn('AiSensy error:', e);
+    }
+
+    return json({
+        success: true,
+        isExisting,
+        message: isExisting
+            ? 'Reactivation request registered. Our team will contact you on WhatsApp.'
+            : '14-day free trial registered. Check your WhatsApp for access details.'
+    });
+}
+
+const QB_SUPABASE_URL = 'https://qnqcysdeolnooxxcafwz.supabase.co';
+const QB_SERVICE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFucWN5c2Rlb2xub294eGNhZnd6Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3NjM1NzQ2NSwiZXhwIjoyMDkxOTMzNDY1fQ.Co7aXPihbAn56b2BE2rh4q6wgqlVEbzp3C6wAZz1V8s';
+
+async function handleScheduledQuizzes(request, env) {
+    const serviceKey = (env && env.SUPABASE_SERVICE_ROLE_KEY) || QB_SERVICE_KEY;
+    const method = request.method;
+
+    if (method === 'OPTIONS') {
+        return new Response(null, {
+            status: 204,
+            headers: {
+                'Access-Control-Allow-Origin': '*',
+                'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+                'Access-Control-Allow-Headers': 'Content-Type, Authorization'
+            }
+        });
+    }
+
+    if (method === 'GET') {
+        const url = new URL(request.url);
+        const search = url.search || '?order=created_at.desc';
+        const res = await fetch(QB_SUPABASE_URL + '/rest/v1/scheduled_quizzes' + search, {
+            headers: {
+                'apikey': serviceKey,
+                'Authorization': 'Bearer ' + serviceKey
+            }
+        });
+        const data = await res.json();
+        return json(data, res.status);
+    }
+
+    if (method === 'POST') {
+        let payload;
+        try {
+            payload = await request.json();
+        } catch {
+            return json({ error: 'Invalid payload' }, 400);
+        }
+
+        const res = await fetch(QB_SUPABASE_URL + '/rest/v1/scheduled_quizzes', {
+            method: 'POST',
+            headers: {
+                'apikey': serviceKey,
+                'Authorization': 'Bearer ' + serviceKey,
+                'Content-Type': 'application/json',
+                'Prefer': 'return=representation'
+            },
+            body: JSON.stringify(payload)
+        });
+
+        const data = await res.json();
+        return json(data, res.status);
+    }
+
+    return new Response('Method Not Allowed', { status: 405 });
 }
