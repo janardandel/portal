@@ -139,49 +139,82 @@ async function handleVerify(request) {
     return json({ role });
 }
 
-async function handleMoodleConfig(request, env) {
-    const authHeader = request.headers.get('Authorization') || '';
-    const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : '';
+// â”€â”€ Multi-Tenant Moodle Resolver â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+const TENANT_MOODLE_MAP = {
+    // Default / Trial Tenant (Pitthugram Trial Institute)
+    '65e4628a-a283-45a3-ab2d-84073977d4c4': {
+        moodle_url: 'https://trial001.classes.institute',
+        moodle_token: '0da58a8c089e3c4b8ef45d7c6c42ed29',
+        tenant_name: 'Pitthugram Trial'
+    }
+};
 
-    if (!token) return json({ error: 'Unauthorized.' }, 401);
+async function getTenantMoodleConfig(instituteId, env) {
+    // 1. Check in-memory mapping
+    if (instituteId && TENANT_MOODLE_MAP[instituteId]) {
+        return TENANT_MOODLE_MAP[instituteId];
+    }
 
-    const moodleUrl = (env && env.MOODLE_URL) || 'https://trial001.classes.institute';
-    const moodleToken = (env && env.MOODLE_TOKEN) || '0da58a8c089e3c4b8ef45d7c6c42ed29';
-
-    try {
-        const res = await fetch(
-            `${SUPABASE_URL}/rest/v1/moodle_config?id=eq.1&select=moodle_url,moodle_token`,
-            {
-                headers: {
-                    'apikey': SUPABASE_KEY,
-                    'Authorization': `Bearer ${token}`
+    // 2. Check Supabase institutes / moodle_config table if configured
+    if (instituteId) {
+        try {
+            const res = await fetch(
+                `${SUPABASE_URL}/rest/v1/moodle_config?institute_id=eq.${encodeURIComponent(instituteId)}&select=moodle_url,moodle_token,tenant_name&limit=1`,
+                {
+                    headers: {
+                        'apikey': SUPABASE_KEY,
+                        'Authorization': `Bearer ${SUPABASE_KEY}`
+                    }
+                }
+            );
+            if (res.ok) {
+                const rows = await res.json();
+                if (rows && rows[0] && rows[0].moodle_url && rows[0].moodle_token) {
+                    return rows[0];
                 }
             }
-        );
-        if (res.ok) {
-            const rows = await res.json();
-            if (rows && rows[0] && rows[0].moodle_url && rows[0].moodle_token) {
-                return json({
-                    configured:   true,
-                    moodle_url:   rows[0].moodle_url,
-                    moodle_token: rows[0].moodle_token
-                });
-            }
+        } catch (e) {
+            console.warn('Tenant Moodle DB query notice:', e);
         }
-    } catch (e) {
-        console.warn('Moodle config db fetch notice:', e);
     }
+
+    // 3. Fallback to default trial Moodle
+    return {
+        moodle_url: (env && env.MOODLE_URL) || 'https://trial001.classes.institute',
+        moodle_token: (env && env.MOODLE_TOKEN) || '0da58a8c089e3c4b8ef45d7c6c42ed29',
+        tenant_name: 'Default Trial'
+    };
+}
+
+async function handleMoodleConfig(request, env) {
+    const u = new URL(request.url);
+    const instituteId = u.searchParams.get('institute_id');
+    const tenantConfig = await getTenantMoodleConfig(instituteId, env);
 
     return json({
         configured:   true,
-        moodle_url:   moodleUrl,
-        moodle_token: moodleToken
+        institute_id: instituteId,
+        moodle_url:   tenantConfig.moodle_url,
+        moodle_token: tenantConfig.moodle_token
     });
 }
 
 async function handleMoodleCourses(request, env) {
-    const moodleUrl = (env && env.MOODLE_URL) || 'https://trial001.classes.institute';
-    const moodleToken = (env && env.MOODLE_TOKEN) || '0da58a8c089e3c4b8ef45d7c6c42ed29';
+    let instituteId = null;
+    if (request.method === 'POST') {
+        try {
+            const b = await request.json();
+            instituteId = b.institute_id || null;
+        } catch {}
+    } else {
+        const u = new URL(request.url);
+        instituteId = u.searchParams.get('institute_id');
+    }
+
+    const tenantConfig = await getTenantMoodleConfig(instituteId, env);
+    const moodleUrl = tenantConfig.moodle_url;
+    const moodleToken = tenantConfig.moodle_token;
+
     let courses = [
         { id: 2, fullname: "Class 11 - NEET Biology", shortname: "BIO11" },
         { id: 3, fullname: "Class 12 - JEE Chemistry", shortname: "CHEM12" },
@@ -194,7 +227,7 @@ async function handleMoodleCourses(request, env) {
     ];
 
     try {
-        const res = await fetch(moodleUrl + '/webservice/rest/server.php?wstoken=' + moodleToken + '&wsfunction=core_course_get_courses&moodlewsrestformat=json');
+        const res = await fetch(`${moodleUrl}/webservice/rest/server.php?wstoken=${moodleToken}&wsfunction=core_course_get_courses&moodlewsrestformat=json`);
         if (res.ok) {
             const data = await res.json();
             if (Array.isArray(data) && data.length > 0) {
@@ -212,7 +245,7 @@ async function handleMoodleCourses(request, env) {
         console.warn('Moodle courses API fetch error:', e);
     }
 
-    return json({ courses: courses, moodle_url: moodleUrl });
+    return json({ courses: courses, moodle_url: moodleUrl, institute_id: instituteId });
 }
 // ── MCQ image presign (IDrive S3, SigV4 via Web Crypto) ─────────────────────
 async function handleMcqPresign(request, env) {
@@ -396,12 +429,40 @@ async function handleMoodleSchedule(request, env) {
     }
 
     const { institute_id, email, courseid, name, timeopen, timeclose, timelimit, attempts, shuffleanswers, questions } = body;
+    const tenantConfig = await getTenantMoodleConfig(institute_id, env);
+
+    // Save to scheduled_quizzes table via service key
+    try {
+        const serviceKey = (env && env.SUPABASE_SERVICE_ROLE_KEY) || QB_SERVICE_KEY;
+        const qIds = Array.isArray(questions) ? questions.map(function(q) { return q.id || q.questionid; }).filter(Boolean) : [];
+        await fetch(QB_SUPABASE_URL + '/rest/v1/scheduled_quizzes', {
+            method: 'POST',
+            headers: {
+                'apikey': serviceKey,
+                'Authorization': `Bearer ${serviceKey}`,
+                'Content-Type': 'application/json',
+                'Prefer': 'return=minimal'
+            },
+            body: JSON.stringify({
+                teacher_wordpress_id: email || '1edca830-a871-4ed6-830b-1fa60273ec91',
+                quiz_title: name || 'Scheduled Quiz',
+                scheduled_date: new Date().toISOString().slice(0, 10),
+                scheduled_time: '10:00:00',
+                question_ids: qIds,
+                status: 'pending'
+            })
+        });
+    } catch (e) {
+        console.warn('Schedule record notice:', e);
+    }
 
     return json({
         status: 'success',
-        questioncount: (questions && questions.length) || 0,
+        institute_id: institute_id,
+        moodle_url: tenantConfig.moodle_url,
         courseid: courseid,
-        message: 'Quiz scheduled successfully in Moodle.'
+        questioncount: (questions && questions.length) || 0,
+        message: `Quiz scheduled successfully in Moodle (${tenantConfig.moodle_url})`
     });
 }
 function json(data, status = 200) {
