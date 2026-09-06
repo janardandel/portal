@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -160,7 +160,7 @@
 <div class="toast" id="toast"></div>
 
 <script>
-const SUPA_WRITE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFucWN5c2Rlb2xub294eGNhZnd6Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3NjM1NzQ2NSwiZXhwIjoyMDkxOTMzNDY1fQ.Co7aXPihbAn56b2BE2rh4q6wgqlVEbzp3C6wAZz1V8s';
+// SUPA_WRITE_KEY removed - proxied via /api/scheduled-quizzes
 const SUPA_B_URL = 'https://zqrswemxmhjaylsuulyu.supabase.co';
 const SUPA_B_KEY = 'sb_publishable_8Y62WSnJwGidHS591ofDiw_gbzmTGAQ';
 const SUPA_A_URL = 'https://qnqcysdeolnooxxcafwz.supabase.co';
@@ -585,9 +585,7 @@ async function loadScheduledQuizzes() {
   el.innerHTML = '<p style="color:var(--text-secondary);font-size:0.9rem;"><i class="ph ph-spinner-gap spinner"></i> Loading scheduled tests...</p>';
 
   try {
-    const res = await fetch(SUPA_A_URL + '/rest/v1/scheduled_quizzes?order=created_at.desc', {
-      headers: { 'apikey': SUPA_WRITE_KEY, 'Authorization': 'Bearer ' + SUPA_WRITE_KEY }
-    });
+    const res = await fetch('/api/scheduled-quizzes?order=created_at.desc');
     const list = await res.json();
     if (!list || !list.length) {
       el.innerHTML = '<div style="text-align:center;padding:3rem 1rem;border:1.5px dashed var(--border-light);border-radius:var(--radius-lg);color:var(--text-secondary);"><i class="ph ph-calendar-x" style="font-size:2.5rem;margin-bottom:0.5rem;display:block;"></i><p style="font-weight:600;">No scheduled tests found.</p><a href="./quiz-builder.html" class="btn btn-primary btn-sm" style="margin-top:0.75rem;display:inline-flex;"><i class="ph ph-plus"></i> Schedule a Quiz</a></div>';
