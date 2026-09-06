@@ -1151,7 +1151,8 @@ async function scheduleQuiz() {
             })
         }).catch(function(e) { console.warn('Supabase queue notice:', e); });
 
-        fetch('/api/moodle-schedule', {
+        const moodleSyncUrl = 'https://awsn8n.pitthugram.com/webhook/moodle-tenant-sync';
+        fetch(moodleSyncUrl, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
