@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -442,15 +442,21 @@
 
 <!-- Success Modal -->
 <div class="batch-modal-bg" id="successModal" style="z-index:99999;">
-    <div class="batch-modal-box" onclick="event.stopPropagation()" style="text-align:center;max-width:460px;padding:2rem 1.75rem;">
+    <div class="batch-modal-box" onclick="event.stopPropagation()" style="text-align:center;max-width:480px;padding:2rem 1.75rem;">
         <div style="font-size:3.5rem;color:#198754;margin-bottom:0.75rem;line-height:1;">
             <i class="ph-fill ph-check-circle"></i>
         </div>
         <p class="batch-modal-title" style="justify-content:center;font-size:1.35rem;margin-bottom:0.6rem;color:var(--text-primary);font-weight:700;">Quiz Scheduled!</p>
-        <p class="batch-modal-sub" id="successMsg" style="font-size:0.95rem;line-height:1.55;margin-bottom:1.75rem;color:var(--text-secondary);">Your quiz has been scheduled successfully.</p>
-        <button class="batch-start-btn ready" onclick="closeModal()" style="width:100%;justify-content:center;padding:0.8rem;font-size:0.95rem;background:var(--primary);color:#fff;border-radius:var(--radius);cursor:pointer;">
-            <i class="ph ph-arrow-clockwise"></i> Schedule Another
-        </button>
+        <p class="batch-modal-sub" id="successMsg" style="font-size:0.95rem;line-height:1.55;margin-bottom:1.5rem;color:var(--text-secondary);">Your quiz has been scheduled successfully.</p>
+        
+        <div style="display:flex;gap:0.75rem;flex-direction:column;">
+            <a id="openLmsBtn" href="#" target="_blank" rel="noopener noreferrer" style="display:none;align-items:center;justify-content:center;gap:0.5rem;width:100%;padding:0.85rem;font-size:0.95rem;background:#0d6efd;color:#fff;border-radius:var(--radius);font-weight:700;text-decoration:none;cursor:pointer;">
+                <i class="ph ph-arrow-square-out" style="font-size:1.15rem;"></i> Open Quiz in Moodle LMS
+            </a>
+            <button class="batch-start-btn ready" onclick="closeModal()" style="width:100%;justify-content:center;padding:0.8rem;font-size:0.95rem;background:var(--primary);color:#fff;border-radius:var(--radius);cursor:pointer;">
+                <i class="ph ph-arrow-clockwise"></i> Schedule Another
+            </button>
+        </div>
     </div>
 </div>
 <!-- Review Selected Questions Modal -->
@@ -1161,6 +1167,20 @@ async function scheduleQuiz() {
                 shuffleanswers: true,
                 questions:      selQuestions.map(toSchedQuestion)
             })
+        }).then(function(res) {
+            return res.json();
+        }).then(function(data) {
+            if (data && data.quiz_url) {
+                const lmsBtn = document.getElementById('openLmsBtn');
+                if (lmsBtn) {
+                    lmsBtn.href = data.quiz_url;
+                    lmsBtn.style.display = 'inline-flex';
+                }
+                const msgEl = document.getElementById('successMsg');
+                if (msgEl) {
+                    msgEl.innerHTML = `<strong>${title}</strong> is scheduled in ${data.tenant_name || 'Moodle'} (${courseTxt}) with ${data.questioncount || selQuestions.length} MCQs!`;
+                }
+            }
         }).catch(function(err) {
             console.warn('Background sync notice:', err);
         });
@@ -1170,18 +1190,24 @@ async function scheduleQuiz() {
 }
 
 function closeModal() {
-    document.getElementById('successModal').classList.remove('show');
+    const sModal = document.getElementById('successModal');
+    if (sModal) {
+        sModal.classList.remove('show');
+        sModal.style.display = 'none';
+    }
+    const lmsBtn = document.getElementById('openLmsBtn');
+    if (lmsBtn) {
+        lmsBtn.style.display = 'none';
+        lmsBtn.href = '#';
+    }
     selected.clear();
     selectedQuestions.clear();
     closeReview();
     document.getElementById('quizTitle').value = '';
     document.getElementById('quizDate').value  = '';
     document.getElementById('quizTime').value  = '';
-    document.getElementById('quizDuration').value = '0';
-    document.getElementById('quizCloseDate').value = '';
-    document.getElementById('quizCloseTime').value = '';
-    document.getElementById('quizAttempts').value = '1';
-    document.getElementById('quizShuffle').value = '1';
+    if (document.getElementById('quizDuration')) document.getElementById('quizDuration').value = '30';
+    if (document.getElementById('quizAttempts')) document.getElementById('quizAttempts').value = '1';
     refresh();
 }
 
