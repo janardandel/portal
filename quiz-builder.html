@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -689,8 +689,8 @@
 const SUPABASE_URL  = 'https://qnqcysdeolnooxxcafwz.supabase.co';
 // Write operations proxied securely via server-side /api/scheduled-quizzes
 const SUPABASE_KEY  = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFucWN5c2Rlb2xub294eGNhZnd6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYzNTc0NjUsImV4cCI6MjA5MTkzMzQ2NX0.hOuPKv1zqQup7JfEpe-SJWT9Duz0RUwcCPwJb0zE_0Q';
-const SUPA_B_URL    = 'https://zqrswemxmhjaylsuulyu.supabase.co';
-const SUPA_B_PUB    = 'sb_publishable_8Y62WSnJwGidHS591ofDiw_gbzmTGAQ';
+const SUPA_B_URL    = SUPABASE_URL; // consolidated into active database
+const SUPA_B_PUB    = SUPABASE_KEY;
 const N8N_WEBHOOK   = 'YOUR_N8N_WEBHOOK_URL'; // (legacy, unused â€” Moodle push now via worker)
 const API_BASE      = '';
 let   teacherInstituteId = null;
@@ -1005,19 +1005,20 @@ async function loadMoodleCourses() {
     sel.innerHTML = '<option value="">Select Moodle Course</option>' +
         DEFAULT_COURSES.map(function(c) { return '<option value="' + c.id + '">' + c.fullname + '</option>'; }).join('');
 
-    if (!currentUser) return;
+    const instId = (currentUser && (currentUser.institute_id || currentUser.centre_id)) || teacherInstituteId || '65e4628a-a283-45a3-ab2d-84073977d4c4';
+    teacherInstituteId = instId;
 
     try {
-        const tr = await fetch(SUPA_B_URL + '/rest/v1/teachers?email=eq.' + encodeURIComponent(currentUser.email) + '&select=institute_id&limit=1', { headers: { apikey: SUPA_B_PUB } });
-        const rows = await tr.json();
-        teacherInstituteId = (rows && rows[0]) ? rows[0].institute_id : '65e4628a-a283-45a3-ab2d-84073977d4c4';
-        
         const res = await fetch(API_BASE + '/api/moodle-courses', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ institute_id: teacherInstituteId, email: currentUser.email })
+            body: JSON.stringify({ institute_id: instId, email: (currentUser && currentUser.email) || '' })
         });
         const d = await res.json();
+        if (d && d.moodle_url) {
+            sessionStorage.setItem('pg_moodle_url', d.moodle_url);
+            localStorage.setItem('pg_moodle_url', d.moodle_url);
+        }
         const courses = (d && d.courses && d.courses.length) ? d.courses : DEFAULT_COURSES;
         sel.innerHTML = '<option value="">Select Moodle Course</option>' + courses.map(function(c) { return '<option value="' + c.id + '">' + (c.fullname || c.shortname) + '</option>'; }).join('');
     } catch (e) {
@@ -1025,7 +1026,6 @@ async function loadMoodleCourses() {
         sel.innerHTML = '<option value="">Select Moodle Course</option>' + DEFAULT_COURSES.map(function(c) { return '<option value="' + c.id + '">' + c.fullname + '</option>'; }).join('');
     }
 }
-
 // Convert a selected question (central or institute) into the Moodle schedule shape.
 function toSchedQuestion(q) {
     if (!q) return { questiontext: 'Question', answers: [] };
