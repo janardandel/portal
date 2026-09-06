@@ -3,12 +3,12 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Review MCQs — Pitthugram</title>
+  <title>Review & Analytics — Portal</title>
   <link rel="icon" type="image/png" href="./favicon.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <script src="https://unpkg.com/@phosphor-icons/web" defer></script>
-  <link rel="stylesheet" href="./pitthugram.css">
+  <link rel="stylesheet" href="./style.css">
   <style>
     .review-layout { display:grid; grid-template-columns:280px 1fr; min-height:calc(100vh - 72px); }
     @media(max-width:800px){ .review-layout{grid-template-columns:1fr;} }
@@ -122,8 +122,9 @@
         </h1>
         <p style="font-size:0.88rem;color:var(--text-secondary);">All scheduled diagnostic quizzes and tests queued for your students.</p>
       </div>
-      <div style="display:flex;gap:0.65rem;">
+      <div style="display:flex;gap:0.65rem;flex-wrap:wrap;">
         <button onclick="loadScheduledQuizzes()" class="btn btn-outline btn-sm"><i class="ph ph-arrows-clockwise"></i> Refresh</button>
+        <button onclick="openQuizResults('13', 'Recent Live Quiz Results')" class="btn btn-outline btn-sm" style="color:#3b82f6;border-color:rgba(59,130,246,0.4);"><i class="ph-bold ph-chart-line-up"></i> Quick Report (Quiz 13)</button>
         <a href="./quiz-builder.html" class="btn btn-primary btn-sm"><i class="ph ph-plus"></i> Schedule New Quiz</a>
       </div>
     </div>
@@ -153,6 +154,88 @@
     </main>
 
   </div>
+  </div>
+</div>
+
+<!-- Quiz Results & Analytics Modal -->
+<div id="resultsModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.78);z-index:1000;align-items:center;justify-content:center;padding:1.25rem;backdrop-filter:blur(4px);">
+  <div style="background:var(--bg-elevated);border:1.5px solid var(--border-light);border-radius:var(--radius-lg);width:100%;max-width:920px;max-height:92vh;display:flex;flex-direction:column;box-shadow:0 25px 50px -12px rgba(0,0,0,0.7);overflow:hidden;">
+    <!-- Modal Header -->
+    <div style="padding:1.25rem 1.5rem;border-bottom:1.5px solid var(--border-light);display:flex;align-items:center;justify-content:space-between;background:var(--bg-card,#1a1a1a);gap:1rem;">
+      <div style="flex:1;min-width:0;">
+        <h3 style="font-size:1.2rem;font-weight:800;color:var(--text-primary);margin:0 0 0.25rem 0;display:flex;align-items:center;gap:0.5rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
+          <i class="ph-fill ph-chart-line-up" style="color:var(--primary);"></i> <span id="resQuizName">Quiz Results</span>
+        </h3>
+        <p id="resQuizCourse" style="font-size:0.82rem;color:var(--text-secondary);margin:0;">Course Performance & Student Leaderboard</p>
+      </div>
+      <div style="display:flex;align-items:center;gap:0.5rem;flex-shrink:0;">
+        <button onclick="refreshCurrentReport()" class="btn btn-outline btn-sm" title="Refresh Live Data"><i class="ph ph-arrows-clockwise"></i></button>
+        <button onclick="closeResultsModal()" style="background:none;border:none;color:var(--text-secondary);cursor:pointer;padding:0.4rem;font-size:1.35rem;border-radius:var(--radius-sm);display:flex;align-items:center;justify-content:center;transition:color 0.2s;" onmouseover="this.style.color='var(--text-primary)'" onmouseout="this.style.color='var(--text-secondary)'"><i class="ph ph-x"></i></button>
+      </div>
+    </div>
+
+    <!-- Modal Body (Scrollable) -->
+    <div id="modalBody" style="padding:1.5rem;overflow-y:auto;flex:1;">
+      <!-- Analytics Stat Cards -->
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:1rem;margin-bottom:1.5rem;">
+        <div style="background:var(--bg-base);border:1.5px solid var(--border-light);border-radius:var(--radius-md);padding:1rem;">
+          <div style="font-size:0.75rem;font-weight:700;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.04em;margin-bottom:0.35rem;">Total Attempts</div>
+          <div id="statTotalAttempts" style="font-size:1.6rem;font-weight:800;color:var(--text-primary);">-</div>
+          <div id="statParticipation" style="font-size:0.75rem;color:var(--text-secondary);margin-top:0.2rem;">Enrolled: -</div>
+        </div>
+        <div style="background:var(--bg-base);border:1.5px solid var(--border-light);border-radius:var(--radius-md);padding:1rem;">
+          <div style="font-size:0.75rem;font-weight:700;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.04em;margin-bottom:0.35rem;">Class Average</div>
+          <div id="statAvgScore" style="font-size:1.6rem;font-weight:800;color:#3b82f6;">-</div>
+          <div id="statAvgPct" style="font-size:0.75rem;color:var(--text-secondary);margin-top:0.2rem;">Accuracy: -</div>
+        </div>
+        <div style="background:var(--bg-base);border:1.5px solid var(--border-light);border-radius:var(--radius-md);padding:1rem;">
+          <div style="font-size:0.75rem;font-weight:700;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.04em;margin-bottom:0.35rem;">Highest Score</div>
+          <div id="statHighest" style="font-size:1.6rem;font-weight:800;color:#22c55e;">-</div>
+          <div id="statLowest" style="font-size:0.75rem;color:var(--text-secondary);margin-top:0.2rem;">Lowest: -</div>
+        </div>
+        <div style="background:var(--bg-base);border:1.5px solid var(--border-light);border-radius:var(--radius-md);padding:1rem;">
+          <div style="font-size:0.75rem;font-weight:700;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.04em;margin-bottom:0.35rem;">Questions</div>
+          <div id="statQuestions" style="font-size:1.6rem;font-weight:800;color:var(--text-primary);">-</div>
+          <div id="statMaxScore" style="font-size:0.75rem;color:var(--text-secondary);margin-top:0.2rem;">Max Score: -</div>
+        </div>
+      </div>
+
+      <!-- Student Leaderboard Section -->
+      <div>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.85rem;flex-wrap:wrap;gap:0.5rem;">
+          <h4 style="font-size:1rem;font-weight:700;color:var(--text-primary);margin:0;display:flex;align-items:center;gap:0.4rem;">
+            <i class="ph-fill ph-trophy" style="color:#eab308;"></i> Student Leaderboard & Performance
+          </h4>
+          <span id="leaderboardCount" style="font-size:0.82rem;color:var(--text-secondary);font-weight:600;"></span>
+        </div>
+
+        <div style="overflow-x:auto;border:1.5px solid var(--border-light);border-radius:var(--radius-md);">
+          <table style="width:100%;border-collapse:collapse;font-size:0.88rem;text-align:left;">
+            <thead>
+              <tr style="background:var(--bg-card,#1a1a1a);border-bottom:1.5px solid var(--border-light);color:var(--text-secondary);font-size:0.74rem;text-transform:uppercase;letter-spacing:0.05em;">
+                <th style="padding:0.75rem 1rem;">Rank</th>
+                <th style="padding:0.75rem 1rem;">Student</th>
+                <th style="padding:0.75rem 1rem;">Score</th>
+                <th style="padding:0.75rem 1rem;">Accuracy</th>
+                <th style="padding:0.75rem 1rem;">Time Taken</th>
+                <th style="padding:0.75rem 1rem;text-align:right;">Parent Report</th>
+              </tr>
+            </thead>
+            <tbody id="leaderboardBody">
+              <!-- Rendered rows -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal Footer -->
+    <div style="padding:1rem 1.5rem;border-top:1.5px solid var(--border-light);display:flex;align-items:center;justify-content:space-between;background:var(--bg-card,#1a1a1a);flex-wrap:wrap;gap:0.75rem;">
+      <div style="font-size:0.8rem;color:var(--text-secondary);display:flex;align-items:center;gap:0.4rem;">
+        <i class="ph ph-whatsapp-logo" style="color:#22c55e;font-size:1.1rem;"></i> <span>Clicking <strong>Send Report</strong> opens a pre-formatted WhatsApp message ready to send to parents.</span>
+      </div>
+      <button onclick="closeResultsModal()" class="btn btn-outline btn-sm">Close</button>
+    </div>
   </div>
 </div>
 
@@ -599,6 +682,16 @@ async function loadScheduledQuizzes() {
       const statusClass = q.status === 'completed' ? 'approved' : (q.status === 'processing' ? 'processing' : 'draft');
       const statusText  = q.status === 'completed' ? 'Completed' : (q.status === 'processing' ? 'In Progress' : 'Scheduled / Pending');
 
+      // Extract numeric quiz ID from moodle_quiz_id (e.g. view.php?id=21 or view.php?id=13)
+      let quizId = '';
+      if (q.moodle_quiz_id) {
+        const m = q.moodle_quiz_id.match(/[?&]id=(\d+)/);
+        if (m) quizId = m[1];
+        else if (/^\d+$/.test(q.moodle_quiz_id)) quizId = q.moodle_quiz_id;
+      }
+      const targetQuizId = quizId || '13';
+      const safeTitle = (q.quiz_title || 'Quiz').replace(/'/g, "\\'");
+
       return `<div style="background:var(--bg-elevated);border:1.5px solid var(--border-light);border-radius:var(--radius-lg);padding:1.25rem 1.5rem;margin-bottom:1rem;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:1rem;">
         <div>
           <div style="font-size:1.1rem;font-weight:700;color:var(--text-primary);margin-bottom:0.35rem;">${escHtml(q.quiz_title || 'Scheduled Quiz')}</div>
@@ -608,8 +701,11 @@ async function loadScheduledQuizzes() {
             <span><i class="ph ph-calendar"></i> ${dateStr} at ${timeStr}</span>
           </div>
         </div>
-        <div style="display:flex;align-items:center;gap:0.75rem;">
+        <div style="display:flex;align-items:center;gap:0.75rem;flex-wrap:wrap;">
           <span class="status-badge ${statusClass}">${statusText}</span>
+          <button onclick="openQuizResults('${targetQuizId}', '${safeTitle}')" class="btn btn-primary btn-sm" style="font-size:0.82rem;display:inline-flex;align-items:center;gap:0.35rem;font-weight:700;">
+            <i class="ph-bold ph-chart-bar"></i> View Results
+          </button>
           <a :href="tenantMoodleUrl" href="https://trial001.classes.institute" onclick="this.href=getTenantMoodleUrl()" target="_blank" class="btn btn-outline btn-sm" style="font-size:0.8rem;"><i class="ph ph-arrow-square-out"></i> Moodle</a>
         </div>
       </div>`;
@@ -619,6 +715,120 @@ async function loadScheduledQuizzes() {
   }
 }
 
+let currentReportQuizId = null;
+
+async function openQuizResults(quizId, quizTitle) {
+  currentReportQuizId = quizId;
+  const modal = document.getElementById('resultsModal');
+  const nameEl = document.getElementById('resQuizName');
+  const courseEl = document.getElementById('resQuizCourse');
+  const bodyEl = document.getElementById('leaderboardBody');
+  
+  if (nameEl) nameEl.textContent = quizTitle || 'Quiz Results';
+  if (courseEl) courseEl.textContent = 'Loading live analytics from Moodle...';
+  if (modal) modal.style.display = 'flex';
+  
+  // Reset stats
+  document.getElementById('statTotalAttempts').textContent = '...';
+  document.getElementById('statParticipation').textContent = 'Enrolled: ...';
+  document.getElementById('statAvgScore').textContent = '...';
+  document.getElementById('statAvgPct').textContent = 'Accuracy: ...';
+  document.getElementById('statHighest').textContent = '...';
+  document.getElementById('statLowest').textContent = 'Lowest: ...';
+  document.getElementById('statQuestions').textContent = '...';
+  document.getElementById('statMaxScore').textContent = 'Max Score: ...';
+  document.getElementById('leaderboardCount').textContent = '';
+  
+  bodyEl.innerHTML = `<tr><td colspan="6" style="padding:2.5rem;text-align:center;color:var(--text-secondary);"><i class="ph ph-spinner-gap spinner" style="font-size:1.5rem;margin-bottom:0.5rem;display:block;"></i> Fetching student scores & analytics...</td></tr>`;
+
+  try {
+    const instituteId = sessionStorage.getItem('pg_institute_id') || localStorage.getItem('pg_institute_id') || '65e4628a-a283-45a3-ab2d-84073977d4c4';
+    const tenantName = sessionStorage.getItem('pg_institute_name') || localStorage.getItem('pg_institute_name') || 'Classes Institute';
+    const moodleUrl = getTenantMoodleUrl();
+    
+    // Call n8n multi-tenant reporting API
+    const url = `https://awsn8n.pitthugram.com/webhook/moodle-quiz-report?quiz_id=${encodeURIComponent(quizId)}&institute_id=${encodeURIComponent(instituteId)}&institute_name=${encodeURIComponent(tenantName)}&moodle_url=${encodeURIComponent(moodleUrl)}`;
+    
+    const res = await fetch(url);
+    const data = await res.json();
+    
+    if (!data || data.status === 'error') {
+      bodyEl.innerHTML = `<tr><td colspan="6" style="padding:2rem;text-align:center;color:var(--primary);"><i class="ph ph-warning-circle" style="font-size:1.5rem;margin-bottom:0.4rem;display:block;"></i> ${escHtml(data?.message || 'Could not retrieve report for this quiz.')}</td></tr>`;
+      if (courseEl) courseEl.textContent = 'Report unavailable';
+      return;
+    }
+    
+    // Populate header & stats
+    if (data.quiz_name && nameEl) nameEl.textContent = data.quiz_name;
+    if (courseEl) courseEl.textContent = `${data.course_name || 'Course'} • ${data.question_count || 0} Questions • Time Limit: ${Math.round((data.timelimit||0)/60)}m`;
+    
+    const a = data.analytics || {};
+    document.getElementById('statTotalAttempts').textContent = a.total_attempts ?? 0;
+    document.getElementById('statParticipation').textContent = `Enrolled: ${a.total_enrolled ?? 0}`;
+    document.getElementById('statAvgScore').textContent = `${a.average_score ?? 0} / ${data.max_score ?? 0}`;
+    document.getElementById('statAvgPct').textContent = `Accuracy: ${a.average_percentage ?? 0}%`;
+    document.getElementById('statHighest').textContent = `${a.highest_score ?? 0} / ${data.max_score ?? 0}`;
+    document.getElementById('statLowest').textContent = `Lowest: ${a.lowest_score ?? 0}`;
+    document.getElementById('statQuestions').textContent = data.question_count ?? 0;
+    document.getElementById('statMaxScore').textContent = `Max: ${data.max_score ?? 0} pts`;
+    
+    const list = data.leaderboard || [];
+    document.getElementById('leaderboardCount').textContent = `${list.length} student submission(s)`;
+    
+    if (list.length === 0) {
+      bodyEl.innerHTML = `<tr><td colspan="6" style="padding:3rem 1.5rem;text-align:center;color:var(--text-secondary);"><i class="ph ph-users" style="font-size:2rem;margin-bottom:0.5rem;display:block;opacity:0.5;"></i> No student attempts recorded yet for this test.<br><span style="font-size:0.8rem;opacity:0.8;">Once students submit their quiz on Moodle, scores and WhatsApp report cards will appear here.</span></td></tr>`;
+      return;
+    }
+    
+    bodyEl.innerHTML = list.map(st => {
+      const rankBadge = st.rank === 1 
+        ? `<span style="background:rgba(234,179,8,0.2);color:#eab308;font-weight:800;padding:0.2rem 0.6rem;border-radius:99px;display:inline-flex;align-items:center;gap:0.25rem;"><i class="ph-fill ph-trophy"></i> #1</span>`
+        : (st.rank === 2
+          ? `<span style="background:rgba(148,163,184,0.2);color:#cbd5e1;font-weight:700;padding:0.2rem 0.55rem;border-radius:99px;">#2</span>`
+          : (st.rank === 3
+            ? `<span style="background:rgba(217,119,6,0.2);color:#f59e0b;font-weight:700;padding:0.2rem 0.55rem;border-radius:99px;">#3</span>`
+            : `<span style="color:var(--text-secondary);font-weight:600;padding:0.2rem 0.55rem;">#${st.rank}</span>`));
+      
+      const pctBadgeClass = st.percentage >= 75 ? 'approved' : (st.percentage >= 40 ? 'draft' : 'failed');
+
+      return `<tr style="border-bottom:1px solid var(--border-light);transition:background 0.15s;" onmouseover="this.style.background='var(--bg-base)'" onmouseout="this.style.background='transparent'">
+        <td style="padding:0.85rem 1rem;">${rankBadge}</td>
+        <td style="padding:0.85rem 1rem;">
+          <div style="font-weight:700;color:var(--text-primary);">${escHtml(st.student_name)}</div>
+          <div style="font-size:0.77rem;color:var(--text-secondary);">${escHtml(st.email || '—')}${st.phone ? ' • ' + escHtml(st.phone) : ''}</div>
+        </td>
+        <td style="padding:0.85rem 1rem;font-weight:700;color:var(--text-primary);">
+          ${st.score} <span style="font-size:0.78rem;font-weight:400;color:var(--text-secondary);">/ ${st.max_score}</span>
+        </td>
+        <td style="padding:0.85rem 1rem;">
+          <span class="status-badge ${pctBadgeClass}">${st.percentage}%</span>
+        </td>
+        <td style="padding:0.85rem 1rem;font-size:0.85rem;color:var(--text-secondary);">
+          <i class="ph ph-timer"></i> ${st.time_taken_formatted || '—'}
+        </td>
+        <td style="padding:0.85rem 1rem;text-align:right;">
+          <a href="${st.whatsapp_url}" target="_blank" class="btn btn-sm" style="background:#25D366;color:#fff;border-radius:var(--radius-md);display:inline-flex;align-items:center;gap:0.35rem;font-size:0.8rem;text-decoration:none;font-weight:700;padding:0.4rem 0.75rem;box-shadow:0 2px 6px rgba(37,211,102,0.3);">
+            <i class="ph-fill ph-whatsapp-logo" style="font-size:1rem;"></i> Send Report
+          </a>
+        </td>
+      </tr>`;
+    }).join('');
+    
+  } catch(e) {
+    bodyEl.innerHTML = `<tr><td colspan="6" style="padding:2rem;text-align:center;color:var(--primary);"><i class="ph ph-warning-circle" style="font-size:1.5rem;margin-bottom:0.4rem;display:block;"></i> Failed to load report: ${escHtml(e.message)}</td></tr>`;
+  }
+}
+
+function closeResultsModal() {
+  const modal = document.getElementById('resultsModal');
+  if (modal) modal.style.display = 'none';
+}
+
+function refreshCurrentReport() {
+  if (currentReportQuizId) {
+    openQuizResults(currentReportQuizId);
+  }
+}
 
 function getTenantMoodleUrl() {
     return sessionStorage.getItem('pg_moodle_url') || localStorage.getItem('pg_moodle_url') || 'https://trial001.classes.institute';
