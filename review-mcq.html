@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -89,7 +89,7 @@
 <!-- Auth gate -->
 <div id="authGate" style="display:none;position:fixed;inset:0;background:var(--bg-base);z-index:999;align-items:center;justify-content:center;">
   <div style="text-align:center;">
-    <img src="./logo.png" alt="Pitthugram" style="height:48px;margin-bottom:1.5rem;">
+    <i class="ph-fill ph-graduation-cap" style="font-size:3rem;color:var(--primary);margin-bottom:1rem;display:inline-block;"></i>
     <p style="color:var(--text-secondary);margin-bottom:1.25rem;">You must be logged in to access this page.</p>
     <a href="./index.html" class="btn btn-primary"><i class="ph ph-sign-in"></i> Go to Login</a>
   </div>
@@ -98,7 +98,7 @@
 <!-- Navbar -->
 <header class="navbar">
   <div class="container nav-inner">
-    <a href="./quiz-builder.html" class="logo"><img src="./logo.png" alt="Pitthugram"></a>
+    <a href="./quiz-builder.html" class="logo" style="display:flex;align-items:center;gap:0.5rem;font-weight:700;font-size:1.15rem;color:var(--text-primary);text-decoration:none;"><i class="ph-fill ph-graduation-cap" style="font-size:1.6rem;color:var(--primary);"></i> <span>Portal</span></a>
     <div class="nav-actions" style="display:flex;align-items:center;gap:0.5rem;">
       <button id="tabBtnScheduled" class="btn btn-sm" onclick="switchReviewTab('scheduled')" style="background:var(--primary);color:#fff;border-radius:var(--radius-md);font-weight:700;display:flex;align-items:center;gap:0.4rem;">
         <i class="ph ph-calendar-check"></i> Scheduled Tests
