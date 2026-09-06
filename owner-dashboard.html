@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Owner Dashboard — Pitthugram</title>
     <link rel="icon" type="image/png" href="./favicon.png">
+    <script>if(!localStorage.getItem('pg_access_token')){location.replace('index.html');}</script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -260,6 +261,8 @@
             .od-field-row { grid-template-columns: 1fr; }
             .od-page { padding: 1.25rem 1rem; }
         }
+
+        body { opacity: 0; transition: opacity 0.15s ease; }
     </style>
 </head>
 <body>
@@ -267,13 +270,11 @@
 <!-- Navbar -->
 <header class="navbar">
     <div class="container nav-inner">
-        <a href="./quiz-builder.html" class="logo">
-            <img src="./logo.png" alt="Pitthugram">
+        <a href="./owner-dashboard.html" class="logo" style="display:flex;align-items:center;gap:0.5rem;font-weight:700;font-size:1.15rem;color:var(--text-primary);text-decoration:none;">
+            <i class="ph-fill ph-graduation-cap" style="font-size:1.6rem;color:var(--primary);"></i>
+            <span>Owner Dashboard</span>
         </a>
         <div class="nav-actions" style="display:flex;gap:0.75rem;">
-            <button id="switchTeacherBtn" onclick="switchToTeacher()" class="btn btn-outline btn-sm" style="display:none;padding:0.5rem 1rem;">
-                <i class="ph ph-chalkboard-teacher"></i><span class="btn-label"> Teacher View</span>
-            </button>
             <button onclick="logout()" class="btn btn-outline btn-sm" style="padding:0.5rem 1rem;border-color:rgba(239,68,68,0.4);color:#FCA5A5;">
                 <i class="ph ph-sign-out"></i><span class="btn-label"> Logout</span>
             </button>
@@ -301,7 +302,7 @@
         </div>
 
         <!-- Moodle config not set warning -->
-        <div class="config-banner" id="configBanner">
+        <div class="config-banner hidden" id="configBanner">
             <i class="ph-fill ph-warning"></i>
             Moodle is not configured. Add your Moodle URL and token in the database (<code>moodle_config</code> table) to enable account management.
         </div>
@@ -479,13 +480,6 @@ let ownerToken  = null;
 let moodleURL   = null;
 let moodleToken = null;
 
-function clearSession() {
-    localStorage.removeItem('pg_access_token');
-    localStorage.removeItem('pg_refresh_token');
-    localStorage.removeItem('pg_user');
-    localStorage.removeItem('pg_role');
-}
-
 // ── Auth guard + role check ──
 (async function init() {
     ownerToken = localStorage.getItem('pg_access_token');
@@ -506,20 +500,17 @@ function clearSession() {
         const role = profiles[0]?.role;
 
         if (!verifyRes.ok || role !== 'owner') {
-            clearSession();
             window.location.href = 'index.html';
             return;
         }
 
-        // Confirmed owner — show Teacher View switch
-        document.getElementById('switchTeacherBtn').style.display = 'inline-flex';
     } catch (_) {
-        clearSession();
         window.location.href = 'index.html';
         return;
     }
 
     await loadMoodleConfig();
+    document.body.style.opacity = '1';
 })();
 
 async function loadMoodleConfig() {
@@ -531,7 +522,8 @@ async function loadMoodleConfig() {
         if (rows && rows[0] && rows[0].moodle_url && rows[0].moodle_token) {
             moodleURL   = rows[0].moodle_url.replace(/\/$/, '');
             moodleToken = rows[0].moodle_token;
-            document.getElementById('configBanner').classList.add('hidden');
+        } else {
+            document.getElementById('configBanner').classList.remove('hidden');
         }
     } catch (_) {}
 }
@@ -777,12 +769,6 @@ function renderUsersTable(users) {
 
 function esc(str) {
     return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-}
-
-// ── Switch to Teacher View (owner only — button hidden for teachers) ──
-function switchToTeacher() {
-    // TODO: update href below to your site's teacher page once it exists
-    window.location.href = './quiz-builder.html';
 }
 
 // ── Logout ──
