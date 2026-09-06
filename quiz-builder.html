@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -687,7 +687,7 @@
 
 <script>
 const SUPABASE_URL  = 'https://qnqcysdeolnooxxcafwz.supabase.co';
-const SUPABASE_WRITE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFucWN5c2Rlb2xub294eGNhZnd6Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3NjM1NzQ2NSwiZXhwIjoyMDkxOTMzNDY1fQ.Co7aXPihbAn56b2BE2rh4q6wgqlVEbzp3C6wAZz1V8s';
+// Write operations proxied securely via server-side /api/scheduled-quizzes
 const SUPABASE_KEY  = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFucWN5c2Rlb2xub294eGNhZnd6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYzNTc0NjUsImV4cCI6MjA5MTkzMzQ2NX0.hOuPKv1zqQup7JfEpe-SJWT9Duz0RUwcCPwJb0zE_0Q';
 const SUPA_B_URL    = 'https://zqrswemxmhjaylsuulyu.supabase.co';
 const SUPA_B_PUB    = 'sb_publishable_8Y62WSnJwGidHS591ofDiw_gbzmTGAQ';
@@ -1672,15 +1672,7 @@ async function loadMyQuizzes() {
     container.innerHTML = '<div class="loading-state"><div class="loader"></div><p>Loading your scheduled tests...</p></div>';
 
     try {
-        const res = await fetch(
-            SUPABASE_URL + '/rest/v1/scheduled_quizzes?order=created_at.desc',
-            {
-                headers: {
-                    'apikey': SUPABASE_WRITE_KEY,
-                    'Authorization': 'Bearer ' + SUPABASE_WRITE_KEY
-                }
-            }
-        );
+        const res = await fetch('/api/scheduled-quizzes?order=created_at.desc');
         if (!res.ok) throw new Error('Failed to load quizzes from database');
 
         const quizzes = await res.json();
