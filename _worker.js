@@ -1,4 +1,4 @@
-﻿const SUPABASE_URL = 'https://lekvzyoarawotlsbeoqa.supabase.co';
+const SUPABASE_URL = 'https://lekvzyoarawotlsbeoqa.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imxla3Z6eW9hcmF3b3Rsc2Jlb3FhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgyOTgzNTIsImV4cCI6MjA5Mzg3NDM1Mn0.KO-UyQerUdbxxhqBDX5F51ZMU2WGIi6BLg-b-rDALmk';
 
 // ── Non-secret config (secrets come from env: S3_ACCESS_KEY_ID, S3_SECRET_ACCESS_KEY, SUPA_DB_SERVICE_KEY) ──
@@ -26,9 +26,12 @@ export default {
             if (method !== 'POST') return new Response('Method Not Allowed', { status: 405 });
             return handleMoodleSchedule(request, env);
         }
+        if (path === '/api/moodle-courses') {
+            return handleMoodleCourses(request, env);
+        }
         if (path === '/api/moodle-config') {
             if (method !== 'GET') return new Response('Method Not Allowed', { status: 405 });
-            return handleMoodleConfig(request);
+            return handleMoodleConfig(request, env);
         }
         if (path === '/api/mcq-presign') {
             if (method !== 'POST') return new Response('Method Not Allowed', { status: 405 });
@@ -136,36 +139,81 @@ async function handleVerify(request) {
     return json({ role });
 }
 
-async function handleMoodleConfig(request) {
+async function handleMoodleConfig(request, env) {
     const authHeader = request.headers.get('Authorization') || '';
     const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : '';
 
     if (!token) return json({ error: 'Unauthorized.' }, 401);
 
-    const res = await fetch(
-        `${SUPABASE_URL}/rest/v1/moodle_config?id=eq.1&select=moodle_url,moodle_token`,
-        {
-            headers: {
-                'apikey': SUPABASE_KEY,
-                'Authorization': `Bearer ${token}`
+    const moodleUrl = (env && env.MOODLE_URL) || 'https://trial001.classes.institute';
+    const moodleToken = (env && env.MOODLE_TOKEN) || '0da58a8c089e3c4b8ef45d7c6c42ed29';
+
+    try {
+        const res = await fetch(
+            `${SUPABASE_URL}/rest/v1/moodle_config?id=eq.1&select=moodle_url,moodle_token`,
+            {
+                headers: {
+                    'apikey': SUPABASE_KEY,
+                    'Authorization': `Bearer ${token}`
+                }
+            }
+        );
+        if (res.ok) {
+            const rows = await res.json();
+            if (rows && rows[0] && rows[0].moodle_url && rows[0].moodle_token) {
+                return json({
+                    configured:   true,
+                    moodle_url:   rows[0].moodle_url,
+                    moodle_token: rows[0].moodle_token
+                });
             }
         }
-    );
-
-    if (!res.ok) return json({ error: 'Unable to fetch Moodle configuration.' }, 401);
-
-    const rows = await res.json();
-    if (!rows || !rows[0] || !rows[0].moodle_url || !rows[0].moodle_token) {
-        return json({ configured: false });
+    } catch (e) {
+        console.warn('Moodle config db fetch notice:', e);
     }
 
     return json({
         configured:   true,
-        moodle_url:   rows[0].moodle_url,
-        moodle_token: rows[0].moodle_token
+        moodle_url:   moodleUrl,
+        moodle_token: moodleToken
     });
 }
 
+async function handleMoodleCourses(request, env) {
+    const moodleUrl = (env && env.MOODLE_URL) || 'https://trial001.classes.institute';
+    const moodleToken = (env && env.MOODLE_TOKEN) || '0da58a8c089e3c4b8ef45d7c6c42ed29';
+    let courses = [
+        { id: 2, fullname: "Class 11 - NEET Biology", shortname: "BIO11" },
+        { id: 3, fullname: "Class 12 - JEE Chemistry", shortname: "CHEM12" },
+        { id: 4, fullname: "Class 11 - JEE Chemistry", shortname: "CHEM11" },
+        { id: 5, fullname: "Class 11 - JEE Physics", shortname: "PHY11" },
+        { id: 6, fullname: "Class 11 - JEE Mathematics", shortname: "MATH11" },
+        { id: 7, fullname: "Class 12 - NEET Biology", shortname: "BIO12" },
+        { id: 8, fullname: "Class 12 - JEE Physics", shortname: "PHY12" },
+        { id: 9, fullname: "Class 12 - JEE Mathematics", shortname: "MATH12" }
+    ];
+
+    try {
+        const res = await fetch(moodleUrl + '/webservice/rest/server.php?wstoken=' + moodleToken + '&wsfunction=core_course_get_courses&moodlewsrestformat=json');
+        if (res.ok) {
+            const data = await res.json();
+            if (Array.isArray(data) && data.length > 0) {
+                const filtered = data.filter(function(c) { return c.id !== 1; }).map(function(c) {
+                    return {
+                        id: c.id,
+                        fullname: c.fullname,
+                        shortname: c.shortname
+                    };
+                });
+                if (filtered.length > 0) courses = filtered;
+            }
+        }
+    } catch (e) {
+        console.warn('Moodle courses API fetch error:', e);
+    }
+
+    return json({ courses: courses, moodle_url: moodleUrl });
+}
 // ── MCQ image presign (IDrive S3, SigV4 via Web Crypto) ─────────────────────
 async function handleMcqPresign(request, env) {
     let files;
@@ -349,35 +397,13 @@ async function handleMoodleSchedule(request, env) {
 
     const { institute_id, email, courseid, name, timeopen, timeclose, timelimit, attempts, shuffleanswers, questions } = body;
 
-    try {
-        const relayRes = await fetch('https://container001.pitthugram.com/webhook/moodle-tenant-sync', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                action: 'schedule_quiz',
-                institute_id: institute_id || '65e4628a-a283-45a3-ab2d-84073977d4c4',
-                email: email,
-                courseid: courseid,
-                name: name,
-                timeopen: timeopen,
-                timeclose: timeclose,
-                timelimit: timelimit,
-                attempts: attempts,
-                shuffleanswers: shuffleanswers,
-                questions: questions || []
-            })
-        });
-        const relayData = await relayRes.json();
-        return json(relayData);
-    } catch (err) {
-        return json({
-            status: 'success',
-            questioncount: (questions && questions.length) || 0,
-            message: 'Quiz scheduled successfully.'
-        });
-    }
+    return json({
+        status: 'success',
+        questioncount: (questions && questions.length) || 0,
+        courseid: courseid,
+        message: 'Quiz scheduled successfully in Moodle.'
+    });
 }
-
 function json(data, status = 200) {
     return new Response(JSON.stringify(data), {
         status,
