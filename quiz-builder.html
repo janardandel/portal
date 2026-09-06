@@ -1129,29 +1129,11 @@ async function scheduleQuiz() {
         sModal.classList.add('show');
     }
 
-        // 2. Fire asynchronous background sync to Moodle Webhook & Supabase Queue
+        // 2. Fire fast-path ingestion to Supabase Queue via AWS n8n Webhook
     try {
-        const qIds = selQuestions.map(function(q) { return q.id; }).filter(Boolean);
-        fetch(SUPABASE_URL + '/rest/v1/scheduled_quizzes', {
-            method: 'POST',
-            headers: {
-                'apikey': SUPABASE_WRITE_KEY,
-                'Authorization': 'Bearer ' + SUPABASE_WRITE_KEY,
-                'Content-Type': 'application/json',
-                'Prefer': 'return=minimal'
-            },
-            body: JSON.stringify({
-                teacher_wordpress_id: (currentUser && currentUser.id) || '1edca830-a871-4ed6-830b-1fa60273ec91',
-                class: activeClass || '11',
-                quiz_title: title,
-                scheduled_date: date,
-                scheduled_time: time + ':00',
-                question_ids: qIds,
-                status: 'pending'
-            })
-        }).catch(function(e) { console.warn('Supabase queue notice:', e); });
+        const moodleSyncUrl   = 'https://awsn8n.pitthugram.com/webhook/moodle-tenant-sync';
+        const moodleStatusUrl = 'https://awsn8n.pitthugram.com/webhook/moodle-quiz-status';
 
-        const moodleSyncUrl = 'https://awsn8n.pitthugram.com/webhook/moodle-tenant-sync';
         fetch(moodleSyncUrl, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -1171,16 +1153,53 @@ async function scheduleQuiz() {
         }).then(function(res) {
             return res.json();
         }).then(function(data) {
+            const lmsBtn = document.getElementById('openLmsBtn');
+            const msgEl = document.getElementById('successMsg');
+
             if (data && data.quiz_url) {
-                const lmsBtn = document.getElementById('openLmsBtn');
                 if (lmsBtn) {
                     lmsBtn.href = data.quiz_url;
                     lmsBtn.style.display = 'inline-flex';
                 }
-                const msgEl = document.getElementById('successMsg');
                 if (msgEl) {
                     msgEl.innerHTML = `<strong>${title}</strong> is scheduled in ${data.tenant_name || 'Moodle'} (${courseTxt}) with ${data.questioncount || selQuestions.length} MCQs!`;
                 }
+            } else if (data && data.job_id) {
+                const jobId = data.job_id;
+                if (msgEl) {
+                    msgEl.innerHTML = `<strong>${title}</strong> is queued for creation in ${data.tenant_name || 'Moodle'}... <span style="display:inline-block;width:12px;height:12px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;animation:spin 0.75s linear infinite;margin-left:5px;vertical-align:middle;"></span>`;
+                }
+
+                let pollCount = 0;
+                const maxPolls = 30; // poll every 2s for up to 60s
+                const pollTimer = setInterval(function() {
+                    pollCount++;
+                    if (pollCount > maxPolls) {
+                        clearInterval(pollTimer);
+                        return;
+                    }
+                    fetch(moodleStatusUrl + '?job_id=' + encodeURIComponent(jobId))
+                        .then(function(sRes) { return sRes.json(); })
+                        .then(function(sData) {
+                            if (sData && sData.status === 'created' && sData.quiz_url) {
+                                clearInterval(pollTimer);
+                                if (lmsBtn) {
+                                    lmsBtn.href = sData.quiz_url;
+                                    lmsBtn.style.display = 'inline-flex';
+                                }
+                                if (msgEl) {
+                                    msgEl.innerHTML = `<strong>${title}</strong> is scheduled in ${data.tenant_name || 'Moodle'} (${courseTxt}) with ${data.questioncount || selQuestions.length} MCQs!`;
+                                }
+                            } else if (sData && sData.status === 'failed') {
+                                clearInterval(pollTimer);
+                                if (msgEl) {
+                                    msgEl.innerHTML = `<span style="color:#ef4444;">Notice: ${sData.error_message || 'Scheduling queue pending'}</span>`;
+                                }
+                            }
+                        }).catch(function(err) {
+                            console.warn('Queue status poll notice:', err);
+                        });
+                }, 2000);
             }
         }).catch(function(err) {
             console.warn('Background sync notice:', err);
