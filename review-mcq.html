@@ -610,7 +610,7 @@ async function loadScheduledQuizzes() {
         </div>
         <div style="display:flex;align-items:center;gap:0.75rem;">
           <span class="status-badge ${statusClass}">${statusText}</span>
-          <a href="https://trial001.classes.institute" target="_blank" class="btn btn-outline btn-sm" style="font-size:0.8rem;"><i class="ph ph-arrow-square-out"></i> Moodle</a>
+          <a :href="tenantMoodleUrl" href="https://trial001.classes.institute" onclick="this.href=getTenantMoodleUrl()" target="_blank" class="btn btn-outline btn-sm" style="font-size:0.8rem;"><i class="ph ph-arrow-square-out"></i> Moodle</a>
         </div>
       </div>`;
     }).join('');
@@ -619,6 +619,10 @@ async function loadScheduledQuizzes() {
   }
 }
 
+
+function getTenantMoodleUrl() {
+    return sessionStorage.getItem('pg_moodle_url') || localStorage.getItem('pg_moodle_url') || 'https://trial001.classes.institute';
+}
 if (checkAuth()) { loadScheduledQuizzes(); }
 </script>
 </body>
