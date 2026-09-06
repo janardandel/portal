@@ -167,7 +167,7 @@ const SUPA_A_URL = 'https://qnqcysdeolnooxxcafwz.supabase.co';
 const SUPA_A_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFucWN5c2Rlb2xub294eGNhZnd6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI4NDY0MzAsImV4cCI6MjA4ODQyMjQzMH0.tbm7J9FyQqwJB-KVSMwX13bfFEFsUqBknBDTFSMRuXE';
 
 // n8n presign endpoint — returns short-lived IDrive URLs. No storage keys in the browser.
-const N8N_PRESIGN = 'https://container001.pitthugram.com/webhook/mcq-presign';
+const N8N_PRESIGN = '/api/mcq-presign';
 
 let currentUser = null, currentJob = null, mcqData = [], pollTimer = null;
 
@@ -610,7 +610,7 @@ async function loadScheduledQuizzes() {
         </div>
         <div style="display:flex;align-items:center;gap:0.75rem;">
           <span class="status-badge ${statusClass}">${statusText}</span>
-          <a href="https://cx001.pitthugram.com" target="_blank" class="btn btn-outline btn-sm" style="font-size:0.8rem;"><i class="ph ph-arrow-square-out"></i> Moodle</a>
+          <a href="https://trial001.classes.institute" target="_blank" class="btn btn-outline btn-sm" style="font-size:0.8rem;"><i class="ph ph-arrow-square-out"></i> Moodle</a>
         </div>
       </div>`;
     }).join('');
