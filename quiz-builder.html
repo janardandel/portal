@@ -218,10 +218,19 @@
             <i class="ph-fill ph-graduation-cap" style="font-size:1.6rem;color:var(--primary);"></i>
             <span>Portal</span>
         </a>
-        <div class="nav-actions">
-            <a href="./teacher-home.html" class="btn btn-outline btn-sm" style="padding:0.5rem 1rem;">
-                <i class="ph ph-house"></i> Dashboard
+        <div class="nav-actions" style="display:flex;align-items:center;gap:0.5rem;flex-wrap:wrap;">
+            <a href="./reports.html" class="btn btn-outline btn-sm" style="padding:0.45rem 0.85rem;display:inline-flex;align-items:center;gap:0.35rem;border-color:var(--primary);color:var(--primary);">
+                <i class="ph-bold ph-chart-line-up"></i> Reports & Analytics
             </a>
+            <a href="./review-mcq.html" class="btn btn-outline btn-sm" style="padding:0.45rem 0.85rem;display:inline-flex;align-items:center;gap:0.35rem;">
+                <i class="ph ph-calendar-check"></i> Scheduled Tests
+            </a>
+            <a href="./review-mcq.html?tab=ocr" class="btn btn-outline btn-sm" style="padding:0.45rem 0.85rem;display:inline-flex;align-items:center;gap:0.35rem;">
+                <i class="ph ph-file-text"></i> OCR Review
+            </a>
+            <button onclick="confirmLogout(event)" class="btn btn-outline btn-sm" style="padding:0.45rem 0.85rem;border-color:rgba(239,68,68,0.4);color:#FCA5A5;">
+                <i class="ph ph-sign-out"></i> Logout
+            </button>
         </div>
     </div>
 </header>
@@ -242,11 +251,10 @@
                     <ul>
                         <li><a href="#" onclick="showDashboard(event)"><i class="ph ph-house"></i> Dashboard</a></li>
                         <li><a href="#" onclick="openBatchModal(event)"><i class="ph ph-calendar-plus"></i> Schedule Quiz</a></li>
-
-                        
+                        <li><a href="./reports.html"><i class="ph-bold ph-chart-line-up" style="color:var(--primary);"></i> Reports & Analytics</a></li>
+                        <li><a href="./review-mcq.html"><i class="ph ph-calendar-check"></i> Scheduled Tests</a></li>
                         <li><a href="./create-mcq.html"><i class="ph ph-pencil-simple-line"></i> Add MCQ</a></li>
-                        
-                        <li><a href="./review-mcq.html"><i class="ph ph-check-square"></i> Review MCQs</a></li>
+                        <li><a href="./review-mcq.html?tab=ocr"><i class="ph ph-file-text"></i> OCR Paper Review</a></li>
                     </ul>
                 </nav>
                 <div class="qb-section">
