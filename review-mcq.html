@@ -8,7 +8,34 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <script src="https://unpkg.com/@phosphor-icons/web" defer></script>
-  <link rel="stylesheet" href="./style.css">
+    <link rel="stylesheet" href="./style.css">
+  <link rel="stylesheet" href="./pitthugram.css">
+  <style>
+    /* Desktop sidebar (721px+) */
+    @media (min-width: 721px) {
+      #qbSidebar {
+        display: flex !important;
+        flex-direction: column !important;
+        position: fixed !important;
+        top: 72px !important;
+        left: 0 !important;
+        width: 280px !important;
+        height: calc(100vh - 72px) !important;
+        max-height: none !important;
+        border-radius: 0 !important;
+        transform: none !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        z-index: 50 !important;
+      }
+      #qbPage.qb-page { margin-left: 280px !important; }
+      #qbPage .qb-layout { display: block !important; }
+    }
+
+    @media (max-width: 720px) {
+      #sidebarToggle { display: inline-flex !important; }
+      #qbPage.qb-page { padding: 1rem 1rem 5rem !important; }
+    }
   <style>
     .review-layout { display:grid; grid-template-columns:280px 1fr; min-height:calc(100vh - 72px); }
     @media(max-width:800px){ .review-layout{grid-template-columns:1fr;} }
@@ -98,22 +125,102 @@
 <!-- Navbar -->
 <header class="navbar">
   <div class="container nav-inner">
-    <a href="./quiz-builder.html" class="logo" style="display:flex;align-items:center;gap:0.5rem;font-weight:700;font-size:1.15rem;color:var(--text-primary);text-decoration:none;"><i class="ph-fill ph-graduation-cap" style="font-size:1.6rem;color:var(--primary);"></i> <span>Portal</span></a>
-    <div class="nav-actions" style="display:flex;align-items:center;gap:0.5rem;">
-      <button id="tabBtnScheduled" class="btn btn-sm" onclick="switchReviewTab('scheduled')" style="background:var(--primary);color:#fff;border-radius:var(--radius-md);font-weight:700;display:flex;align-items:center;gap:0.4rem;">
+    <a href="./quiz-builder.html" class="logo" style="display:flex;align-items:center;gap:0.5rem;font-weight:700;font-size:1.15rem;color:var(--text-primary);text-decoration:none;">
+      <i class="ph-fill ph-graduation-cap" style="font-size:1.6rem;color:var(--primary);"></i>
+      <span>Portal</span>
+    </a>
+    <div class="nav-actions" style="display:flex;align-items:center;gap:0.5rem;flex-wrap:wrap;">
+      <a href="./reports.html" class="btn btn-outline btn-sm" style="padding:0.45rem 0.85rem;display:inline-flex;align-items:center;gap:0.35rem;">
+        <i class="ph-bold ph-chart-line-up"></i> Reports & Analytics
+      </a>
+      <button id="tabBtnScheduled" class="btn btn-sm" onclick="switchReviewTab('scheduled')" style="padding:0.45rem 0.85rem;display:inline-flex;align-items:center;gap:0.35rem;background:var(--primary);color:#fff;border-color:var(--primary);font-weight:700;">
         <i class="ph ph-calendar-check"></i> Scheduled Tests
       </button>
-      <button id="tabBtnOcr" class="btn btn-outline btn-sm" onclick="switchReviewTab('ocr')" style="display:flex;align-items:center;gap:0.4rem;">
-        <i class="ph ph-file-text"></i> OCR Paper Review
+      <button id="tabBtnOcr" class="btn btn-outline btn-sm" onclick="switchReviewTab('ocr')" style="padding:0.45rem 0.85rem;display:inline-flex;align-items:center;gap:0.35rem;">
+        <i class="ph ph-file-text"></i> OCR Review
       </button>
-      <a href="./reports.html" class="btn btn-outline btn-sm"><i class="ph-bold ph-chart-line-up"></i> Reports</a>
-      <a href="./quiz-builder.html" class="btn btn-outline btn-sm"><i class="ph ph-plus-circle"></i> Quiz Builder</a>
-      <button class="btn btn-outline btn-sm" onclick="logout()"><i class="ph ph-sign-out"></i> Logout</button>
+      <a href="./quiz-builder.html" class="btn btn-outline btn-sm" style="padding:0.45rem 0.85rem;display:inline-flex;align-items:center;gap:0.35rem;">
+        <i class="ph ph-plus-circle"></i> Quiz Builder
+      </a>
+      <button onclick="logout()" class="btn btn-outline btn-sm" style="padding:0.45rem 0.85rem;border-color:rgba(239,68,68,0.4);color:#FCA5A5;">
+        <i class="ph ph-sign-out"></i> Logout
+      </button>
     </div>
   </div>
 </header>
 
-<div id="mainContent" style="display:none;padding:1.5rem 2rem;">
+<!-- Unified Portal Dashboard Shell -->
+<div class="qb-page" id="qbPage">
+  <div class="qb-wrap">
+    <div class="qb-layout">
+
+      <!-- Left Sidebar (Matching Quiz Builder) -->
+      <aside class="qb-sidebar" id="qbSidebar">
+        <div class="qb-brand">
+          <i class="ph-fill ph-graduation-cap" style="font-size:1.5rem;color:var(--primary);"></i>
+          <span>Portal</span>
+          <button class="sidebar-close" id="sidebarClose" aria-label="Close menu" onclick="closeSidebar()">
+            <i class="ph ph-x"></i>
+          </button>
+        </div>
+        <nav class="qb-nav">
+          <ul>
+            <li><a href="./quiz-builder.html"><i class="ph ph-plus-circle"></i> Quiz Builder</a></li>
+            <li><a href="./reports.html"><i class="ph-bold ph-chart-line-up"></i> Reports & Analytics</a></li>
+            <li><a href="#" id="sideNavScheduled" class="active" onclick="switchReviewTab('scheduled'); closeSidebar(); return false;"><i class="ph ph-calendar-check" style="color:var(--primary);"></i> Scheduled Tests</a></li>
+            <li><a href="./create-mcq.html"><i class="ph ph-pencil-simple-line"></i> Add MCQ</a></li>
+            <li><a href="#" id="sideNavOcr" onclick="switchReviewTab('ocr'); closeSidebar(); return false;"><i class="ph ph-file-text"></i> OCR Paper Review</a></li>
+          </ul>
+        </nav>
+
+        <div class="qb-section" style="margin-top:1.25rem;">
+          <div class="qb-section-title" style="font-size:0.75rem;font-weight:700;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:0.75rem;">
+            <span>Quick Actions</span>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:0.5rem;">
+            <a href="./quiz-builder.html" class="btn btn-primary btn-sm" style="justify-content:flex-start;gap:0.5rem;width:100%;font-size:0.82rem;">
+              <i class="ph ph-plus"></i> Schedule New Quiz
+            </a>
+            <button onclick="loadScheduledQuizzes()" class="btn btn-outline btn-sm" style="justify-content:flex-start;gap:0.5rem;width:100%;font-size:0.82rem;">
+              <i class="ph ph-arrows-clockwise"></i> Refresh Tests
+            </button>
+            <a href="./reports.html" class="btn btn-outline btn-sm" style="justify-content:flex-start;gap:0.5rem;width:100%;font-size:0.82rem;">
+              <i class="ph-bold ph-chart-line-up"></i> Open Analytics
+            </a>
+          </div>
+        </div>
+
+        <div class="qb-sidebar-foot" style="margin-top:auto;padding-top:1rem;">
+          <a href="#" class="sidebar-link" onclick="logout()"><i class="ph ph-sign-out"></i> Logout</a>
+        </div>
+      </aside>
+      <div class="sidebar-backdrop" id="sidebarBackdrop" onclick="closeSidebar()"></div>
+
+      <!-- Main Workspace -->
+      <main class="qb-main" id="mainContent" style="padding:1.75rem 2rem 4rem;min-height:calc(100vh - 72px);display:none;flex-direction:column;gap:1.5rem;">
+        <!-- Top Bar -->
+        <div class="qb-top" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem;margin-bottom:0.5rem;">
+          <div style="display:flex;align-items:center;gap:0.75rem;">
+            <button class="sidebar-toggle" id="sidebarToggle" onclick="openSidebar()" aria-label="Open menu" style="display:none;background:none;border:none;color:var(--text-primary);font-size:1.4rem;cursor:pointer;">
+              <i class="ph ph-list"></i>
+            </button>
+            <div>
+              <h1 id="pageTitleHeading" style="font-size:1.5rem;font-weight:800;color:var(--text-primary);margin-bottom:0.2rem;display:flex;align-items:center;gap:0.5rem;">
+                <i class="ph-fill ph-calendar-check" style="color:var(--primary);"></i> Scheduled Tests
+              </h1>
+              <p id="pageSubHeading" style="font-size:0.88rem;color:var(--text-secondary);margin:0;">Manage scheduled diagnostic quizzes and view student submission reports.</p>
+            </div>
+          </div>
+          <div class="user-chip" style="display:flex;align-items:center;gap:0.75rem;background:var(--bg-surface);border:1px solid var(--border);border-radius:99px;padding:0.35rem 0.85rem;">
+            <div class="avatar" style="width:28px;height:28px;border-radius:50%;background:rgba(244,0,9,0.15);color:var(--primary);display:flex;align-items:center;justify-content:center;font-size:0.9rem;"><i class="ph-fill ph-user"></i></div>
+            <span id="userEmailSpan" style="font-size:0.83rem;color:var(--text-primary);font-weight:600;">Faculty Portal</span>
+            <button onclick="logout()" style="background:none;border:none;color:#ef4444;cursor:pointer;font-size:0.9rem;display:flex;align-items:center;" title="Logout">
+              <i class="ph ph-sign-out"></i>
+            </button>
+          </div>
+        </div>
+
+
   <!-- Scheduled Tests View -->
   <div id="scheduledTestsView" style="display:block;max-width:1000px;margin:0 auto;">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem;flex-wrap:wrap;gap:1rem;">
@@ -153,11 +260,10 @@
       </div>
       <div id="reviewContent" style="display:none;"></div>
     </main>
-
-  </div>
+      </main>
+    </div>
   </div>
 </div>
-
 <!-- Quiz Results & Analytics Modal -->
 <div id="resultsModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.78);z-index:1000;align-items:center;justify-content:center;padding:1.25rem;backdrop-filter:blur(4px);">
   <div style="background:var(--bg-elevated);border:1.5px solid var(--border-light);border-radius:var(--radius-lg);width:100%;max-width:920px;max-height:92vh;display:flex;flex-direction:column;box-shadow:0 25px 50px -12px rgba(0,0,0,0.7);overflow:hidden;">
@@ -647,18 +753,30 @@ function switchReviewTab(tab) {
   const ocrView   = document.getElementById('ocrReviewView');
   const schedBtn  = document.getElementById('tabBtnScheduled');
   const ocrBtn    = document.getElementById('tabBtnOcr');
+  const sideSched = document.getElementById('sideNavScheduled');
+  const sideOcr   = document.getElementById('sideNavOcr');
+  const titleHead = document.getElementById('pageTitleHeading');
+  const subHead   = document.getElementById('pageSubHeading');
 
   if (tab === 'scheduled') {
     if (schedView) schedView.style.display = 'block';
     if (ocrView)   ocrView.style.display   = 'none';
-    if (schedBtn) { schedBtn.className = 'btn btn-sm'; schedBtn.style.background = 'var(--primary)'; schedBtn.style.color = '#fff'; }
-    if (ocrBtn)   { ocrBtn.className = 'btn btn-outline btn-sm'; ocrBtn.style.background = 'transparent'; }
+    if (schedBtn) { schedBtn.className = 'btn btn-sm'; schedBtn.style.background = 'var(--primary)'; schedBtn.style.color = '#fff'; schedBtn.style.borderColor = 'var(--primary)'; }
+    if (ocrBtn)   { ocrBtn.className = 'btn btn-outline btn-sm'; ocrBtn.style.background = 'transparent'; ocrBtn.style.color = 'var(--text-secondary)'; }
+    if (sideSched) sideSched.classList.add('active');
+    if (sideOcr)   sideOcr.classList.remove('active');
+    if (titleHead) titleHead.innerHTML = '<i class="ph-fill ph-calendar-check" style="color:var(--primary);"></i> Scheduled Tests';
+    if (subHead)   subHead.textContent = 'Manage scheduled diagnostic quizzes and view student submission reports.';
     loadScheduledQuizzes();
   } else {
     if (schedView) schedView.style.display = 'none';
     if (ocrView)   ocrView.style.display   = 'grid';
-    if (ocrBtn)   { ocrBtn.className = 'btn btn-sm'; ocrBtn.style.background = 'var(--primary)'; ocrBtn.style.color = '#fff'; }
-    if (schedBtn) { schedBtn.className = 'btn btn-outline btn-sm'; schedBtn.style.background = 'transparent'; }
+    if (ocrBtn)   { ocrBtn.className = 'btn btn-sm'; ocrBtn.style.background = 'var(--primary)'; ocrBtn.style.color = '#fff'; ocrBtn.style.borderColor = 'var(--primary)'; }
+    if (schedBtn) { schedBtn.className = 'btn btn-outline btn-sm'; schedBtn.style.background = 'transparent'; schedBtn.style.color = 'var(--text-secondary)'; }
+    if (sideOcr)   sideOcr.classList.add('active');
+    if (sideSched) sideSched.classList.remove('active');
+    if (titleHead) titleHead.innerHTML = '<i class="ph-fill ph-file-text" style="color:var(--primary);"></i> OCR Paper Review';
+    if (subHead)   subHead.textContent = 'Review and approve AI-extracted multiple-choice questions from scanned test papers.';
     loadJobs();
   }
 }
@@ -834,7 +952,33 @@ function refreshCurrentReport() {
 function getTenantMoodleUrl() {
     return sessionStorage.getItem('pg_moodle_url') || localStorage.getItem('pg_moodle_url') || 'https://trial001.classes.institute';
 }
-if (checkAuth()) { loadScheduledQuizzes(); }
+function openSidebar() {
+  const sb = document.getElementById('qbSidebar');
+  const bd = document.getElementById('sidebarBackdrop');
+  if (sb) sb.classList.add('open');
+  if (bd) bd.classList.add('show');
+}
+function closeSidebar() {
+  const sb = document.getElementById('qbSidebar');
+  const bd = document.getElementById('sidebarBackdrop');
+  if (sb) sb.classList.remove('open');
+  if (bd) bd.classList.remove('show');
+}
+
+// Check initial auth and query params
+if (checkAuth()) {
+  const email = localStorage.getItem('pg_user_email') || sessionStorage.getItem('pg_user_email');
+  if (email) {
+    const el = document.getElementById('userEmailSpan');
+    if (el) el.textContent = email;
+  }
+  const params = new URLSearchParams(window.location.search);
+  if (params.get('tab') === 'ocr') {
+    switchReviewTab('ocr');
+  } else {
+    loadScheduledQuizzes();
+  }
+}
 </script>
 </body>
 </html>
