@@ -30,10 +30,10 @@ export async function onRequestGet(context) {
         return json({ configured: false });
     }
 
+    // Withhold moodle_token from client response
     return json({
         configured:   true,
-        moodle_url:   rows[0].moodle_url,
-        moodle_token: rows[0].moodle_token
+        moodle_url:   rows[0].moodle_url
     });
 }
 
