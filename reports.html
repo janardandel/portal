@@ -1,0 +1,646 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reports & Analytics â€” Portal</title>
+  <link rel="icon" type="image/png" href="./favicon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/@phosphor-icons/web" defer></script>
+  <link rel="stylesheet" href="./style.css">
+  <style>
+    /* â”€â”€ Layout & Responsive Workspace â”€â”€ */
+    .reports-layout {
+      display: grid;
+      grid-template-columns: 360px 1fr;
+      gap: 1.5rem;
+      min-height: calc(100vh - 72px);
+      padding: 1.75rem 2rem 4rem;
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+    @media (max-width: 992px) {
+      .reports-layout { grid-template-columns: 1fr; padding: 1rem 1rem 3rem; }
+    }
+
+    /* â”€â”€ Left Directory Panel â”€â”€ */
+    .test-dir-panel {
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 1.25rem;
+      display: flex;
+      flex-direction: column;
+      max-height: calc(100vh - 120px);
+      position: sticky;
+      top: 90px;
+    }
+    @media (max-width: 992px) {
+      .test-dir-panel { position: static; max-height: 480px; }
+    }
+
+    .dir-search {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+    }
+    .dir-search input {
+      flex: 1;
+      padding: 0.6rem 0.85rem;
+      background: var(--bg-input);
+      border: 1.5px solid var(--border-light);
+      border-radius: var(--radius);
+      color: var(--text-primary);
+      font-size: 0.88rem;
+      outline: none;
+      transition: var(--transition);
+    }
+    .dir-search input:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px var(--primary-glow);
+    }
+
+    .test-card-list {
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 0.65rem;
+      padding-right: 0.25rem;
+    }
+    .test-card-list::-webkit-scrollbar { width: 5px; }
+    .test-card-list::-webkit-scrollbar-thumb { background: var(--border-light); border-radius: 99px; }
+
+    .test-card {
+      background: var(--bg-elevated);
+      border: 1.5px solid var(--border-light);
+      border-radius: var(--radius);
+      padding: 1rem;
+      cursor: pointer;
+      transition: var(--transition);
+      text-align: left;
+    }
+    .test-card:hover {
+      border-color: var(--primary);
+      background: rgba(244,0,9,0.04);
+      transform: translateY(-1px);
+    }
+    .test-card.active {
+      border-color: var(--primary);
+      background: rgba(244,0,9,0.08);
+      box-shadow: 0 0 0 1px var(--primary);
+    }
+    .test-card-title {
+      font-weight: 700;
+      font-size: 0.95rem;
+      color: var(--text-primary);
+      margin-bottom: 0.35rem;
+      line-height: 1.3;
+    }
+    .test-card-meta {
+      font-size: 0.78rem;
+      color: var(--text-secondary);
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.65rem;
+      align-items: center;
+    }
+
+    /* â”€â”€ Right Main Report Content â”€â”€ */
+    .report-main {
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 1.75rem 2rem;
+      min-height: 600px;
+      display: flex;
+      flex-direction: column;
+    }
+    @media (max-width: 600px) {
+      .report-main { padding: 1.25rem 1rem; }
+    }
+
+    .report-header {
+      border-bottom: 1.5px solid var(--border-light);
+      padding-bottom: 1.25rem;
+      margin-bottom: 1.5rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+    .report-title-area h2 {
+      font-size: 1.4rem;
+      font-weight: 800;
+      color: var(--text-primary);
+      margin-bottom: 0.3rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .report-subtitle {
+      font-size: 0.88rem;
+      color: var(--text-secondary);
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    /* â”€â”€ KPI Grid â”€â”€ */
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 1rem;
+      margin-bottom: 1.75rem;
+    }
+    .kpi-card {
+      background: var(--bg-elevated);
+      border: 1.5px solid var(--border-light);
+      border-radius: var(--radius);
+      padding: 1rem 1.15rem;
+    }
+    .kpi-label {
+      font-size: 0.74rem;
+      font-weight: 700;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 0.35rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .kpi-value {
+      font-size: 1.7rem;
+      font-weight: 800;
+      color: var(--text-primary);
+      line-height: 1.1;
+    }
+    .kpi-sub {
+      font-size: 0.77rem;
+      color: var(--text-secondary);
+      margin-top: 0.3rem;
+    }
+
+    /* â”€â”€ Leaderboard Table â”€â”€ */
+    .table-wrap {
+      overflow-x: auto;
+      border: 1.5px solid var(--border-light);
+      border-radius: var(--radius);
+      margin-top: 1rem;
+    }
+    .report-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.88rem;
+      text-align: left;
+      white-space: nowrap;
+    }
+    .report-table th {
+      background: var(--bg-elevated);
+      color: var(--text-secondary);
+      font-size: 0.74rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      padding: 0.85rem 1rem;
+      border-bottom: 1.5px solid var(--border-light);
+    }
+    .report-table td {
+      padding: 0.95rem 1rem;
+      border-bottom: 1px solid var(--border-light);
+      vertical-align: middle;
+      color: var(--text-secondary);
+    }
+    .report-table tr:hover td {
+      background: rgba(255,255,255,0.02);
+    }
+    .report-table tr:last-child td {
+      border-bottom: none;
+    }
+
+    /* â”€â”€ Badges â”€â”€ */
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+      font-size: 0.72rem;
+      font-weight: 700;
+      padding: 0.2rem 0.55rem;
+      border-radius: 99px;
+    }
+    .status-badge.approved   { background: rgba(34,197,94,0.15); color: #22c55e; }
+    .status-badge.draft      { background: rgba(234,179,8,0.15);  color: #eab308; }
+    .status-badge.failed     { background: rgba(239,68,68,0.15);  color: #ef4444; }
+    .status-badge.processing { background: rgba(59,130,246,0.15); color: #3b82f6; }
+
+    .rank-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+      font-weight: 800;
+      padding: 0.2rem 0.6rem;
+      border-radius: 99px;
+      font-size: 0.8rem;
+    }
+    .rank-1 { background: rgba(234,179,8,0.22); color: #eab308; border: 1px solid rgba(234,179,8,0.4); }
+    .rank-2 { background: rgba(148,163,184,0.22); color: #cbd5e1; border: 1px solid rgba(148,163,184,0.4); }
+    .rank-3 { background: rgba(217,119,6,0.22); color: #f59e0b; border: 1px solid rgba(217,119,6,0.4); }
+    .rank-other { color: var(--text-secondary); font-weight: 600; padding: 0.2rem 0.5rem; }
+
+    .empty-report {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 400px;
+      text-align: center;
+      color: var(--text-secondary);
+      gap: 0.75rem;
+    }
+    .empty-report i { font-size: 3rem; color: var(--border-light); }
+
+    .spinner { animation: spin 0.8s linear infinite; display: inline-block; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+
+<!-- Navbar -->
+<header class="navbar">
+  <div class="container nav-inner">
+    <a href="./quiz-builder.html" class="logo" style="display:flex;align-items:center;gap:0.55rem;font-weight:800;font-size:1.2rem;color:var(--text-primary);text-decoration:none;">
+      <i class="ph-fill ph-graduation-cap" style="font-size:1.6rem;color:var(--primary);"></i>
+      <span>Portal</span>
+    </a>
+    <div class="nav-actions" style="display:flex;align-items:center;gap:0.65rem;flex-wrap:wrap;">
+      <a href="./reports.html" class="btn btn-sm" style="background:var(--primary);color:#fff;border-color:var(--primary);font-weight:700;display:inline-flex;align-items:center;gap:0.35rem;">
+        <i class="ph-bold ph-chart-line-up"></i> Reports & Analytics
+      </a>
+      <a href="./quiz-builder.html" class="btn btn-outline btn-sm" style="display:inline-flex;align-items:center;gap:0.35rem;">
+        <i class="ph ph-plus-circle"></i> Quiz Builder
+      </a>
+      <a href="./review-mcq.html" class="btn btn-outline btn-sm" style="display:inline-flex;align-items:center;gap:0.35rem;">
+        <i class="ph ph-calendar-check"></i> Scheduled Tests
+      </a>
+      <button class="btn btn-outline btn-sm" onclick="logout()"><i class="ph ph-sign-out"></i> Logout</button>
+    </div>
+  </div>
+</header>
+
+<!-- Main Reports Workspace -->
+<div class="reports-layout">
+
+  <!-- Left: Test Directory Panel -->
+  <aside class="test-dir-panel">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.75rem;">
+      <div style="font-size:0.78rem;font-weight:700;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.06em;display:flex;align-items:center;gap:0.4rem;">
+        <i class="ph-bold ph-folder-open" style="color:var(--primary);"></i> Tests Directory
+      </div>
+      <button onclick="loadTestsDirectory()" class="btn btn-sm" style="padding:0.25rem 0.5rem;font-size:0.75rem;" title="Refresh List">
+        <i class="ph ph-arrows-clockwise"></i>
+      </button>
+    </div>
+
+    <!-- Search / Filter -->
+    <div class="dir-search">
+      <input type="text" id="testSearchInput" placeholder="Filter tests..." oninput="filterTestList()">
+    </div>
+
+    <!-- Scrollable test list -->
+    <div class="test-card-list" id="testsListContainer">
+      <p style="color:var(--text-secondary);font-size:0.85rem;text-align:center;padding:1.5rem 0;">
+        <i class="ph ph-spinner-gap spinner"></i> Loading tests...
+      </p>
+    </div>
+  </aside>
+
+  <!-- Right: Selected Test Report & Analytics -->
+  <main class="report-main" id="reportMainArea">
+    <!-- Header -->
+    <div class="report-header">
+      <div class="report-title-area">
+        <h2 id="repQuizTitle"><i class="ph-fill ph-chart-line-up" style="color:var(--primary);"></i> Select a Test to View Performance</h2>
+        <div class="report-subtitle" id="repQuizSubtitle">
+          <span>Choose any scheduled or completed test from the directory to load live analytics and student scorecards.</span>
+        </div>
+      </div>
+      <div style="display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap;">
+        <button onclick="refreshActiveReport()" class="btn btn-outline btn-sm" id="btnRefreshReport" style="display:none;">
+          <i class="ph ph-arrows-clockwise"></i> Refresh Analytics
+        </button>
+        <button onclick="window.print()" class="btn btn-outline btn-sm" id="btnPrintReport" style="display:none;">
+          <i class="ph ph-printer"></i> Print / Export
+        </button>
+      </div>
+    </div>
+
+    <!-- KPI Row -->
+    <div class="kpi-grid" id="kpiContainer" style="display:none;">
+      <div class="kpi-card">
+        <div class="kpi-label"><span>Total Submissions</span> <i class="ph ph-users"></i></div>
+        <div class="kpi-value" id="kpiAttempts">-</div>
+        <div class="kpi-sub" id="kpiParticipation">Enrolled: -</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label"><span>Class Average</span> <i class="ph ph-chart-bar" style="color:#3b82f6;"></i></div>
+        <div class="kpi-value" style="color:#3b82f6;" id="kpiAvgScore">-</div>
+        <div class="kpi-sub" id="kpiAvgPct">Accuracy: -</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label"><span>Highest Score</span> <i class="ph ph-trophy" style="color:#22c55e;"></i></div>
+        <div class="kpi-value" style="color:#22c55e;" id="kpiHighest">-</div>
+        <div class="kpi-sub" id="kpiLowest">Lowest: -</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label"><span>Test Capacity</span> <i class="ph ph-check-square"></i></div>
+        <div class="kpi-value" id="kpiQuestions">-</div>
+        <div class="kpi-sub" id="kpiMaxScore">Max Score: -</div>
+      </div>
+    </div>
+
+    <!-- Leaderboard / Results Table -->
+    <div id="resultsContent" style="display:none;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.75rem;flex-wrap:wrap;gap:0.5rem;">
+        <h3 style="font-size:1.05rem;font-weight:700;color:var(--text-primary);display:flex;align-items:center;gap:0.4rem;margin:0;">
+          <i class="ph-fill ph-trophy" style="color:#eab308;"></i> Student Leaderboard & Performance Scorecards
+        </h3>
+        <span id="leaderboardSummary" style="font-size:0.8rem;color:var(--text-secondary);font-weight:600;"></span>
+      </div>
+
+      <div class="table-wrap">
+        <table class="report-table">
+          <thead>
+            <tr>
+              <th style="width:70px;">Rank</th>
+              <th>Student Details</th>
+              <th>Score</th>
+              <th>Accuracy</th>
+              <th>Time Taken</th>
+              <th>Submitted At</th>
+              <th style="text-align:right;">1-Click Parent Report</th>
+            </tr>
+          </thead>
+          <tbody id="studentTableBody">
+            <!-- Rows rendered dynamically -->
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Informational banner -->
+      <div style="margin-top:1.25rem;padding:0.85rem 1.15rem;border-radius:var(--radius);background:var(--bg-elevated);border:1px solid var(--border-light);font-size:0.8rem;color:var(--text-secondary);display:flex;align-items:center;gap:0.5rem;">
+        <i class="ph-fill ph-whatsapp-logo" style="color:#25D366;font-size:1.2rem;"></i>
+        <span>Clicking <strong>Send Report</strong> opens WhatsApp Web or Mobile directly on your device with a pre-filled scorecard ready to send to the parent at <strong>â‚¹0 messaging cost</strong>.</span>
+      </div>
+    </div>
+
+    <!-- Initial Empty State -->
+    <div class="empty-report" id="emptyReportState">
+      <i class="ph ph-file-text"></i>
+      <h3 style="font-size:1.15rem;font-weight:700;color:var(--text-primary);">No Test Selected</h3>
+      <p style="max-width:380px;font-size:0.85rem;">Click any test on the left to view comprehensive performance analytics, ranked scores, and WhatsApp parent scorecards.</p>
+    </div>
+  </main>
+
+</div>
+
+<script>
+let allTests = [];
+let activeQuizId = null;
+let activeQuizTitle = '';
+
+// Auth check
+function checkAuth() {
+  const token = localStorage.getItem('pg_access_token');
+  const user  = localStorage.getItem('pg_user');
+  if (!token || !user) {
+    location.replace('index.html');
+    return false;
+  }
+  return true;
+}
+
+function logout() {
+  ['pg_access_token','pg_refresh_token','pg_user','pg_role'].forEach(k=>localStorage.removeItem(k));
+  window.location.href = './index.html';
+}
+
+function getTenantMoodleUrl() {
+  return sessionStorage.getItem('pg_moodle_url') || localStorage.getItem('pg_moodle_url') || 'https://trial001.classes.institute';
+}
+
+function escHtml(s) {
+  return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// â”€â”€ Load Scheduled / Completed Tests from Supabase API â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+async function loadTestsDirectory() {
+  const listEl = document.getElementById('testsListContainer');
+  if (!listEl) return;
+  listEl.innerHTML = '<p style="color:var(--text-secondary);font-size:0.85rem;text-align:center;padding:1.5rem 0;"><i class="ph ph-spinner-gap spinner"></i> Loading tests...</p>';
+
+  try {
+    const res = await fetch('/api/scheduled-quizzes?order=created_at.desc');
+    const list = await res.json();
+
+    if (!list || !list.length) {
+      listEl.innerHTML = '<p style="color:var(--text-secondary);font-size:0.85rem;padding:1.5rem;text-align:center;">No tests found. Create a quiz in Quiz Builder to get started.</p>';
+      return;
+    }
+
+    allTests = list;
+    renderTestsList(allTests);
+
+    // Auto-select first test or Quiz 13 if available
+    const firstTest = allTests[0];
+    if (firstTest) {
+      let qid = '';
+      if (firstTest.moodle_quiz_id) {
+        const m = firstTest.moodle_quiz_id.match(/[?&]id=(\d+)/);
+        if (m) qid = m[1];
+        else if (/^\d+$/.test(firstTest.moodle_quiz_id)) qid = firstTest.moodle_quiz_id;
+      }
+      selectTest(qid || '13', firstTest.quiz_title || 'Recent Test');
+    }
+  } catch(e) {
+    listEl.innerHTML = `<p style="color:var(--primary);font-size:0.85rem;padding:1rem;">Failed to load tests: ${escHtml(e.message)}</p>`;
+  }
+}
+
+function renderTestsList(items) {
+  const listEl = document.getElementById('testsListContainer');
+  if (!items.length) {
+    listEl.innerHTML = '<p style="color:var(--text-secondary);font-size:0.85rem;padding:1rem;text-align:center;">No matching tests.</p>';
+    return;
+  }
+
+  listEl.innerHTML = items.map(q => {
+    let qid = '';
+    if (q.moodle_quiz_id) {
+      const m = q.moodle_quiz_id.match(/[?&]id=(\d+)/);
+      if (m) qid = m[1];
+      else if (/^\d+$/.test(q.moodle_quiz_id)) qid = q.moodle_quiz_id;
+    }
+    const targetQuizId = qid || '13';
+    const isActive = activeQuizId === targetQuizId;
+    const qCount = (q.question_ids && Array.isArray(q.question_ids)) ? q.question_ids.length : 1;
+    const dateStr = q.scheduled_date || 'Recent';
+
+    return `
+      <div class="test-card ${isActive ? 'active' : ''}" onclick="selectTest('${targetQuizId}', '${escHtml(q.quiz_title || 'Quiz').replace(/'/g, "\\'")}')">
+        <div class="test-card-title">${escHtml(q.quiz_title || 'Scheduled Quiz')}</div>
+        <div class="test-card-meta">
+          <span><i class="ph ph-graduation-cap"></i> Class ${escHtml(q.class || '11')}</span>
+          <span><i class="ph ph-list-checks"></i> ${qCount} Qs</span>
+          <span><i class="ph ph-calendar"></i> ${dateStr}</span>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function filterTestList() {
+  const q = (document.getElementById('testSearchInput').value || '').toLowerCase();
+  const filtered = allTests.filter(t => (t.quiz_title || '').toLowerCase().includes(q) || (t.class || '').toLowerCase().includes(q));
+  renderTestsList(filtered);
+}
+
+// â”€â”€ Select & Fetch Report for a Test â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+async function selectTest(quizId, quizTitle) {
+  activeQuizId = quizId;
+  activeQuizTitle = quizTitle;
+  renderTestsList(allTests); // refresh active card highlight
+
+  // Show UI elements
+  document.getElementById('emptyReportState').style.display = 'none';
+  document.getElementById('kpiContainer').style.display = 'grid';
+  document.getElementById('resultsContent').style.display = 'block';
+  document.getElementById('btnRefreshReport').style.display = 'inline-flex';
+  document.getElementById('btnPrintReport').style.display = 'inline-flex';
+
+  document.getElementById('repQuizTitle').innerHTML = `<i class="ph-fill ph-chart-line-up" style="color:var(--primary);"></i> ${escHtml(quizTitle)}`;
+  document.getElementById('repQuizSubtitle').innerHTML = '<span><i class="ph ph-spinner-gap spinner"></i> Querying Moodle REST API for student attempts & analytics...</span>';
+
+  // Clear KPIs
+  document.getElementById('kpiAttempts').textContent = '...';
+  document.getElementById('kpiParticipation').textContent = 'Enrolled: ...';
+  document.getElementById('kpiAvgScore').textContent = '...';
+  document.getElementById('kpiAvgPct').textContent = 'Accuracy: ...';
+  document.getElementById('kpiHighest').textContent = '...';
+  document.getElementById('kpiLowest').textContent = 'Lowest: ...';
+  document.getElementById('kpiQuestions').textContent = '...';
+  document.getElementById('kpiMaxScore').textContent = 'Max Score: ...';
+  document.getElementById('leaderboardSummary').textContent = '';
+
+  const tbody = document.getElementById('studentTableBody');
+  tbody.innerHTML = `<tr><td colspan="7" style="padding:2.5rem;text-align:center;color:var(--text-secondary);"><i class="ph ph-spinner-gap spinner" style="font-size:1.8rem;margin-bottom:0.5rem;display:block;"></i> Fetching student scores & leaderboard...</td></tr>`;
+
+  try {
+    const instituteId = sessionStorage.getItem('pg_institute_id') || localStorage.getItem('pg_institute_id') || '65e4628a-a283-45a3-ab2d-84073977d4c4';
+    const tenantName = sessionStorage.getItem('pg_institute_name') || localStorage.getItem('pg_institute_name') || 'Classes Institute';
+    const moodleUrl = getTenantMoodleUrl();
+
+    const reportUrl = `https://awsn8n.pitthugram.com/webhook/moodle-quiz-report?quiz_id=${encodeURIComponent(quizId)}&institute_id=${encodeURIComponent(instituteId)}&institute_name=${encodeURIComponent(tenantName)}&moodle_url=${encodeURIComponent(moodleUrl)}`;
+    
+    const res = await fetch(reportUrl);
+    const data = await res.json();
+
+    if (!data || data.status === 'error') {
+      document.getElementById('repQuizSubtitle').innerHTML = `<span style="color:var(--primary);"><i class="ph ph-warning-circle"></i> ${escHtml(data?.message || 'Report unavailable')}</span>`;
+      tbody.innerHTML = `<tr><td colspan="7" style="padding:2rem;text-align:center;color:var(--primary);"><i class="ph ph-warning-circle" style="font-size:1.5rem;margin-bottom:0.4rem;display:block;"></i> ${escHtml(data?.message || 'No attempt data found')}</td></tr>`;
+      return;
+    }
+
+    // Populate header info
+    if (data.quiz_name) {
+      document.getElementById('repQuizTitle').innerHTML = `<i class="ph-fill ph-chart-line-up" style="color:var(--primary);"></i> ${escHtml(data.quiz_name)}`;
+    }
+    document.getElementById('repQuizSubtitle').innerHTML = `
+      <span><i class="ph ph-book-open"></i> ${escHtml(data.course_name || 'Class Course')}</span>
+      <span><i class="ph ph-list-numbers"></i> ${data.question_count || 0} Questions</span>
+      <span><i class="ph ph-timer"></i> ${Math.round((data.timelimit || 0) / 60)} min limit</span>
+    `;
+
+    // Populate KPIs
+    const a = data.analytics || {};
+    document.getElementById('kpiAttempts').textContent = a.total_attempts ?? 0;
+    document.getElementById('kpiParticipation').textContent = `Participation: ${a.participation_rate ?? 0}% (${a.total_attempts}/${a.total_enrolled || a.total_attempts})`;
+    document.getElementById('kpiAvgScore').textContent = `${a.average_score ?? 0} / ${data.max_score ?? 0}`;
+    document.getElementById('kpiAvgPct').textContent = `Cohort Accuracy: ${a.average_percentage ?? 0}%`;
+    document.getElementById('kpiHighest').textContent = `${a.highest_score ?? 0} / ${data.max_score ?? 0}`;
+    document.getElementById('kpiLowest').textContent = `Lowest Score: ${a.lowest_score ?? 0}`;
+    document.getElementById('kpiQuestions').textContent = data.question_count ?? 0;
+    document.getElementById('kpiMaxScore').textContent = `Max Possible: ${data.max_score ?? 0} pts`;
+
+    const list = data.leaderboard || [];
+    document.getElementById('leaderboardSummary').textContent = `${list.length} student submission(s)`;
+
+    if (!list.length) {
+      tbody.innerHTML = `
+        <tr><td colspan="7" style="padding:3.5rem 1.5rem;text-align:center;color:var(--text-secondary);">
+          <i class="ph ph-users" style="font-size:2.2rem;margin-bottom:0.6rem;display:block;opacity:0.5;"></i>
+          <strong>No student attempts recorded yet for this test.</strong><br>
+          <span style="font-size:0.8rem;opacity:0.8;">Once students take this quiz on their LMS, performance scorecards will automatically appear here.</span>
+        </td></tr>`;
+      return;
+    }
+
+    // Render leaderboard rows
+    tbody.innerHTML = list.map(st => {
+      let rankBadge = `<span class="rank-pill rank-other">#${st.rank}</span>`;
+      if (st.rank === 1) rankBadge = `<span class="rank-pill rank-1"><i class="ph-fill ph-trophy"></i> #1 Rank</span>`;
+      else if (st.rank === 2) rankBadge = `<span class="rank-pill rank-2">#2 Rank</span>`;
+      else if (st.rank === 3) rankBadge = `<span class="rank-pill rank-3">#3 Rank</span>`;
+
+      const pctClass = st.percentage >= 75 ? 'approved' : (st.percentage >= 40 ? 'draft' : 'failed');
+      const submittedDate = st.submitted_at ? new Date(st.submitted_at).toLocaleString('en-IN', { dateStyle:'medium', timeStyle:'short' }) : 'Completed';
+
+      return `
+        <tr>
+          <td>${rankBadge}</td>
+          <td>
+            <div style="font-weight:700;color:var(--text-primary);">${escHtml(st.student_name)}</div>
+            <div style="font-size:0.77rem;color:var(--text-secondary);">${escHtml(st.email || 'â€”')}${st.phone ? ' â€¢ ' + escHtml(st.phone) : ''}</div>
+          </td>
+          <td style="font-weight:700;color:var(--text-primary);">
+            ${st.score} <span style="font-size:0.76rem;font-weight:400;color:var(--text-secondary);">/ ${st.max_score}</span>
+          </td>
+          <td>
+            <span class="status-badge ${pctClass}">${st.percentage}%</span>
+          </td>
+          <td style="font-size:0.85rem;color:var(--text-secondary);">
+            <i class="ph ph-timer"></i> ${st.time_taken_formatted || 'â€”'}
+          </td>
+          <td style="font-size:0.82rem;color:var(--text-secondary);">
+            ${submittedDate}
+          </td>
+          <td style="text-align:right;">
+            <a href="${st.whatsapp_url}" target="_blank" class="btn btn-sm" style="background:#25D366;color:#fff;border-radius:var(--radius-sm);display:inline-flex;align-items:center;gap:0.35rem;font-size:0.8rem;text-decoration:none;font-weight:700;padding:0.4rem 0.8rem;box-shadow:0 2px 6px rgba(37,211,102,0.3);">
+              <i class="ph-fill ph-whatsapp-logo" style="font-size:1.05rem;"></i> Send Report
+            </a>
+          </td>
+        </tr>
+      `;
+    }).join('');
+
+  } catch(e) {
+    tbody.innerHTML = `<tr><td colspan="7" style="padding:2rem;text-align:center;color:var(--primary);"><i class="ph ph-warning-circle" style="font-size:1.5rem;margin-bottom:0.4rem;display:block;"></i> Failed to load report: ${escHtml(e.message)}</td></tr>`;
+  }
+}
+
+function refreshActiveReport() {
+  if (activeQuizId) {
+    selectTest(activeQuizId, activeQuizTitle);
+  }
+}
+
+// Initialize
+if (checkAuth()) {
+  loadTestsDirectory();
+}
+</script>
+</body>
+</html>
