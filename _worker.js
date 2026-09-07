@@ -8,7 +8,7 @@ const S3_BUCKET   = 'mcq-supabase';
 // Teacher MCQs are saved into the "Pitthugram Onboarding Project" Supabase (SUPA_B)
 const SAVE_DB_URL = 'https://zqrswemxmhjaylsuulyu.supabase.co';
 const QB_SUPABASE_URL = 'https://qnqcysdeolnooxxcafwz.supabase.co';
-const QB_SERVICE_KEY  = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFucWN5c2Rlb2xub294eGNhZnd6Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3NjM1NzQ2NSwiZXhwIjoyMDkxOTMzNDY1fQ.Co7aXPihbAn56b2BE2rh4q6wgqlVEbzp3C6wAZz1V8s';
+const QB_SERVICE_KEY = '';
 
 export default {
     async fetch(request, env) {
@@ -146,7 +146,7 @@ const TENANT_MOODLE_MAP = {
     // Default / Trial Tenant (Pitthugram Trial Institute)
     '65e4628a-a283-45a3-ab2d-84073977d4c4': {
         moodle_url: 'https://trial001.classes.institute',
-        moodle_token: '0da58a8c089e3c4b8ef45d7c6c42ed29',
+        moodle_token: (env && env.MOODLE_TOKEN) || '',
         tenant_name: 'Pitthugram Trial'
     }
 };
@@ -183,7 +183,7 @@ async function getTenantMoodleConfig(instituteId, env) {
     // 3. Fallback to default trial Moodle
     return {
         moodle_url: (env && env.MOODLE_URL) || 'https://trial001.classes.institute',
-        moodle_token: (env && env.MOODLE_TOKEN) || '0da58a8c089e3c4b8ef45d7c6c42ed29',
+        moodle_token: (env && env.MOODLE_TOKEN) || '',
         tenant_name: 'Default Trial'
     };
 }
@@ -197,7 +197,8 @@ async function handleMoodleConfig(request, env) {
         configured:   true,
         institute_id: instituteId,
         moodle_url:   tenantConfig.moodle_url,
-        moodle_token: tenantConfig.moodle_token
+        // moodle_token withheld for security
+        configured: !!tenantConfig.moodle_url
     });
 }
 
@@ -527,7 +528,7 @@ async function handleHubspotLead(request, env) {
         return json({ error: 'Email address is required.' }, 400);
     }
 
-    const hsToken = (env && env.HUBSPOT_TOKEN) || atob('cGF0LW5hMi1iNGE4MjY0YS0xZDJlLTRlNzEtOWMxOC1jMjQwZWYyYmFmYzc=');
+    const hsToken = (env && env.HUBSPOT_TOKEN) || '';
     const hsHeaders = {
         'Authorization': 'Bearer ' + hsToken,
         'Content-Type': 'application/json'
@@ -622,7 +623,7 @@ async function handleTrial(request, env) {
         return json({ error: 'Missing required fields (email, phone, firstname)' }, 400);
     }
 
-    const hsToken = (env && env.HUBSPOT_TOKEN) || atob('cGF0LW5hMi1iNGE4MjY0YS0xZDJlLTRlNzEtOWMxOC1jMjQwZWYyYmFmYzc=');
+    const hsToken = (env && env.HUBSPOT_TOKEN) || '';
     const hsHeaders = {
         'Authorization': 'Bearer ' + hsToken,
         'Content-Type': 'application/json'
@@ -732,7 +733,7 @@ async function handleTrial(request, env) {
     try {
         const rawPhone = phone.replace(/[^0-9]/g, '');
         const cleanPhone = rawPhone.length === 10 ? '91' + rawPhone : rawPhone;
-        const AISENSY_KEY = (env && env.AISENSY_API_KEY) || '2ef5c66b4cbbf386db60e358b2097ba5f223f66cb7111451a92e4ba0575d1607';
+        const AISENSY_KEY = (env && env.AISENSY_API_KEY) || '';
 
         fetch('https://backend.aisensy.com/campaign/t1/api/v2', {
             method: 'POST',
@@ -765,9 +766,14 @@ async function handleTrial(request, env) {
 }
 
 const QB_SUPABASE_URL = 'https://qnqcysdeolnooxxcafwz.supabase.co';
-const QB_SERVICE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFucWN5c2Rlb2xub294eGNhZnd6Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3NjM1NzQ2NSwiZXhwIjoyMDkxOTMzNDY1fQ.Co7aXPihbAn56b2BE2rh4q6wgqlVEbzp3C6wAZz1V8s';
+const QB_SERVICE_KEY = '';
 
 async function handleScheduledQuizzes(request, env) {
+    const authHeader = request.headers.get('Authorization') || '';
+    const authToken = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : '';
+    if (!authToken && request.method !== 'OPTIONS') {
+        return json({ error: 'Unauthorized: Authentication required.' }, 401);
+    }
     const serviceKey = (env && env.SUPABASE_SERVICE_ROLE_KEY) || QB_SERVICE_KEY;
     const method = request.method;
 
