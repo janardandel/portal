@@ -13,7 +13,7 @@ export async function onRequestPost(context) {
         return json({ error: 'Email address is required.' }, 400);
     }
 
-    const hsToken = (env && env.HUBSPOT_TOKEN) || atob('cGF0LW5hMi1iNGE4MjY0YS0xZDJlLTRlNzEtOWMxOC1jMjQwZWYyYmFmYzc=');
+    const hsToken = (env && env.HUBSPOT_TOKEN) || '';
     const hsHeaders = {
         'Authorization': 'Bearer ' + hsToken,
         'Content-Type': 'application/json'
