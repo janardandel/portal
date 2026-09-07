@@ -1,7 +1,7 @@
 const TENANT_MOODLE_MAP = {
     '65e4628a-a283-45a3-ab2d-84073977d4c4': {
         moodle_url: 'https://trial001.classes.institute',
-        moodle_token: '0da58a8c089e3c4b8ef45d7c6c42ed29',
+        moodle_token: (env && env.MOODLE_TOKEN) || '',
         tenant_name: 'Pitthugram Trial'
     }
 };
@@ -26,7 +26,7 @@ export async function onRequestPost(context) {
 async function getCourses(instituteId, env) {
     const tenantConfig = TENANT_MOODLE_MAP[instituteId] || {
         moodle_url: (env && env.MOODLE_URL) || 'https://trial001.classes.institute',
-        moodle_token: (env && env.MOODLE_TOKEN) || '0da58a8c089e3c4b8ef45d7c6c42ed29',
+        moodle_token: (env && env.MOODLE_TOKEN) || '',
         tenant_name: 'Default Trial'
     };
     const moodleUrl = tenantConfig.moodle_url;
