@@ -1,13 +1,13 @@
 const TENANT_MOODLE_MAP = {
     '65e4628a-a283-45a3-ab2d-84073977d4c4': {
         moodle_url: 'https://trial001.classes.institute',
-        moodle_token: '0da58a8c089e3c4b8ef45d7c6c42ed29',
+        moodle_token: (env && env.MOODLE_TOKEN) || '',
         tenant_name: 'Pitthugram Trial'
     }
 };
 
 const QB_SUPABASE_URL = 'https://qnqcysdeolnooxxcafwz.supabase.co';
-const QB_SERVICE_KEY  = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFucWN5c2Rlb2xub294eGNhZnd6Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3NjM1NzQ2NSwiZXhwIjoyMDkxOTMzNDY1fQ.Co7aXPihbAn56b2BE2rh4q6wgqlVEbzp3C6wAZz1V8s';
+const QB_SERVICE_KEY = '';
 
 export async function onRequestPost(context) {
     const { request, env } = context;
@@ -22,7 +22,7 @@ export async function onRequestPost(context) {
     const { institute_id, email, courseid, name, timeopen, timeclose, timelimit, attempts, shuffleanswers, questions } = body;
     const tenantConfig = TENANT_MOODLE_MAP[institute_id] || {
         moodle_url: (env && env.MOODLE_URL) || 'https://trial001.classes.institute',
-        moodle_token: (env && env.MOODLE_TOKEN) || '0da58a8c089e3c4b8ef45d7c6c42ed29',
+        moodle_token: (env && env.MOODLE_TOKEN) || '',
         tenant_name: 'Default Tenant'
     };
 
