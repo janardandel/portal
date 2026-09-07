@@ -408,7 +408,13 @@ function getTenantMoodleUrl() {
 }
 
 function escHtml(s) {
-  return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  if (s === null || s === undefined) return '';
+  return String(s)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
 }
 
 async function loadTestsDirectory() {
@@ -586,7 +592,7 @@ async function selectTest(quizId, quizTitle) {
             ${submittedDate}
           </td>
           <td style="text-align:right;">
-            <a href="${st.whatsapp_url}" target="_blank" class="btn btn-sm" style="background:#25D366;color:#fff;border-radius:var(--radius-sm);display:inline-flex;align-items:center;gap:0.35rem;font-size:0.8rem;text-decoration:none;font-weight:700;padding:0.4rem 0.8rem;box-shadow:0 2px 6px rgba(37,211,102,0.3);">
+            <a href="${(st.whatsapp_url && (st.whatsapp_url.startsWith('https://wa.me/') || st.whatsapp_url.startsWith('https://api.whatsapp.com/'))) ? escHtml(st.whatsapp_url) : '#'}" target="_blank" rel="noopener noreferrer" class="btn btn-sm" style="background:#25D366;color:#fff;border-radius:var(--radius-sm);display:inline-flex;align-items:center;gap:0.35rem;font-size:0.8rem;text-decoration:none;font-weight:700;padding:0.4rem 0.8rem;box-shadow:0 2px 6px rgba(37,211,102,0.3);">
               <i class="ph-fill ph-whatsapp-logo" style="font-size:1.05rem;"></i> Send Report
             </a>
           </td>
