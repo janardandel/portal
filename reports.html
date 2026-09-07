@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -10,160 +10,86 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <script src="https://unpkg.com/@phosphor-icons/web" defer></script>
   <link rel="stylesheet" href="./style.css">
+  <link rel="stylesheet" href="./pitthugram.css">
   <style>
-    /* â”€â”€ Layout & Responsive Workspace â”€â”€ */
-    .reports-layout {
-      display: grid;
-      grid-template-columns: 360px 1fr;
-      gap: 1.5rem;
-      min-height: calc(100vh - 72px);
-      padding: 1.75rem 2rem 4rem;
-      max-width: 1400px;
-      margin: 0 auto;
-    }
-    @media (max-width: 992px) {
-      .reports-layout { grid-template-columns: 1fr; padding: 1rem 1rem 3rem; }
+    /* â”€â”€ Desktop sidebar (721px+) â”€â”€ */
+    @media (min-width: 721px) {
+      #qbSidebar {
+        display: flex !important;
+        flex-direction: column !important;
+        position: fixed !important;
+        top: 72px !important;
+        left: 0 !important;
+        width: 280px !important;
+        height: calc(100vh - 72px) !important;
+        max-height: none !important;
+        border-radius: 0 !important;
+        transform: none !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        z-index: 50 !important;
+      }
+      #qbPage.qb-page { margin-left: 280px !important; }
+      #qbPage .qb-layout { display: block !important; }
     }
 
-    /* â”€â”€ Left Directory Panel â”€â”€ */
-    .test-dir-panel {
+    @media (max-width: 720px) {
+      #sidebarToggle { display: inline-flex !important; }
+      #qbPage.qb-page { padding: 1rem 1rem 5rem !important; }
+    }
+
+    /* â”€â”€ Test Card Directory inside Sidebar â”€â”€ */
+    .test-card {
       background: var(--bg-surface);
       border: 1px solid var(--border);
-      border-radius: var(--radius-lg);
-      padding: 1.25rem;
-      display: flex;
-      flex-direction: column;
-      max-height: calc(100vh - 120px);
-      position: sticky;
-      top: 90px;
-    }
-    @media (max-width: 992px) {
-      .test-dir-panel { position: static; max-height: 480px; }
-    }
-
-    .dir-search {
-      display: flex;
-      gap: 0.5rem;
-      margin-bottom: 1rem;
-    }
-    .dir-search input {
-      flex: 1;
-      padding: 0.6rem 0.85rem;
-      background: var(--bg-input);
-      border: 1.5px solid var(--border-light);
       border-radius: var(--radius);
-      color: var(--text-primary);
-      font-size: 0.88rem;
-      outline: none;
-      transition: var(--transition);
-    }
-    .dir-search input:focus {
-      border-color: var(--primary);
-      box-shadow: 0 0 0 3px var(--primary-glow);
-    }
-
-    .test-card-list {
-      overflow-y: auto;
-      display: flex;
-      flex-direction: column;
-      gap: 0.65rem;
-      padding-right: 0.25rem;
-    }
-    .test-card-list::-webkit-scrollbar { width: 5px; }
-    .test-card-list::-webkit-scrollbar-thumb { background: var(--border-light); border-radius: 99px; }
-
-    .test-card {
-      background: var(--bg-elevated);
-      border: 1.5px solid var(--border-light);
-      border-radius: var(--radius);
-      padding: 1rem;
+      padding: 0.75rem 0.85rem;
       cursor: pointer;
       transition: var(--transition);
       text-align: left;
     }
     .test-card:hover {
       border-color: var(--primary);
-      background: rgba(244,0,9,0.04);
-      transform: translateY(-1px);
+      background: rgba(244,0,9,0.06);
     }
     .test-card.active {
       border-color: var(--primary);
-      background: rgba(244,0,9,0.08);
+      background: rgba(244,0,9,0.12);
       box-shadow: 0 0 0 1px var(--primary);
     }
     .test-card-title {
       font-weight: 700;
-      font-size: 0.95rem;
+      font-size: 0.88rem;
       color: var(--text-primary);
-      margin-bottom: 0.35rem;
+      margin-bottom: 0.25rem;
       line-height: 1.3;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
     .test-card-meta {
-      font-size: 0.78rem;
+      font-size: 0.75rem;
       color: var(--text-secondary);
       display: flex;
-      flex-wrap: wrap;
-      gap: 0.65rem;
-      align-items: center;
-    }
-
-    /* â”€â”€ Right Main Report Content â”€â”€ */
-    .report-main {
-      background: var(--bg-surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius-lg);
-      padding: 1.75rem 2rem;
-      min-height: 600px;
-      display: flex;
-      flex-direction: column;
-    }
-    @media (max-width: 600px) {
-      .report-main { padding: 1.25rem 1rem; }
-    }
-
-    .report-header {
-      border-bottom: 1.5px solid var(--border-light);
-      padding-bottom: 1.25rem;
-      margin-bottom: 1.5rem;
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      flex-wrap: wrap;
-      gap: 1rem;
-    }
-    .report-title-area h2 {
-      font-size: 1.4rem;
-      font-weight: 800;
-      color: var(--text-primary);
-      margin-bottom: 0.3rem;
-      display: flex;
-      align-items: center;
       gap: 0.5rem;
-    }
-    .report-subtitle {
-      font-size: 0.88rem;
-      color: var(--text-secondary);
-      display: flex;
-      gap: 1rem;
-      flex-wrap: wrap;
       align-items: center;
     }
 
     /* â”€â”€ KPI Grid â”€â”€ */
     .kpi-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
       gap: 1rem;
       margin-bottom: 1.75rem;
     }
     .kpi-card {
-      background: var(--bg-elevated);
-      border: 1.5px solid var(--border-light);
-      border-radius: var(--radius);
-      padding: 1rem 1.15rem;
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 1.25rem 1.35rem;
     }
     .kpi-label {
-      font-size: 0.74rem;
+      font-size: 0.75rem;
       font-weight: 700;
       color: var(--text-secondary);
       text-transform: uppercase;
@@ -174,22 +100,23 @@
       justify-content: space-between;
     }
     .kpi-value {
-      font-size: 1.7rem;
+      font-size: 1.8rem;
       font-weight: 800;
       color: var(--text-primary);
       line-height: 1.1;
     }
     .kpi-sub {
-      font-size: 0.77rem;
+      font-size: 0.78rem;
       color: var(--text-secondary);
-      margin-top: 0.3rem;
+      margin-top: 0.35rem;
     }
 
     /* â”€â”€ Leaderboard Table â”€â”€ */
     .table-wrap {
       overflow-x: auto;
-      border: 1.5px solid var(--border-light);
-      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      background: var(--bg-surface);
       margin-top: 1rem;
     }
     .report-table {
@@ -206,21 +133,19 @@
       font-weight: 700;
       text-transform: uppercase;
       letter-spacing: 0.05em;
-      padding: 0.85rem 1rem;
-      border-bottom: 1.5px solid var(--border-light);
+      padding: 0.85rem 1.15rem;
+      border-bottom: 1px solid var(--border);
     }
     .report-table td {
-      padding: 0.95rem 1rem;
-      border-bottom: 1px solid var(--border-light);
+      padding: 1rem 1.15rem;
+      border-bottom: 1px solid var(--border);
       vertical-align: middle;
       color: var(--text-secondary);
     }
     .report-table tr:hover td {
       background: rgba(255,255,255,0.02);
     }
-    .report-table tr:last-child td {
-      border-bottom: none;
-    }
+    .report-table tr:last-child td { border-bottom: none; }
 
     /* â”€â”€ Badges â”€â”€ */
     .status-badge {
@@ -235,7 +160,6 @@
     .status-badge.approved   { background: rgba(34,197,94,0.15); color: #22c55e; }
     .status-badge.draft      { background: rgba(234,179,8,0.15);  color: #eab308; }
     .status-badge.failed     { background: rgba(239,68,68,0.15);  color: #ef4444; }
-    .status-badge.processing { background: rgba(59,130,246,0.15); color: #3b82f6; }
 
     .rank-pill {
       display: inline-flex;
@@ -256,10 +180,14 @@
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      min-height: 400px;
+      min-height: 420px;
       text-align: center;
       color: var(--text-secondary);
       gap: 0.75rem;
+      padding: 3rem 1.5rem;
+      background: var(--bg-surface);
+      border: 1px dashed var(--border);
+      border-radius: var(--radius-lg);
     }
     .empty-report i { font-size: 3rem; color: var(--border-light); }
 
@@ -272,139 +200,171 @@
 <!-- Navbar -->
 <header class="navbar">
   <div class="container nav-inner">
-    <a href="./quiz-builder.html" class="logo" style="display:flex;align-items:center;gap:0.55rem;font-weight:800;font-size:1.2rem;color:var(--text-primary);text-decoration:none;">
+    <a href="./quiz-builder.html" class="logo" style="display:flex;align-items:center;gap:0.5rem;font-weight:700;font-size:1.15rem;color:var(--text-primary);text-decoration:none;">
       <i class="ph-fill ph-graduation-cap" style="font-size:1.6rem;color:var(--primary);"></i>
       <span>Portal</span>
     </a>
-    <div class="nav-actions" style="display:flex;align-items:center;gap:0.65rem;flex-wrap:wrap;">
-      <a href="./reports.html" class="btn btn-sm" style="background:var(--primary);color:#fff;border-color:var(--primary);font-weight:700;display:inline-flex;align-items:center;gap:0.35rem;">
+    <div class="nav-actions" style="display:flex;align-items:center;gap:0.5rem;flex-wrap:wrap;">
+      <a href="./reports.html" class="btn btn-sm" style="padding:0.45rem 0.85rem;display:inline-flex;align-items:center;gap:0.35rem;background:var(--primary);color:#fff;border-color:var(--primary);font-weight:700;">
         <i class="ph-bold ph-chart-line-up"></i> Reports & Analytics
       </a>
-      <a href="./quiz-builder.html" class="btn btn-outline btn-sm" style="display:inline-flex;align-items:center;gap:0.35rem;">
+      <a href="./quiz-builder.html" class="btn btn-outline btn-sm" style="padding:0.45rem 0.85rem;display:inline-flex;align-items:center;gap:0.35rem;">
         <i class="ph ph-plus-circle"></i> Quiz Builder
       </a>
-      <a href="./review-mcq.html" class="btn btn-outline btn-sm" style="display:inline-flex;align-items:center;gap:0.35rem;">
+      <a href="./review-mcq.html" class="btn btn-outline btn-sm" style="padding:0.45rem 0.85rem;display:inline-flex;align-items:center;gap:0.35rem;">
         <i class="ph ph-calendar-check"></i> Scheduled Tests
       </a>
-      <button class="btn btn-outline btn-sm" onclick="logout()"><i class="ph ph-sign-out"></i> Logout</button>
+      <a href="./review-mcq.html?tab=ocr" class="btn btn-outline btn-sm" style="padding:0.45rem 0.85rem;display:inline-flex;align-items:center;gap:0.35rem;">
+        <i class="ph ph-file-text"></i> OCR Review
+      </a>
+      <button onclick="logout()" class="btn btn-outline btn-sm" style="padding:0.45rem 0.85rem;border-color:rgba(239,68,68,0.4);color:#FCA5A5;">
+        <i class="ph ph-sign-out"></i> Logout
+      </button>
     </div>
   </div>
 </header>
 
-<!-- Main Reports Workspace -->
-<div class="reports-layout">
+<!-- Unified Portal Dashboard Shell -->
+<div class="qb-page" id="qbPage">
+  <div class="qb-wrap">
+    <div class="qb-layout">
 
-  <!-- Left: Test Directory Panel -->
-  <aside class="test-dir-panel">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.75rem;">
-      <div style="font-size:0.78rem;font-weight:700;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.06em;display:flex;align-items:center;gap:0.4rem;">
-        <i class="ph-bold ph-folder-open" style="color:var(--primary);"></i> Tests Directory
-      </div>
-      <button onclick="loadTestsDirectory()" class="btn btn-sm" style="padding:0.25rem 0.5rem;font-size:0.75rem;" title="Refresh List">
-        <i class="ph ph-arrows-clockwise"></i>
-      </button>
-    </div>
-
-    <!-- Search / Filter -->
-    <div class="dir-search">
-      <input type="text" id="testSearchInput" placeholder="Filter tests..." oninput="filterTestList()">
-    </div>
-
-    <!-- Scrollable test list -->
-    <div class="test-card-list" id="testsListContainer">
-      <p style="color:var(--text-secondary);font-size:0.85rem;text-align:center;padding:1.5rem 0;">
-        <i class="ph ph-spinner-gap spinner"></i> Loading tests...
-      </p>
-    </div>
-  </aside>
-
-  <!-- Right: Selected Test Report & Analytics -->
-  <main class="report-main" id="reportMainArea">
-    <!-- Header -->
-    <div class="report-header">
-      <div class="report-title-area">
-        <h2 id="repQuizTitle"><i class="ph-fill ph-chart-line-up" style="color:var(--primary);"></i> Select a Test to View Performance</h2>
-        <div class="report-subtitle" id="repQuizSubtitle">
-          <span>Choose any scheduled or completed test from the directory to load live analytics and student scorecards.</span>
+      <!-- Left Sidebar (Matching Quiz Builder) -->
+      <aside class="qb-sidebar" id="qbSidebar">
+        <div class="qb-brand">
+          <i class="ph-fill ph-graduation-cap" style="font-size:1.5rem;color:var(--primary);"></i>
+          <span>Portal</span>
+          <button class="sidebar-close" id="sidebarClose" aria-label="Close menu" onclick="closeSidebar()">
+            <i class="ph ph-x"></i>
+          </button>
         </div>
-      </div>
-      <div style="display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap;">
-        <button onclick="refreshActiveReport()" class="btn btn-outline btn-sm" id="btnRefreshReport" style="display:none;">
-          <i class="ph ph-arrows-clockwise"></i> Refresh Analytics
-        </button>
-        <button onclick="window.print()" class="btn btn-outline btn-sm" id="btnPrintReport" style="display:none;">
-          <i class="ph ph-printer"></i> Print / Export
-        </button>
-      </div>
+        <nav class="qb-nav">
+          <ul>
+            <li><a href="./quiz-builder.html"><i class="ph ph-plus-circle"></i> Quiz Builder</a></li>
+            <li><a href="./reports.html" class="active"><i class="ph-bold ph-chart-line-up" style="color:var(--primary);"></i> Reports & Analytics</a></li>
+            <li><a href="./review-mcq.html"><i class="ph ph-calendar-check"></i> Scheduled Tests</a></li>
+            <li><a href="./create-mcq.html"><i class="ph ph-pencil-simple-line"></i> Add MCQ</a></li>
+            <li><a href="./review-mcq.html?tab=ocr"><i class="ph ph-file-text"></i> OCR Paper Review</a></li>
+          </ul>
+        </nav>
+
+        <!-- Tests Directory integrated in Sidebar -->
+        <div class="qb-section" style="margin-top:1.25rem;">
+          <div class="qb-section-title" style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.6rem;">
+            <span>Tests Directory</span>
+            <button onclick="loadTestsDirectory()" style="background:none;border:none;color:var(--text-secondary);cursor:pointer;padding:0.15rem;" title="Refresh"><i class="ph ph-arrows-clockwise"></i></button>
+          </div>
+          <div style="margin-bottom:0.65rem;">
+            <input type="text" id="testSearchInput" placeholder="Filter tests..." oninput="filterTestList()" style="width:100%;padding:0.5rem 0.75rem;background:var(--bg-input);border:1.5px solid var(--border-light);border-radius:var(--radius);color:var(--text-primary);font-size:0.83rem;outline:none;">
+          </div>
+          <div class="test-card-list" id="testsListContainer" style="max-height:calc(100vh - 420px);overflow-y:auto;display:flex;flex-direction:column;gap:0.45rem;padding-right:0.25rem;">
+            <p style="color:var(--text-secondary);font-size:0.8rem;text-align:center;padding:1rem 0;">
+              <i class="ph ph-spinner-gap spinner"></i> Loading tests...
+            </p>
+          </div>
+        </div>
+
+        <div class="qb-sidebar-foot" style="margin-top:auto;padding-top:1rem;">
+          <a href="#" class="sidebar-link" onclick="logout()"><i class="ph ph-sign-out"></i> Logout</a>
+        </div>
+      </aside>
+      <div class="sidebar-backdrop" id="sidebarBackdrop" onclick="closeSidebar()"></div>
+
+      <!-- Main Workspace -->
+      <main class="qb-main" style="padding:1.75rem 2rem 4rem;min-height:calc(100vh - 72px);display:flex;flex-direction:column;gap:1.5rem;">
+        <!-- Top Bar -->
+        <div class="qb-top" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem;margin-bottom:0.5rem;">
+          <div style="display:flex;align-items:center;gap:0.75rem;">
+            <button class="sidebar-toggle" id="sidebarToggle" onclick="openSidebar()" aria-label="Open menu" style="display:none;background:none;border:none;color:var(--text-primary);font-size:1.4rem;cursor:pointer;">
+              <i class="ph ph-list"></i>
+            </button>
+            <div>
+              <h1 id="repQuizTitle" style="font-size:1.5rem;font-weight:800;color:var(--text-primary);margin:0 0 0.25rem 0;display:flex;align-items:center;gap:0.5rem;">
+                <i class="ph-fill ph-chart-line-up" style="color:var(--primary);"></i> Select a Test to View Performance
+              </h1>
+              <div id="repQuizSubtitle" style="font-size:0.88rem;color:var(--text-secondary);display:flex;gap:1rem;flex-wrap:wrap;align-items:center;">
+                <span>Choose any test from the left directory to load live cohort analytics and student scorecards.</span>
+              </div>
+            </div>
+          </div>
+          <div style="display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap;">
+            <button onclick="refreshActiveReport()" class="btn btn-outline btn-sm" id="btnRefreshReport" style="display:none;">
+              <i class="ph ph-arrows-clockwise"></i> Refresh Analytics
+            </button>
+            <button onclick="window.print()" class="btn btn-outline btn-sm" id="btnPrintReport" style="display:none;">
+              <i class="ph ph-printer"></i> Print / Export
+            </button>
+          </div>
+        </div>
+
+        <!-- KPI Grid -->
+        <div class="kpi-grid" id="kpiContainer" style="display:none;">
+          <div class="kpi-card">
+            <div class="kpi-label"><span>Total Submissions</span> <i class="ph ph-users"></i></div>
+            <div class="kpi-value" id="kpiAttempts">-</div>
+            <div class="kpi-sub" id="kpiParticipation">Enrolled: -</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-label"><span>Class Average</span> <i class="ph ph-chart-bar" style="color:#3b82f6;"></i></div>
+            <div class="kpi-value" style="color:#3b82f6;" id="kpiAvgScore">-</div>
+            <div class="kpi-sub" id="kpiAvgPct">Accuracy: -</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-label"><span>Highest Score</span> <i class="ph ph-trophy" style="color:#22c55e;"></i></div>
+            <div class="kpi-value" style="color:#22c55e;" id="kpiHighest">-</div>
+            <div class="kpi-sub" id="kpiLowest">Lowest: -</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-label"><span>Test Capacity</span> <i class="ph ph-check-square"></i></div>
+            <div class="kpi-value" id="kpiQuestions">-</div>
+            <div class="kpi-sub" id="kpiMaxScore">Max Score: -</div>
+          </div>
+        </div>
+
+        <!-- Leaderboard Table Section -->
+        <div id="resultsContent" style="display:none;">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.75rem;flex-wrap:wrap;gap:0.5rem;">
+            <h3 style="font-size:1.05rem;font-weight:700;color:var(--text-primary);display:flex;align-items:center;gap:0.4rem;margin:0;">
+              <i class="ph-fill ph-trophy" style="color:#eab308;"></i> Student Leaderboard & Performance Scorecards
+            </h3>
+            <span id="leaderboardSummary" style="font-size:0.8rem;color:var(--text-secondary);font-weight:600;"></span>
+          </div>
+
+          <div class="table-wrap">
+            <table class="report-table">
+              <thead>
+                <tr>
+                  <th style="width:70px;">Rank</th>
+                  <th>Student Details</th>
+                  <th>Score</th>
+                  <th>Accuracy</th>
+                  <th>Time Taken</th>
+                  <th>Submitted At</th>
+                  <th style="text-align:right;">1-Click Parent Report</th>
+                </tr>
+              </thead>
+              <tbody id="studentTableBody">
+                <!-- Rows populated dynamically -->
+              </tbody>
+            </table>
+          </div>
+
+          <div style="margin-top:1.25rem;padding:0.85rem 1.15rem;border-radius:var(--radius);background:var(--bg-surface);border:1px solid var(--border);font-size:0.8rem;color:var(--text-secondary);display:flex;align-items:center;gap:0.5rem;">
+            <i class="ph-fill ph-whatsapp-logo" style="color:#25D366;font-size:1.2rem;"></i>
+            <span>Clicking <strong>Send Report</strong> opens WhatsApp directly with a pre-filled scorecard ready to send to the parent at <strong>â‚¹0 messaging cost</strong>.</span>
+          </div>
+        </div>
+
+        <!-- Empty State -->
+        <div class="empty-report" id="emptyReportState">
+          <i class="ph ph-file-text"></i>
+          <h3 style="font-size:1.15rem;font-weight:700;color:var(--text-primary);">No Test Selected</h3>
+          <p style="max-width:380px;font-size:0.85rem;">Select any test from the left directory to view full cohort analytics, student rankings, and WhatsApp parent scorecards.</p>
+        </div>
+      </main>
+
     </div>
-
-    <!-- KPI Row -->
-    <div class="kpi-grid" id="kpiContainer" style="display:none;">
-      <div class="kpi-card">
-        <div class="kpi-label"><span>Total Submissions</span> <i class="ph ph-users"></i></div>
-        <div class="kpi-value" id="kpiAttempts">-</div>
-        <div class="kpi-sub" id="kpiParticipation">Enrolled: -</div>
-      </div>
-      <div class="kpi-card">
-        <div class="kpi-label"><span>Class Average</span> <i class="ph ph-chart-bar" style="color:#3b82f6;"></i></div>
-        <div class="kpi-value" style="color:#3b82f6;" id="kpiAvgScore">-</div>
-        <div class="kpi-sub" id="kpiAvgPct">Accuracy: -</div>
-      </div>
-      <div class="kpi-card">
-        <div class="kpi-label"><span>Highest Score</span> <i class="ph ph-trophy" style="color:#22c55e;"></i></div>
-        <div class="kpi-value" style="color:#22c55e;" id="kpiHighest">-</div>
-        <div class="kpi-sub" id="kpiLowest">Lowest: -</div>
-      </div>
-      <div class="kpi-card">
-        <div class="kpi-label"><span>Test Capacity</span> <i class="ph ph-check-square"></i></div>
-        <div class="kpi-value" id="kpiQuestions">-</div>
-        <div class="kpi-sub" id="kpiMaxScore">Max Score: -</div>
-      </div>
-    </div>
-
-    <!-- Leaderboard / Results Table -->
-    <div id="resultsContent" style="display:none;">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.75rem;flex-wrap:wrap;gap:0.5rem;">
-        <h3 style="font-size:1.05rem;font-weight:700;color:var(--text-primary);display:flex;align-items:center;gap:0.4rem;margin:0;">
-          <i class="ph-fill ph-trophy" style="color:#eab308;"></i> Student Leaderboard & Performance Scorecards
-        </h3>
-        <span id="leaderboardSummary" style="font-size:0.8rem;color:var(--text-secondary);font-weight:600;"></span>
-      </div>
-
-      <div class="table-wrap">
-        <table class="report-table">
-          <thead>
-            <tr>
-              <th style="width:70px;">Rank</th>
-              <th>Student Details</th>
-              <th>Score</th>
-              <th>Accuracy</th>
-              <th>Time Taken</th>
-              <th>Submitted At</th>
-              <th style="text-align:right;">1-Click Parent Report</th>
-            </tr>
-          </thead>
-          <tbody id="studentTableBody">
-            <!-- Rows rendered dynamically -->
-          </tbody>
-        </table>
-      </div>
-
-      <!-- Informational banner -->
-      <div style="margin-top:1.25rem;padding:0.85rem 1.15rem;border-radius:var(--radius);background:var(--bg-elevated);border:1px solid var(--border-light);font-size:0.8rem;color:var(--text-secondary);display:flex;align-items:center;gap:0.5rem;">
-        <i class="ph-fill ph-whatsapp-logo" style="color:#25D366;font-size:1.2rem;"></i>
-        <span>Clicking <strong>Send Report</strong> opens WhatsApp Web or Mobile directly on your device with a pre-filled scorecard ready to send to the parent at <strong>â‚¹0 messaging cost</strong>.</span>
-      </div>
-    </div>
-
-    <!-- Initial Empty State -->
-    <div class="empty-report" id="emptyReportState">
-      <i class="ph ph-file-text"></i>
-      <h3 style="font-size:1.15rem;font-weight:700;color:var(--text-primary);">No Test Selected</h3>
-      <p style="max-width:380px;font-size:0.85rem;">Click any test on the left to view comprehensive performance analytics, ranked scores, and WhatsApp parent scorecards.</p>
-    </div>
-  </main>
-
+  </div>
 </div>
 
 <script>
@@ -412,7 +372,6 @@ let allTests = [];
 let activeQuizId = null;
 let activeQuizTitle = '';
 
-// Auth check
 function checkAuth() {
   const token = localStorage.getItem('pg_access_token');
   const user  = localStorage.getItem('pg_user');
@@ -428,6 +387,22 @@ function logout() {
   window.location.href = './index.html';
 }
 
+function openSidebar() {
+  const sb = document.getElementById('qbSidebar');
+  const bd = document.getElementById('sidebarBackdrop');
+  if (sb) sb.classList.add('open');
+  if (bd) bd.classList.add('show');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeSidebar() {
+  const sb = document.getElementById('qbSidebar');
+  const bd = document.getElementById('sidebarBackdrop');
+  if (sb) sb.classList.remove('open');
+  if (bd) bd.classList.remove('show');
+  document.body.style.overflow = '';
+}
+
 function getTenantMoodleUrl() {
   return sessionStorage.getItem('pg_moodle_url') || localStorage.getItem('pg_moodle_url') || 'https://trial001.classes.institute';
 }
@@ -436,25 +411,23 @@ function escHtml(s) {
   return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
-// â”€â”€ Load Scheduled / Completed Tests from Supabase API â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 async function loadTestsDirectory() {
   const listEl = document.getElementById('testsListContainer');
   if (!listEl) return;
-  listEl.innerHTML = '<p style="color:var(--text-secondary);font-size:0.85rem;text-align:center;padding:1.5rem 0;"><i class="ph ph-spinner-gap spinner"></i> Loading tests...</p>';
+  listEl.innerHTML = '<p style="color:var(--text-secondary);font-size:0.8rem;text-align:center;padding:1rem 0;"><i class="ph ph-spinner-gap spinner"></i> Loading tests...</p>';
 
   try {
     const res = await fetch('/api/scheduled-quizzes?order=created_at.desc');
     const list = await res.json();
 
     if (!list || !list.length) {
-      listEl.innerHTML = '<p style="color:var(--text-secondary);font-size:0.85rem;padding:1.5rem;text-align:center;">No tests found. Create a quiz in Quiz Builder to get started.</p>';
+      listEl.innerHTML = '<p style="color:var(--text-secondary);font-size:0.8rem;padding:1rem;text-align:center;">No tests found.</p>';
       return;
     }
 
     allTests = list;
     renderTestsList(allTests);
 
-    // Auto-select first test or Quiz 13 if available
     const firstTest = allTests[0];
     if (firstTest) {
       let qid = '';
@@ -466,14 +439,14 @@ async function loadTestsDirectory() {
       selectTest(qid || '13', firstTest.quiz_title || 'Recent Test');
     }
   } catch(e) {
-    listEl.innerHTML = `<p style="color:var(--primary);font-size:0.85rem;padding:1rem;">Failed to load tests: ${escHtml(e.message)}</p>`;
+    listEl.innerHTML = `<p style="color:var(--primary);font-size:0.8rem;padding:0.75rem;">Failed to load tests: ${escHtml(e.message)}</p>`;
   }
 }
 
 function renderTestsList(items) {
   const listEl = document.getElementById('testsListContainer');
   if (!items.length) {
-    listEl.innerHTML = '<p style="color:var(--text-secondary);font-size:0.85rem;padding:1rem;text-align:center;">No matching tests.</p>';
+    listEl.innerHTML = '<p style="color:var(--text-secondary);font-size:0.8rem;padding:1rem;text-align:center;">No matching tests.</p>';
     return;
   }
 
@@ -508,13 +481,12 @@ function filterTestList() {
   renderTestsList(filtered);
 }
 
-// â”€â”€ Select & Fetch Report for a Test â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 async function selectTest(quizId, quizTitle) {
   activeQuizId = quizId;
   activeQuizTitle = quizTitle;
-  renderTestsList(allTests); // refresh active card highlight
+  renderTestsList(allTests);
+  closeSidebar(); // On mobile, close drawer upon selection
 
-  // Show UI elements
   document.getElementById('emptyReportState').style.display = 'none';
   document.getElementById('kpiContainer').style.display = 'grid';
   document.getElementById('resultsContent').style.display = 'block';
@@ -524,7 +496,6 @@ async function selectTest(quizId, quizTitle) {
   document.getElementById('repQuizTitle').innerHTML = `<i class="ph-fill ph-chart-line-up" style="color:var(--primary);"></i> ${escHtml(quizTitle)}`;
   document.getElementById('repQuizSubtitle').innerHTML = '<span><i class="ph ph-spinner-gap spinner"></i> Querying Moodle REST API for student attempts & analytics...</span>';
 
-  // Clear KPIs
   document.getElementById('kpiAttempts').textContent = '...';
   document.getElementById('kpiParticipation').textContent = 'Enrolled: ...';
   document.getElementById('kpiAvgScore').textContent = '...';
@@ -554,7 +525,6 @@ async function selectTest(quizId, quizTitle) {
       return;
     }
 
-    // Populate header info
     if (data.quiz_name) {
       document.getElementById('repQuizTitle').innerHTML = `<i class="ph-fill ph-chart-line-up" style="color:var(--primary);"></i> ${escHtml(data.quiz_name)}`;
     }
@@ -564,7 +534,6 @@ async function selectTest(quizId, quizTitle) {
       <span><i class="ph ph-timer"></i> ${Math.round((data.timelimit || 0) / 60)} min limit</span>
     `;
 
-    // Populate KPIs
     const a = data.analytics || {};
     document.getElementById('kpiAttempts').textContent = a.total_attempts ?? 0;
     document.getElementById('kpiParticipation').textContent = `Participation: ${a.participation_rate ?? 0}% (${a.total_attempts}/${a.total_enrolled || a.total_attempts})`;
@@ -588,7 +557,6 @@ async function selectTest(quizId, quizTitle) {
       return;
     }
 
-    // Render leaderboard rows
     tbody.innerHTML = list.map(st => {
       let rankBadge = `<span class="rank-pill rank-other">#${st.rank}</span>`;
       if (st.rank === 1) rankBadge = `<span class="rank-pill rank-1"><i class="ph-fill ph-trophy"></i> #1 Rank</span>`;
@@ -637,7 +605,6 @@ function refreshActiveReport() {
   }
 }
 
-// Initialize
 if (checkAuth()) {
   loadTestsDirectory();
 }
