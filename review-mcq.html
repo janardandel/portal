@@ -582,7 +582,15 @@ function renderMCQCards() {
     </div>`).join('');
 }
 
-function escHtml(s){ return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function escHtml(s) {
+  if (s === null || s === undefined) return '';
+  return String(s)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
 
 function deleteMCQ(i) {
   mcqData.splice(i,1);
@@ -926,7 +934,7 @@ async function openQuizResults(quizId, quizTitle) {
           <i class="ph ph-timer"></i> ${st.time_taken_formatted || '—'}
         </td>
         <td style="padding:0.85rem 1rem;text-align:right;">
-          <a href="${st.whatsapp_url}" target="_blank" class="btn btn-sm" style="background:#25D366;color:#fff;border-radius:var(--radius-md);display:inline-flex;align-items:center;gap:0.35rem;font-size:0.8rem;text-decoration:none;font-weight:700;padding:0.4rem 0.75rem;box-shadow:0 2px 6px rgba(37,211,102,0.3);">
+          <a href="${(st.whatsapp_url && (st.whatsapp_url.startsWith('https://wa.me/') || st.whatsapp_url.startsWith('https://api.whatsapp.com/'))) ? escHtml(st.whatsapp_url) : '#'}" target="_blank" rel="noopener noreferrer" class="btn btn-sm" style="background:#25D366;color:#fff;border-radius:var(--radius-md);display:inline-flex;align-items:center;gap:0.35rem;font-size:0.8rem;text-decoration:none;font-weight:700;padding:0.4rem 0.75rem;box-shadow:0 2px 6px rgba(37,211,102,0.3);">
             <i class="ph-fill ph-whatsapp-logo" style="font-size:1rem;"></i> Send Report
           </a>
         </td>
