@@ -50,11 +50,6 @@ export default {
         if (path === '/api/scheduled-quizzes') {
             return handleScheduledQuizzes(request, env);
         }
-        if (path === '/api/hubspot-lead') {
-            if (method !== 'POST') return new Response('Method Not Allowed', { status: 405 });
-            return handleHubspotLead(request, env);
-        }
-
         // Serve static assets for everything else
         return env.ASSETS.fetch(request);
     }
@@ -515,101 +510,49 @@ function json(data, status = 200) {
     });
 }
 
-async function handleHubspotLead(request, env) {
-    let data;
-    try {
-        data = await request.json();
-    } catch {
-        return json({ error: 'Invalid JSON payload.' }, 400);
-    }
+// â”€â”€ Server-Side Handlers for Trial & Scheduled Quizzes (Protects CRM & DB keys) â”€â”€
+const AIRTABLE_BASE  = 'appJUgBQPQHElMNrN';
+const AIRTABLE_TABLE = 'tblIbHhU3t3DYLzWE';
 
-    const { email, firstname, lastname, phone, company, city, batch_size, exam_target } = data;
-    if (!email) {
-        return json({ error: 'Email address is required.' }, 400);
-    }
-
-    const hsToken = (env && env.HUBSPOT_TOKEN) || '';
-    const hsHeaders = {
-        'Authorization': 'Bearer ' + hsToken,
-        'Content-Type': 'application/json'
-    };
+async function allocateMoodleCredentials(env) {
+    const atToken = (env && env.AIRTABLE_TOKEN) || '';
+    if (!atToken) return null;
+    const atHeaders = { 'Authorization': 'Bearer ' + atToken, 'Content-Type': 'application/json' };
 
     try {
-        // 1. Create Contact
-        const contactPayload = {
-            properties: {
-                email: email.trim(),
-                firstname: (firstname || '').trim(),
-                lastname: (lastname || '').trim(),
-                phone: (phone || '').trim(),
-                company: (company || '').trim()
-            }
-        };
+        const filterUrl = `https://api.airtable.com/v0/${AIRTABLE_BASE}/${AIRTABLE_TABLE}?filterByFormula=NOT({Used})&maxRecords=1`;
+        const atResp = await fetch(filterUrl, { headers: atHeaders });
+        const atData = await atResp.json();
+        if (!atData.records || atData.records.length === 0) return null;
 
-        const contactResp = await fetch('https://api.hubapi.com/crm/v3/objects/contacts', {
-            method: 'POST',
-            headers: hsHeaders,
-            body: JSON.stringify(contactPayload)
-        });
-
-        const contactData = await contactResp.json();
-        const contactId = contactData.id;
-
-        // 2. Create Company if provided
-        let companyId = null;
-        if (company) {
-            const compPayload = {
-                properties: {
-                    name: company.trim(),
-                    city: (city || 'India').trim(),
-                    country: 'India'
-                }
-            };
-            const compResp = await fetch('https://api.hubapi.com/crm/v3/objects/companies', {
-                method: 'POST',
-                headers: hsHeaders,
-                body: JSON.stringify(compPayload)
-            });
-            const compData = await compResp.json();
-            companyId = compData.id;
-
-            // Associate Contact to Company
-            if (contactId && companyId) {
-                await fetch('https://api.hubapi.com/crm/v4/objects/contacts/' + contactId + '/associations/default/companies/' + companyId, {
-                    method: 'PUT',
-                    headers: hsHeaders
-                });
-            }
+        const rec = atData.records[0];
+        const f = rec.fields;
+        const studentLogins = [];
+        for (let i = 1; i <= 5; i++) {
+            const sUser = f['Student' + i + ' Username'];
+            const sPass = f['Student' + i + ' Password'];
+            if (sUser && sPass) studentLogins.push({ num: i, username: sUser, password: sPass });
         }
 
-        // 3. Create Follow-up Task in HubSpot
-        const taskPayload = {
-            properties: {
-                hs_task_subject: 'New Lead: ' + (firstname || '') + ' ' + (lastname || '') + ' (' + (company || 'Educator') + ')',
-                hs_task_body: 'Target Exam: ' + (exam_target || 'JEE / NEET') + ' | Batch Size: ' + (batch_size || 'N/A') + ' | Phone: ' + (phone || 'N/A') + '. Follow up to schedule LMS trial.',
-                hs_task_status: 'NOT_STARTED',
-                hs_task_priority: 'HIGH',
-                hs_timestamp: String(Date.now())
-            }
+        // Lock immediately so a concurrent signup can't claim the same row
+        await fetch(`https://api.airtable.com/v0/${AIRTABLE_BASE}/${AIRTABLE_TABLE}/${rec.id}`, {
+            method: 'PATCH',
+            headers: atHeaders,
+            body: JSON.stringify({ fields: { Used: true } })
+        });
+
+        return {
+            moodleUrl: f['Coaching URL'] || null,
+            teacherUser: f['Teacher Username'] || null,
+            teacherPass: f['Teacher Password'] || null,
+            studentLogins
         };
-
-        await fetch('https://api.hubapi.com/crm/v3/objects/tasks', {
-            method: 'POST',
-            headers: hsHeaders,
-            body: JSON.stringify(taskPayload)
-        });
-
-        return json({
-            success: true,
-            message: 'Lead registered in HubSpot CRM successfully.',
-            contactId: contactId,
-            companyId: companyId
-        });
-    } catch (err) {
-        return json({ error: err.message || 'HubSpot sync error' }, 500);
+    } catch (e) {
+        console.warn('Airtable pool notice:', e);
+        return null;
     }
 }
-// â”€â”€ Server-Side Handlers for Trial & Scheduled Quizzes (Protects CRM & DB keys) â”€â”€
+
 async function handleTrial(request, env) {
     let body;
     try {
@@ -618,7 +561,7 @@ async function handleTrial(request, env) {
         return json({ error: 'Invalid JSON payload' }, 400);
     }
 
-    const { email, phone, firstname, lastname, company, exam_target, message } = body;
+    const { email, phone, firstname, lastname, company, exam_target, batch_size } = body;
     if (!email || !phone || !firstname) {
         return json({ error: 'Missing required fields (email, phone, firstname)' }, 400);
     }
@@ -631,19 +574,16 @@ async function handleTrial(request, env) {
 
     let contactId = null;
     let isExisting = false;
+    let moodleUrl = null, teacherUser = null, teacherPass = null, studentLogins = [];
 
-    // 1. HubSpot Contact lookup / creation
+    // 1. HubSpot dedup check
     try {
         const searchRes = await fetch('https://api.hubapi.com/crm/v3/objects/contacts/search', {
             method: 'POST',
             headers: hsHeaders,
             body: JSON.stringify({
                 filterGroups: [{
-                    filters: [{
-                        propertyName: 'email',
-                        operator: 'EQ',
-                        value: email.trim().toLowerCase()
-                    }]
+                    filters: [{ propertyName: 'email', operator: 'EQ', value: email.trim().toLowerCase() }]
                 }]
             })
         });
@@ -652,14 +592,32 @@ async function handleTrial(request, env) {
             isExisting = true;
             contactId = searchData.results[0].id;
         }
+    } catch (err) {
+        console.warn('HubSpot dedup notice:', err);
+    }
 
-        if (!isExisting) {
-            // Create Contact
+    if (!isExisting) {
+        // 2. Allocate a real Moodle credential set from the pool (never a hardcoded default)
+        const allocation = await allocateMoodleCredentials(env);
+        if (allocation) {
+            moodleUrl = allocation.moodleUrl;
+            teacherUser = allocation.teacherUser;
+            teacherPass = allocation.teacherPass;
+            studentLogins = allocation.studentLogins;
+        }
+
+        // 3. Create Contact (with Moodle properties when allocated)
+        try {
             const contactResp = await fetch('https://api.hubapi.com/crm/v3/objects/contacts', {
                 method: 'POST',
                 headers: hsHeaders,
                 body: JSON.stringify({
-                    properties: { email, firstname, lastname, phone, company }
+                    properties: {
+                        email, firstname, lastname, phone, company,
+                        ...(moodleUrl ? { moodle_url: moodleUrl } : {}),
+                        ...(teacherUser ? { moodle_username: teacherUser } : {}),
+                        ...(teacherPass ? { moodle_password: teacherPass } : {})
+                    }
                 })
             });
             const contactData = await contactResp.json();
@@ -671,13 +629,11 @@ async function handleTrial(request, env) {
                     const compResp = await fetch('https://api.hubapi.com/crm/v3/objects/companies', {
                         method: 'POST',
                         headers: hsHeaders,
-                        body: JSON.stringify({
-                            properties: { name: company, country: 'India' }
-                        })
+                        body: JSON.stringify({ properties: { name: company, country: 'India' } })
                     });
                     const compData = await compResp.json();
                     if (compData.id) {
-                        await fetch(https://api.hubapi.com/crm/v4/objects/contacts/ + contactId + /associations/default/companies/ + compData.id, {
+                        await fetch(`https://api.hubapi.com/crm/v4/objects/contacts/${contactId}/associations/default/companies/${compData.id}`, {
                             method: 'PUT',
                             headers: hsHeaders
                         });
@@ -689,13 +645,21 @@ async function handleTrial(request, env) {
 
             // Create Onboarding Task
             try {
+                let taskBody = 'Target Exam: ' + (exam_target || 'JEE / NEET') + ' | Batch Size: ' + (batch_size || 'N/A') +
+                               ' | Phone: ' + phone + ' | Email: ' + email;
+                if (teacherUser && teacherPass) {
+                    taskBody += '\n\nMOODLE CREDENTIALS ALLOCATED:\n• Moodle URL: ' + (moodleUrl || 'N/A') +
+                                '\n• Teacher Login: ' + teacherUser + ' / ' + teacherPass;
+                } else {
+                    taskBody += '\n\nNo pooled Moodle credentials were available — manual provisioning required.';
+                }
                 await fetch('https://api.hubapi.com/crm/v3/objects/tasks', {
                     method: 'POST',
                     headers: hsHeaders,
                     body: JSON.stringify({
                         properties: {
                             hs_task_subject: 'New LMS Trial: ' + firstname + ' ' + (lastname || '') + ' (' + (company || 'Educator') + ')',
-                            hs_task_body: 'Target Exam: ' + (exam_target || 'JEE / NEET') + ' | Phone: ' + phone + ' | Email: ' + email + '. Setup trial course and WhatsApp credentials.',
+                            hs_task_body: taskBody,
                             hs_task_status: 'NOT_STARTED',
                             hs_task_priority: 'HIGH',
                             hs_timestamp: String(Date.now())
@@ -705,53 +669,55 @@ async function handleTrial(request, env) {
             } catch (e) {
                 console.warn('Task notice:', e);
             }
-        } else {
-            // Reactivation Task
-            try {
-                await fetch('https://api.hubapi.com/crm/v3/objects/tasks', {
-                    method: 'POST',
-                    headers: hsHeaders,
-                    body: JSON.stringify({
-                        properties: {
-                            hs_task_subject: 'Reactivation Request: ' + firstname + ' ' + (lastname || '') + ' (' + (company || 'Educator') + ')',
-                            hs_task_body: 'Existing contact requested trial reactivation. Phone: ' + phone + ' | Email: ' + email + '.',
-                            hs_task_status: 'NOT_STARTED',
-                            hs_task_priority: 'HIGH',
-                            hs_timestamp: String(Date.now())
-                        }
-                    })
-                });
-            } catch (e) {
-                console.warn('Reactivation task notice:', e);
-            }
+        } catch (err) {
+            console.error('HubSpot contact creation error:', err);
         }
-    } catch (err) {
-        console.error('HubSpot sync error:', err);
+    } else {
+        // Reactivation Task
+        try {
+            await fetch('https://api.hubapi.com/crm/v3/objects/tasks', {
+                method: 'POST',
+                headers: hsHeaders,
+                body: JSON.stringify({
+                    properties: {
+                        hs_task_subject: 'Reactivation Request: ' + firstname + ' ' + (lastname || '') + ' (' + (company || 'Educator') + ')',
+                        hs_task_body: 'Existing contact requested trial reactivation. Phone: ' + phone + ' | Email: ' + email + '.',
+                        hs_task_status: 'NOT_STARTED',
+                        hs_task_priority: 'HIGH',
+                        hs_timestamp: String(Date.now())
+                    }
+                })
+            });
+        } catch (e) {
+            console.warn('Reactivation task notice:', e);
+        }
     }
 
-    // 2. Dispatch WhatsApp confirmation via AiSensy Cloud API
+    // 4. Dispatch WhatsApp confirmation via AiSensy Cloud API
     try {
         const rawPhone = phone.replace(/[^0-9]/g, '');
         const cleanPhone = rawPhone.length === 10 ? '91' + rawPhone : rawPhone;
         const AISENSY_KEY = (env && env.AISENSY_API_KEY) || '';
 
-        fetch('https://backend.aisensy.com/campaign/t1/api/v2', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                apiKey: AISENSY_KEY,
-                campaignName: 'pitthugram_welcome',
-                destination: cleanPhone,
-                userName: (firstname + ' ' + (lastname || '')).trim(),
-                templateParams: [
-                    firstname,
-                    company || 'Coaching Institute',
-                    'https://portal.classes.institute',
-                    email,
-                    'Pitthugram@2026'
-                ]
-            })
-        }).catch(e => console.warn('AiSensy dispatch notice:', e));
+        if (AISENSY_KEY) {
+            fetch('https://backend.aisensy.com/campaign/t1/api/v2', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    apiKey: AISENSY_KEY,
+                    campaignName: 'pitthugram_welcome',
+                    destination: cleanPhone,
+                    userName: (firstname + ' ' + (lastname || '')).trim(),
+                    templateParams: [
+                        firstname,
+                        company || 'Coaching Institute',
+                        moodleUrl || 'https://portal.classes.institute',
+                        teacherUser || email,
+                        teacherPass || ''
+                    ]
+                })
+            }).catch(e => console.warn('AiSensy dispatch notice:', e));
+        }
     } catch (e) {
         console.warn('AiSensy error:', e);
     }
@@ -759,14 +725,14 @@ async function handleTrial(request, env) {
     return json({
         success: true,
         isExisting,
+        moodleUrl, teacherUser, teacherPass, studentLogins,
         message: isExisting
             ? 'Reactivation request registered. Our team will contact you on WhatsApp.'
-            : '14-day free trial registered. Check your WhatsApp for access details.'
+            : (teacherUser && teacherPass
+                ? '14-day free trial registered. Check your WhatsApp for access details.'
+                : 'Trial request registered. Our onboarding team will set up your Moodle access and follow up shortly.')
     });
 }
-
-const QB_SUPABASE_URL = 'https://qnqcysdeolnooxxcafwz.supabase.co';
-const QB_SERVICE_KEY = '';
 
 async function handleScheduledQuizzes(request, env) {
     const authHeader = request.headers.get('Authorization') || '';
