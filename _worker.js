@@ -141,7 +141,6 @@ const TENANT_MOODLE_MAP = {
     // Default / Trial Tenant (Pitthugram Trial Institute)
     '65e4628a-a283-45a3-ab2d-84073977d4c4': {
         moodle_url: 'https://trial001.classes.institute',
-        moodle_token: (env && env.MOODLE_TOKEN) || '',
         tenant_name: 'Pitthugram Trial'
     }
 };
@@ -149,7 +148,10 @@ const TENANT_MOODLE_MAP = {
 async function getTenantMoodleConfig(instituteId, env) {
     // 1. Check in-memory mapping
     if (instituteId && TENANT_MOODLE_MAP[instituteId]) {
-        return TENANT_MOODLE_MAP[instituteId];
+        return {
+            ...TENANT_MOODLE_MAP[instituteId],
+            moodle_token: (env && env.MOODLE_TOKEN) || ''
+        };
     }
 
     // 2. Check Supabase institutes / moodle_config table if configured
