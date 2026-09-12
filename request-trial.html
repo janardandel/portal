@@ -401,9 +401,9 @@ document.getElementById('trialForm').addEventListener('submit', async function(e
 
     try {
         // Everything — HubSpot dedup/CRM sync, Moodle credential allocation, and the
-        // AiSensy WhatsApp send — happens server-side in /api/trial. No API keys ever
-        // reach this page.
-        const resp = await fetch('/api/trial', {
+        // AiSensy WhatsApp send — happens server-side at api.classes.institute. No API
+        // keys ever reach this page.
+        const resp = await fetch('https://api.classes.institute/api/trial', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ email, phone, firstname, lastname, company, exam_target, batch_size })
