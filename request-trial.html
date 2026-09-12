@@ -400,60 +400,24 @@ document.getElementById('trialForm').addEventListener('submit', async function(e
     spinner.style.display = 'block';
 
     try {
-        // 1. Deduplication check (server-side, no keys exposed to the browser)
-        let isExisting = false;
-        try {
-            const checkResp = await fetch('/api/hubspot-check', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email })
-            });
-            const checkData = await checkResp.json();
-            isExisting = !!checkData.existing;
-        } catch (err) { console.warn('Dedup check notice:', err); }
+        // Everything — HubSpot dedup/CRM sync, Moodle credential allocation, and the
+        // AiSensy WhatsApp send — happens server-side in /api/trial. No API keys ever
+        // reach this page.
+        const resp = await fetch('/api/trial', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, phone, firstname, lastname, company, exam_target, batch_size })
+        });
+        const data = await resp.json();
+        if (!resp.ok) throw new Error(data.error || 'Submission failed.');
 
-        let moodleUrl = null;
-        let teacherUser = null;
-        let teacherPass = null;
-        let studentLogins = [];
+        const isExisting  = !!data.isExisting;
+        const moodleUrl   = data.moodleUrl || null;
+        const teacherUser = data.teacherUser || null;
+        const teacherPass = data.teacherPass || null;
+        const studentLogins = data.studentLogins || [];
 
-        // 2. If new, allocate a Moodle credential set from the pool (server-side)
-        if (!isExisting) {
-            try {
-                const poolResp = await fetch('/api/airtable-pool', { method: 'POST' });
-                const poolData = await poolResp.json();
-                if (poolData.allocated) {
-                    moodleUrl = poolData.moodleUrl;
-                    teacherUser = poolData.teacherUser;
-                    teacherPass = poolData.teacherPass;
-                    studentLogins = poolData.studentLogins || [];
-                }
-            } catch (err) { console.warn('Credential pool notice:', err); }
-        }
-
-        // 3. Sync to HubSpot CRM (server-side)
-        try {
-            await fetch('/api/hubspot-lead', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    email, firstname, lastname, phone, company,
-                    batch_size, exam_target, existing: isExisting,
-                    moodleUrl, teacherUser, teacherPass
-                })
-            });
-        } catch (err) { console.warn('HubSpot sync notice:', err); }
-
-        // 4. Trigger WhatsApp welcome message (server-side, key never touches the browser)
-        if (!isExisting && teacherUser && teacherPass) {
-            fetch('/api/aisensy-send', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ phone, firstname, lastname, company, moodleUrl, teacherUser, teacherPass })
-            }).catch(function(err) { console.warn('AiSensy notice:', err); });
-        }
-
-        // 5. Build the WhatsApp deep-link + preview and render the success screen
+        // Build the WhatsApp deep-link + preview and render the success screen
         const waMsg = isExisting
             ? 'Hi Pitthugram Team, I am ' + firstname + ' from ' + (company || 'our academy') + '. I previously registered and would like to reactivate our coaching trial or view paid plans!'
             : 'Hi Pitthugram Team, I am ' + firstname + ' from ' + (company || 'Coaching Academy') + '. I just submitted my 14-day free trial request for ' + exam_target + '. Please send my Moodle LMS trial login credentials!';
