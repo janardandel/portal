@@ -620,13 +620,10 @@ function clearSession() {
 
     // Verify role directly via Supabase
     try {
-        const verifyRes = await fetch(`${SUPABASE_URL}/rest/v1/profiles?id=eq.${user.id}&select=role`, {
-            headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${ownerToken}` }
-        });
-        const profiles = await verifyRes.json();
-        const role = profiles[0]?.role;
+        const memberships = JSON.parse(localStorage.getItem('pg_memberships') || '[]');
+        const role = memberships.some(m => m.role === 'owner') ? 'owner' : null;
 
-        if (!verifyRes.ok || role !== 'owner') {
+        if (role !== 'owner') {
             clearSession();
             window.location.href = 'index.html';
             return;
