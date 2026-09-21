@@ -707,7 +707,18 @@ const SUPABASE_KEY  = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFz
 const SUPA_B_URL    = SUPABASE_URL; // consolidated into active database
 const SUPA_B_PUB    = SUPABASE_KEY;
 const N8N_WEBHOOK   = 'YOUR_N8N_WEBHOOK_URL'; // (legacy, unused â€” Moodle push now via worker)
-const API_BASE      = '';
+const API_BASE      = 'https://api.classes.institute';
+function pgAuthHeaders(extra) {
+  return Object.assign({ Authorization: 'Bearer ' + (localStorage.getItem('pg_access_token') || '') }, extra || {});
+}
+function pgInstituteId() {
+  try {
+    const m = JSON.parse(localStorage.getItem('pg_memberships') || '[]');
+    const mine = m.find(x => x.role === 'owner' || x.role === 'teacher');
+    return mine ? mine.institute_id : null;
+  } catch (_) { return null; }
+}
+
 let   teacherInstituteId = null;
 
 let allQuestions       = [];
@@ -1020,13 +1031,13 @@ async function loadMoodleCourses() {
     sel.innerHTML = '<option value="">Select Moodle Course</option>' +
         DEFAULT_COURSES.map(function(c) { return '<option value="' + c.id + '">' + c.fullname + '</option>'; }).join('');
 
-    const instId = (currentUser && (currentUser.institute_id || currentUser.centre_id)) || teacherInstituteId || '65e4628a-a283-45a3-ab2d-84073977d4c4';
+    const instId = pgInstituteId() || (currentUser && (currentUser.institute_id || currentUser.centre_id)) || teacherInstituteId || '65e4628a-a283-45a3-ab2d-84073977d4c4';
     teacherInstituteId = instId;
 
     try {
         const res = await fetch(API_BASE + '/api/moodle-courses', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: pgAuthHeaders({ 'Content-Type': 'application/json' }),
             body: JSON.stringify({ institute_id: instId, email: (currentUser && currentUser.email) || '' })
         });
         const d = await res.json();
@@ -1730,7 +1741,7 @@ async function loadMyQuizzes() {
     container.innerHTML = '<div class="loading-state"><div class="loader"></div><p>Loading your scheduled tests...</p></div>';
 
     try {
-        const res = await fetch('/api/scheduled-quizzes?order=created_at.desc');
+        const res = await fetch(API_BASE + '/api/scheduled-quizzes?order=created_at.desc', { headers: pgAuthHeaders() });
         if (!res.ok) throw new Error('Failed to load quizzes from database');
 
         const quizzes = await res.json();
