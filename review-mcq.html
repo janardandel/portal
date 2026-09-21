@@ -224,12 +224,7 @@
   <!-- Scheduled Tests View -->
   <div id="scheduledTestsView" style="display:block;max-width:1000px;margin:0 auto;">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem;flex-wrap:wrap;gap:1rem;">
-      <div>
-        <h1 style="font-size:1.5rem;font-weight:800;color:var(--text-primary);margin-bottom:0.25rem;display:flex;align-items:center;gap:0.6rem;">
-          <i class="ph-fill ph-calendar-check" style="color:var(--primary);"></i> Scheduled Moodle Tests
-        </h1>
-        <p style="font-size:0.88rem;color:var(--text-secondary);">All scheduled diagnostic quizzes and tests queued for your students.</p>
-      </div>
+      <div></div>
       <div style="display:flex;gap:0.65rem;flex-wrap:wrap;">
         <button onclick="loadScheduledQuizzes()" class="btn btn-outline btn-sm"><i class="ph ph-arrows-clockwise"></i> Refresh</button>
         <button onclick="openQuizResults('13', 'Recent Live Quiz Results')" class="btn btn-outline btn-sm" style="color:#3b82f6;border-color:rgba(59,130,246,0.4);"><i class="ph-bold ph-chart-line-up"></i> Quick Report (Quiz 13)</button>
@@ -828,7 +823,10 @@ async function loadScheduledQuizzes() {
   try {
     const res = await fetch(API_BASE + '/api/scheduled-quizzes?order=created_at.desc', { headers: pgAuthHeaders() });
     const list = await res.json();
-    if (!list || !list.length) {
+    if (!res.ok || !Array.isArray(list)) {
+      throw new Error((list && (list.error || list.message)) || ('HTTP ' + res.status));
+    }
+    if (!list.length) {
       el.innerHTML = '<div style="text-align:center;padding:3rem 1rem;border:1.5px dashed var(--border-light);border-radius:var(--radius-lg);color:var(--text-secondary);"><i class="ph ph-calendar-x" style="font-size:2.5rem;margin-bottom:0.5rem;display:block;"></i><p style="font-weight:600;">No scheduled tests found.</p><a href="./quiz-builder.html" class="btn btn-primary btn-sm" style="margin-top:0.75rem;display:inline-flex;"><i class="ph ph-plus"></i> Schedule a Quiz</a></div>';
       return;
     }
@@ -1006,7 +1004,10 @@ function closeSidebar() {
 
 // Check initial auth and query params
 if (checkAuth()) {
-  const email = localStorage.getItem('pg_user_email') || sessionStorage.getItem('pg_user_email');
+  let email = localStorage.getItem('pg_user_email') || sessionStorage.getItem('pg_user_email');
+  if (!email) {
+    try { email = (JSON.parse(localStorage.getItem('pg_user') || '{}')).email || ''; } catch (_) { email = ''; }
+  }
   if (email) {
     const el = document.getElementById('userEmailSpan');
     if (el) el.textContent = email;
