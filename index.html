@@ -135,7 +135,10 @@ document.getElementById('loginForm').addEventListener('submit', async function(e
         const memberships = authData.memberships || [];
         const role = memberships.some(m => m.role === 'owner') ? 'owner'
                    : memberships.some(m => m.role === 'teacher') ? 'teacher' : null;
-        if (!role) throw new Error('Account not configured. Please contact support.');
+        if (!role) {
+            const got = JSON.stringify(memberships.map(m => m && m.role));
+            throw new Error('Account not configured. Please contact support. (roles received: ' + got + ', keys: ' + Object.keys(authData).join(',') + ')');
+        }
 
         localStorage.setItem('pg_access_token',  authData.access_token);
         localStorage.setItem('pg_refresh_token', authData.refresh_token);
