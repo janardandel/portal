@@ -603,10 +603,15 @@ let moodleURL   = null;
 let moodleToken = null;
 
 // ── Auth guard + role check ──
+function clearSession() {
+    ['pg_access_token','pg_refresh_token','pg_user','pg_role'].forEach(k => localStorage.removeItem(k));
+}
+
 (async function init() {
     ownerToken = localStorage.getItem('pg_access_token');
     if (!ownerToken) {
-        window.location.href = 'index.html';
+        clearSession();
+            window.location.href = 'index.html';
         return;
     }
 
@@ -622,12 +627,14 @@ let moodleToken = null;
         const role = profiles[0]?.role;
 
         if (!verifyRes.ok || role !== 'owner') {
+            clearSession();
             window.location.href = 'index.html';
             return;
         }
 
     } catch (_) {
-        window.location.href = 'index.html';
+        clearSession();
+            window.location.href = 'index.html';
         return;
     }
 
