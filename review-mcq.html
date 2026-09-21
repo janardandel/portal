@@ -357,7 +357,19 @@ const SUPA_A_URL = 'https://qnqcysdeolnooxxcafwz.supabase.co';
 const SUPA_A_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFucWN5c2Rlb2xub294eGNhZnd6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI4NDY0MzAsImV4cCI6MjA4ODQyMjQzMH0.tbm7J9FyQqwJB-KVSMwX13bfFEFsUqBknBDTFSMRuXE';
 
 // n8n presign endpoint — returns short-lived IDrive URLs. No storage keys in the browser.
-const N8N_PRESIGN = '/api/mcq-presign';
+const API_BASE = 'https://api.classes.institute';
+const N8N_PRESIGN = API_BASE + '/api/mcq-presign';
+function pgAuthHeaders(extra) {
+  return Object.assign({ Authorization: 'Bearer ' + (localStorage.getItem('pg_access_token') || '') }, extra || {});
+}
+function pgInstituteId() {
+  try {
+    const m = JSON.parse(localStorage.getItem('pg_memberships') || '[]');
+    const mine = m.find(x => x.role === 'owner' || x.role === 'teacher');
+    return mine ? mine.institute_id : null;
+  } catch (_) { return null; }
+}
+
 
 let currentUser = null, currentJob = null, mcqData = [], pollTimer = null;
 
@@ -389,7 +401,7 @@ async function sbPatch(path, body) {
   return fetch(`${SUPA_B_URL}/rest/v1/${path}`, {
     method:'PATCH',
     headers:{ apikey:SUPA_B_KEY, Authorization:`Bearer ${SUPA_B_KEY}`,
-              'Content-Type':'application/json', 'User-Agent':'node-fetch/1.0' },
+              'Content-Type':'application/json', Prefer:'return=representation', 'User-Agent':'node-fetch/1.0' },
     body: JSON.stringify(body)
   });
 }
@@ -401,6 +413,16 @@ async function sbPost(url, key, path, body) {
               'User-Agent':'node-fetch/1.0' },
     body: JSON.stringify(body)
   });
+}
+
+// A write only counts if the server accepted it AND changed a row. RLS can turn a
+// denied PATCH into a silent no-op, so an empty result is treated as a failure.
+async function mustWrite(res, what) {
+  if (!res.ok) throw new Error(what + ' failed (HTTP ' + res.status + ')');
+  let rows = null;
+  try { rows = await res.clone().json(); } catch (_) {}
+  if (Array.isArray(rows) && rows.length === 0) throw new Error(what + ' was not saved (permission denied)');
+  return res;
 }
 
 // ── Load job list ────────────────────────────────────────────────
@@ -611,12 +633,13 @@ async function deleteFilesFromIDrive(filePaths) {
   try {
     const res = await fetch(N8N_PRESIGN, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ keys: filePaths, expires: 600 })
+      headers: pgAuthHeaders({ 'Content-Type': 'application/json' }),
+      body: JSON.stringify({ files: filePaths.map(k => ({ key: k })), keys: filePaths, expires: 600 })
     });
     if (!res.ok) { console.warn('presign for delete failed:', res.status); return; }
     const { signed } = await res.json();
     for (const s of (signed || [])) {
+      if (!s.deleteUrl) continue;
       try {
         await fetch(s.deleteUrl, { method: 'DELETE' });
       } catch (e) { console.warn(`Failed to delete ${s.key}:`, e.message); }
@@ -637,6 +660,7 @@ async function approveAll(jobId, setId, instituteId) {
   const topic    = document.getElementById('m-topic')?.value    || '';
   const difficulty = document.getElementById('m-difficulty')?.value || 'medium';
   const isOwner = currentUser.role === 'owner';
+  let published = false;
 
   try {
     // sync question text edits from DOM
@@ -681,37 +705,37 @@ async function approveAll(jobId, setId, instituteId) {
         if (q.diagrams && q.diagrams.length > 0 && q.diagrams[0].image_url) {
           qUpdate.image_url = q.diagrams[0].image_url;
         }
-        await sbPatch(`questions?id=eq.${q.id}`, qUpdate);
+        await mustWrite(await sbPatch(`questions?id=eq.${q.id}`, qUpdate), 'Question update');
         // update options
         for (const [l, t] of Object.entries(q.options)) {
-          await fetch(`${SUPA_B_URL}/rest/v1/options?question_id=eq.${q.id}&option_label=eq.${l}`, {
+          await mustWrite(await fetch(`${SUPA_B_URL}/rest/v1/options?question_id=eq.${q.id}&option_label=eq.${l}`, {
             method:'PATCH',
             headers:{ apikey:SUPA_B_KEY, Authorization:`Bearer ${SUPA_B_KEY}`,
-                      'Content-Type':'application/json', 'User-Agent':'node-fetch/1.0' },
+                      'Content-Type':'application/json', Prefer:'return=representation', 'User-Agent':'node-fetch/1.0' },
             body: JSON.stringify({ option_text: t })
-          });
+          }), 'Option update');
         }
       } else {
         // new manually added MCQ
-        const qr = await sbPost(SUPA_B_URL, SUPA_B_KEY, 'questions', {
+        const qr = await mustWrite(await sbPost(SUPA_B_URL, SUPA_B_KEY, 'questions', {
           institute_id: instituteId, set_id: setId,
           question_text: q.question_text, correct_option: q.correct_option,
           status:'approved', source:'manual', confidence_score:1.0
-        });
+        }), 'New question');
         const saved = await qr.json();
         const qId = (Array.isArray(saved)?saved[0]:saved)?.id;
         if (qId) {
           const opts = Object.entries(q.options).map(([l,t])=>({question_id:qId,option_label:l,option_text:t}));
-          await sbPost(SUPA_B_URL, SUPA_B_KEY, 'options', opts);
+          await mustWrite(await sbPost(SUPA_B_URL, SUPA_B_KEY, 'options', opts), 'New options');
         }
       }
     }
 
     // 2. Update mcq_set metadata
-    await sbPatch(`mcq_sets?id=eq.${setId}`, { category, subject, unit, topic, status:'approved' });
+    await mustWrite(await sbPatch(`mcq_sets?id=eq.${setId}`, { category, subject, unit, topic, status:'approved' }), 'MCQ set update');
 
     // 3. Update job status
-    await sbPatch(`mcq_upload_jobs?id=eq.${jobId}`, { status:'APPROVED' });
+    await mustWrite(await sbPatch(`mcq_upload_jobs?id=eq.${jobId}`, { status:'APPROVED' }), 'Job status update');
 
     // 4. Delete files from IDrive S3 (cleanup after approval)
     if (currentJob.file_paths && Array.isArray(currentJob.file_paths)) {
@@ -727,15 +751,22 @@ async function approveAll(jobId, setId, instituteId) {
         answer: q.correct_option,
         contributed_by: currentUser.id
       }));
-      await fetch(`${SUPA_A_URL}/rest/v1/mcq_bank`, {
-        method:'POST',
-        headers:{ apikey:SUPA_A_KEY, Authorization:`Bearer ${SUPA_A_KEY}`,
-                  'Content-Type':'application/json', 'User-Agent':'node-fetch/1.0' },
-        body: JSON.stringify(centralMCQs)
-      });
+      try {
+        await mustWrite(await fetch(`${SUPA_A_URL}/rest/v1/mcq_bank`, {
+          method:'POST',
+          headers:{ apikey:SUPA_A_KEY, Authorization:`Bearer ${SUPA_A_KEY}`,
+                    'Content-Type':'application/json', Prefer:'return=representation', 'User-Agent':'node-fetch/1.0' },
+          body: JSON.stringify(centralMCQs)
+        }), 'Publish to central bank');
+        published = true;
+      } catch (pe) { console.warn(pe); }
     }
 
-    showToast('success', `✅ ${mcqData.length} MCQs approved${isOwner?' and published to central bank':''}`);
+    if (isOwner && !published) {
+      showToast('error', `⚠️ ${mcqData.length} MCQs approved for your institute, but publishing to the central bank failed`);
+    } else {
+      showToast('success', `✅ ${mcqData.length} MCQs approved${isOwner?' and published to central bank':''}`);
+    }
     currentJob = null;
     document.getElementById('reviewContent').style.display='none';
     document.getElementById('emptyState').style.display='flex';
@@ -795,7 +826,7 @@ async function loadScheduledQuizzes() {
   el.innerHTML = '<p style="color:var(--text-secondary);font-size:0.9rem;"><i class="ph ph-spinner-gap spinner"></i> Loading scheduled tests...</p>';
 
   try {
-    const res = await fetch('/api/scheduled-quizzes?order=created_at.desc');
+    const res = await fetch(API_BASE + '/api/scheduled-quizzes?order=created_at.desc', { headers: pgAuthHeaders() });
     const list = await res.json();
     if (!list || !list.length) {
       el.innerHTML = '<div style="text-align:center;padding:3rem 1rem;border:1.5px dashed var(--border-light);border-radius:var(--radius-lg);color:var(--text-secondary);"><i class="ph ph-calendar-x" style="font-size:2.5rem;margin-bottom:0.5rem;display:block;"></i><p style="font-weight:600;">No scheduled tests found.</p><a href="./quiz-builder.html" class="btn btn-primary btn-sm" style="margin-top:0.75rem;display:inline-flex;"><i class="ph ph-plus"></i> Schedule a Quiz</a></div>';

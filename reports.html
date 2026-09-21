@@ -423,7 +423,7 @@ async function loadTestsDirectory() {
   listEl.innerHTML = '<p style="color:var(--text-secondary);font-size:0.8rem;text-align:center;padding:1rem 0;"><i class="ph ph-spinner-gap spinner"></i> Loading tests...</p>';
 
   try {
-    const res = await fetch('/api/scheduled-quizzes?order=created_at.desc');
+    const res = await fetch('https://api.classes.institute/api/scheduled-quizzes?order=created_at.desc', { headers: { Authorization: 'Bearer ' + (localStorage.getItem('pg_access_token') || '') } });
     const list = await res.json();
 
     if (!list || !list.length) {
