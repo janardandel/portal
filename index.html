@@ -124,20 +124,24 @@ document.getElementById('loginForm').addEventListener('submit', async function(e
     document.getElementById('loginSpinner').style.display = 'block';
 
     try {
-        const { data: authData, error: authErr } = await sb.auth.signInWithPassword({ email, password });
-        if (authErr) throw new Error(authErr.message || 'Invalid email or password.');
+        const res = await fetch('https://api.classes.institute/api/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, password })
+        });
+        const authData = await res.json();
+        if (!res.ok) throw new Error(authData.error || 'Invalid email or password.');
 
-        const { data: profiles, error: profErr } = await sb.from('profiles').select('role').eq('id', authData.user.id).single();
-        if (profErr) throw new Error('Account not configured. Please contact support.');
-
-        const role = profiles?.role;
+        const memberships = authData.memberships || [];
+        const role = memberships.some(m => m.role === 'owner') ? 'owner'
+                   : memberships.some(m => m.role === 'teacher') ? 'teacher' : null;
         if (!role) throw new Error('Account not configured. Please contact support.');
-        if (role !== 'owner' && role !== 'teacher') throw new Error('Unrecognised account role. Please contact support.');
 
-        localStorage.setItem('pg_access_token',  authData.session.access_token);
-        localStorage.setItem('pg_refresh_token', authData.session.refresh_token);
+        localStorage.setItem('pg_access_token',  authData.access_token);
+        localStorage.setItem('pg_refresh_token', authData.refresh_token);
         localStorage.setItem('pg_user',          JSON.stringify({ id: authData.user.id, email: authData.user.email }));
         localStorage.setItem('pg_role',          role);
+        localStorage.setItem('pg_memberships',   JSON.stringify(memberships));
 
         document.getElementById('loginSpinner').style.display = 'none';
         showAlert('Login successful! Redirecting...', 'success');
