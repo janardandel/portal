@@ -283,6 +283,18 @@ const N8N_SAVE    = 'https://api.pitthugram.com/api/mcq-save';
 
 let currentUser   = null;
 let teacherRecord = null;
+
+function pgAuthHeaders(extra) {
+    return Object.assign({ Authorization: 'Bearer ' + (localStorage.getItem('pg_access_token') || '') }, extra || {});
+}
+function pgInstituteId() {
+    try {
+        const m = JSON.parse(localStorage.getItem('pg_memberships') || '[]');
+        const mine = m.find(x => x.role === 'owner' || x.role === 'teacher');
+        return mine ? mine.institute_id : null;
+    } catch (_) { return null; }
+}
+
 let questions     = [];
 
 // ── Auth ──────────────────────────────────────────────────────────────────
@@ -577,7 +589,7 @@ async function uploadImage(event, idx) {
     if (!file) return;
     event.target.value = '';
 
-    const instId = teacherRecord ? teacherRecord.institute_id : 'central';
+    const instId = pgInstituteId() || (teacherRecord ? teacherRecord.institute_id : 'central');
     const target = document.getElementById(`imgtarget-${idx}`)?.value || 'question';
     const ext    = (file.name.split('.').pop() || 'png').toLowerCase();
     const uuid   = (crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(36).slice(2)}`);
@@ -594,7 +606,7 @@ async function uploadImage(event, idx) {
     try {
         const presignRes = await fetch(N8N_PRESIGN, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: pgAuthHeaders({ 'Content-Type': 'application/json' }),
             body: JSON.stringify({ files: [{ key, contentType: file.type || 'image/png' }] })
         });
         if (!presignRes.ok) throw new Error('Presign failed: ' + presignRes.status);
@@ -670,7 +682,7 @@ async function saveQuestions() {
     const payload = {
         email:        currentUser ? currentUser.email : '',
         teacher_id:   teacherRecord ? teacherRecord.id   : null,
-        institute_id: teacherRecord ? teacherRecord.institute_id : null,
+        institute_id: pgInstituteId() || (teacherRecord ? teacherRecord.institute_id : null),
         subject:      defaultSubject,
         class:        defaultClass,
         chapter:      defaultChapter,
@@ -708,7 +720,7 @@ async function saveQuestions() {
     try {
         const res = await fetch(N8N_SAVE, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: pgAuthHeaders({ 'Content-Type': 'application/json' }),
             body: JSON.stringify(payload)
         });
         if (!res.ok) throw new Error('Save webhook returned ' + res.status);
