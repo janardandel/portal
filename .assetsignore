@@ -1,1 +1,2 @@
 _worker.js
+# build trigger: re-run Cloudflare Workers Build after token change
