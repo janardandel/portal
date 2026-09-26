@@ -763,6 +763,19 @@ function logout() {
 }
 
 // â”€â”€ Fetch questions (Supabase A central + Supabase B institute, merged) â”€â”€
+// Syllabus and question bank spell some chapters differently ("The d- and f-Block
+// Elements" vs "d- and f-Block Elements"). Match on the name without a leading "The".
+function chapterCore(c) { return String(c).trim().replace(/^the\s+/i, ''); }
+function uniqueChapters(rows) {
+    const seen = new Set(), out = [];
+    rows.forEach(function (x) {
+        if (!x || !x.chapter) return;
+        const k = chapterCore(x.chapter).toLowerCase();
+        if (!seen.has(k)) { seen.add(k); out.push(x.chapter); }
+    });
+    return out;
+}
+
 async function fetchQuestions() {
     const cls        = activeClass;
     const subject    = activeSubject;
@@ -777,14 +790,14 @@ async function fetchQuestions() {
     if (dbCls)       urlA += '&class=eq.'            + encodeURIComponent(dbCls);
     if (activeBoard) urlA += '&board=eq.'            + encodeURIComponent(activeBoard);
     if (subject)     urlA += '&subject=eq.'          + encodeURIComponent(subject);
-    if (chapter)     urlA += '&chapter=eq.'          + encodeURIComponent(chapter);
+    if (chapter)     urlA += '&chapter=ilike.*'      + encodeURIComponent(chapterCore(chapter));
     if (difficulty)  urlA += '&difficulty_level=eq.' + encodeURIComponent(difficulty);
 
     let urlB = SUPA_B_URL + '/rest/v1/questions?is_active=eq.true&select=*,question_images(idrive_url,caption)&order=class,subject,chapter,difficulty_level';
     if (dbCls)       urlB += '&class=eq.'            + encodeURIComponent(dbCls);
     if (activeBoard) urlB += '&board=eq.'            + encodeURIComponent(activeBoard);
     if (subject)     urlB += '&subject=eq.'          + encodeURIComponent(subject);
-    if (chapter)     urlB += '&chapter=eq.'          + encodeURIComponent(chapter);
+    if (chapter)     urlB += '&chapter=ilike.*'      + encodeURIComponent(chapterCore(chapter));
     if (difficulty)  urlB += '&difficulty_level=eq.' + encodeURIComponent(difficulty);
 
     // Central read uses the anon key only. The portal login token is issued by a
@@ -1451,7 +1464,7 @@ async function loadModalChapters(subject, examCtx, board) {
     try {
         const r = await fetch(url, { headers: { 'apikey': SUPABASE_KEY } });
         if (!r.ok) return;
-        const chs = [...new Set((await r.json()).map(x => x.chapter).filter(Boolean))];
+        const chs = uniqueChapters(await r.json());
         chs.forEach(c => { const o = document.createElement('option'); o.value = c; o.textContent = c; mCh.appendChild(o); });
     } catch(_) {}
 }
@@ -1520,7 +1533,7 @@ async function loadFilterChapters(subj) {
     try {
         const r = await fetch(url, { headers: { 'apikey': SUPABASE_KEY } });
         if (!r.ok) return;
-        const chs = [...new Set((await r.json()).map(x => x.chapter).filter(Boolean))];
+        const chs = uniqueChapters(await r.json());
         chs.forEach(c => { const o = document.createElement('option'); o.value = c; o.textContent = c; selCh.appendChild(o); });
     } catch(_) {}
 }
