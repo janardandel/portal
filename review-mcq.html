@@ -821,7 +821,7 @@ async function loadScheduledQuizzes() {
   el.innerHTML = '<p style="color:var(--text-secondary);font-size:0.9rem;"><i class="ph ph-spinner-gap spinner"></i> Loading scheduled tests...</p>';
 
   try {
-    const res = await fetch(API_BASE + '/api/scheduled-quizzes?order=created_at.desc', { headers: pgAuthHeaders() });
+    const res = await fetch(API_BASE + '/api/scheduled-quizzes?order=created_at.desc&institute_id=' + encodeURIComponent(pgInstituteId() || ''), { headers: pgAuthHeaders() });
     const list = await res.json();
     if (!res.ok || !Array.isArray(list)) {
       throw new Error((list && (list.error || list.message)) || ('HTTP ' + res.status));
