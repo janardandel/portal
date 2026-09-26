@@ -353,7 +353,8 @@ const SUPA_A_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSI
 
 // n8n presign endpoint — returns short-lived IDrive URLs. No storage keys in the browser.
 const API_BASE = 'https://api.classes.institute';
-const N8N_PRESIGN = API_BASE + '/api/mcq-presign';
+const MCQ_API = 'https://api.pitthugram.com';
+const N8N_PRESIGN = MCQ_API + '/api/mcq-presign';
 function pgAuthHeaders(extra) {
   return Object.assign({ Authorization: 'Bearer ' + (localStorage.getItem('pg_access_token') || '') }, extra || {});
 }
@@ -690,79 +691,31 @@ async function approveAll(jobId, setId, instituteId) {
       }
     }
 
-    // 1. Update existing questions + options
-    for (const q of mcqData) {
-      if (q.id) {
-        const qUpdate = {
-          question_text: q.question_text, correct_option: q.correct_option, status:'approved'
-        };
-        // Link first diagram's URL to the question if available
-        if (q.diagrams && q.diagrams.length > 0 && q.diagrams[0].image_url) {
-          qUpdate.image_url = q.diagrams[0].image_url;
-        }
-        await mustWrite(await sbPatch(`questions?id=eq.${q.id}`, qUpdate), 'Question update');
-        // update options
-        for (const [l, t] of Object.entries(q.options)) {
-          await mustWrite(await fetch(`${SUPA_B_URL}/rest/v1/options?question_id=eq.${q.id}&option_label=eq.${l}`, {
-            method:'PATCH',
-            headers:{ apikey:SUPA_B_KEY, Authorization:`Bearer ${SUPA_B_KEY}`,
-                      'Content-Type':'application/json', Prefer:'return=representation', 'User-Agent':'node-fetch/1.0' },
-            body: JSON.stringify({ option_text: t })
-          }), 'Option update');
-        }
-      } else {
-        // new manually added MCQ
-        const qr = await mustWrite(await sbPost(SUPA_B_URL, SUPA_B_KEY, 'questions', {
-          institute_id: instituteId, set_id: setId,
-          question_text: q.question_text, correct_option: q.correct_option,
-          status:'approved', source:'manual', confidence_score:1.0
-        }), 'New question');
-        const saved = await qr.json();
-        const qId = (Array.isArray(saved)?saved[0]:saved)?.id;
-        if (qId) {
-          const opts = Object.entries(q.options).map(([l,t])=>({question_id:qId,option_label:l,option_text:t}));
-          await mustWrite(await sbPost(SUPA_B_URL, SUPA_B_KEY, 'options', opts), 'New options');
-        }
-      }
-    }
-
-    // 2. Update mcq_set metadata
-    await mustWrite(await sbPatch(`mcq_sets?id=eq.${setId}`, { category, subject, unit, topic, status:'approved' }), 'MCQ set update');
-
-    // 3. Update job status
-    await mustWrite(await sbPatch(`mcq_upload_jobs?id=eq.${jobId}`, { status:'APPROVED' }), 'Job status update');
+    // 1-3. Approve on the server: questions, options, set details and job status in one checked call
+    const approveRes = await fetch(MCQ_API + '/api/mcq-review/approve', {
+      method: 'POST',
+      headers: pgAuthHeaders({ 'Content-Type': 'application/json' }),
+      body: JSON.stringify({
+        institute_id: instituteId, job_id: jobId, set_id: setId,
+        meta: { category, subject, unit, topic },
+        questions: mcqData.map(q => ({
+          id: q.id || null,
+          question_text: q.question_text,
+          correct_option: q.correct_option,
+          options: q.options,
+          image_url: (q.diagrams && q.diagrams[0] && q.diagrams[0].image_url) || null
+        }))
+      })
+    });
+    const approveData = await approveRes.json().catch(() => ({}));
+    if (!approveRes.ok) throw new Error(approveData.error || ('Approve failed (HTTP ' + approveRes.status + ')'));
 
     // 4. Delete files from IDrive S3 (cleanup after approval)
     if (currentJob.file_paths && Array.isArray(currentJob.file_paths)) {
       await deleteFilesFromIDrive(currentJob.file_paths);
     }
 
-    // 5. If owner → also publish to Central MCQ Bank (Supabase A)
-    if (isOwner) {
-      const centralMCQs = mcqData.map(q=>({
-        subject, category, unit, topic, difficulty,
-        question_text: q.question_text,
-        options: q.options,
-        answer: q.correct_option,
-        contributed_by: currentUser.id
-      }));
-      try {
-        await mustWrite(await fetch(`${SUPA_A_URL}/rest/v1/mcq_bank`, {
-          method:'POST',
-          headers:{ apikey:SUPA_A_KEY, Authorization:`Bearer ${SUPA_A_KEY}`,
-                    'Content-Type':'application/json', Prefer:'return=representation', 'User-Agent':'node-fetch/1.0' },
-          body: JSON.stringify(centralMCQs)
-        }), 'Publish to central bank');
-        published = true;
-      } catch (pe) { console.warn(pe); }
-    }
-
-    if (isOwner && !published) {
-      showToast('error', `⚠️ ${mcqData.length} MCQs approved for your institute, but publishing to the central bank failed`);
-    } else {
-      showToast('success', `✅ ${mcqData.length} MCQs approved${isOwner?' and published to central bank':''}`);
-    }
-    currentJob = null;
+    showToast('success', `✅ ${mcqData.length} MCQs approved`);
     document.getElementById('reviewContent').style.display='none';
     document.getElementById('emptyState').style.display='flex';
     loadJobs();
