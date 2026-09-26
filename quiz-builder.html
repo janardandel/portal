@@ -1741,7 +1741,7 @@ async function loadMyQuizzes() {
     container.innerHTML = '<div class="loading-state"><div class="loader"></div><p>Loading your scheduled tests...</p></div>';
 
     try {
-        const res = await fetch(API_BASE + '/api/scheduled-quizzes?order=created_at.desc', { headers: pgAuthHeaders() });
+        const res = await fetch(API_BASE + '/api/scheduled-quizzes?order=created_at.desc&institute_id=' + encodeURIComponent(pgInstituteId() || ''), { headers: pgAuthHeaders() });
         if (!res.ok) throw new Error('Failed to load quizzes from database');
 
         const quizzes = await res.json();
