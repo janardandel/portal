@@ -1,7 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<script src="./session.js"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Owner Dashboard — Pitthugram</title>
@@ -424,6 +423,76 @@
             #peopleTableArea .od-table th:nth-child(3), #peopleTableArea .od-table td:nth-child(3) { display: none; }
         }
 
+
+        /* ── Phase 3: layout polish ── */
+        /* the site's marketing styles give every <section> 7rem of padding; tabs must not inherit it */
+        .od-tab { padding: 0; margin: 0; }
+
+        /* sidebar: label next to its icon, not pushed to the far edge */
+        #qbSidebar .qb-nav a { justify-content: flex-start; }
+
+        /* the top bar repeated the sidebar's links; keep just the sign-out button there */
+        .navbar .nav-actions a.btn { display: none !important; }
+        @media (max-width: 720px) { .navbar .nav-actions { display: none !important; } }
+
+        .od-tabs { overflow-x: auto; flex-wrap: nowrap; scrollbar-width: none; }
+        .od-tabs::-webkit-scrollbar { display: none; }
+        .od-tab-btn { white-space: nowrap; flex: 0 0 auto; }
+
+        .od-stats { grid-template-columns: repeat(auto-fit, minmax(min(150px, 100%), 1fr)); }
+        .od-stat { transition: var(--transition); }
+        .od-stat:hover { border-color: var(--border-light); transform: translateY(-2px); }
+
+        /* one line of row buttons */
+        .od-row-actions { flex-wrap: nowrap; }
+        #peopleTableArea .od-table td:last-child { white-space: nowrap; }
+        #peopleTableArea .od-table td, #peopleTableArea .od-table th { padding-left: 0.75rem; padding-right: 0.75rem; }
+
+        /* loading skeletons */
+        @keyframes od-shimmer { 0% { background-position: -200px 0; } 100% { background-position: 200px 0; } }
+        .od-skel, .od-stats.loading .od-stat-value {
+            background: linear-gradient(90deg, var(--bg-input) 0px, var(--bg-elevated) 100px, var(--bg-input) 200px);
+            background-size: 400px 100%;
+            animation: od-shimmer 1.3s linear infinite;
+            border-radius: 8px;
+        }
+        .od-stats.loading .od-stat-value { color: transparent; width: 4.5rem; }
+        .od-skel-row { height: 44px; margin-bottom: 0.6rem; }
+        .od-skel-row:nth-child(odd) { opacity: 0.7; }
+
+        /* empty states with a next step */
+        .od-empty .od-mini, .od-empty .od-btn-inline { margin-top: 1rem; }
+        .od-empty p { margin: 0 0 0.25rem; color: var(--text-secondary); }
+
+        /* phones: people rows become cards, page never scrolls sideways */
+        @media (max-width: 720px) {
+            .od-wrap, .od-page { max-width: 100%; overflow-x: hidden; }
+            main.qb-main { padding: 1.25rem 1rem 4rem !important; }
+            .od-panel { padding: 1.25rem; }
+            .od-filters input[type="search"] { flex-basis: 100%; }
+            #peopleTableArea .od-table thead { display: none; }
+            #peopleTableArea .od-table, #peopleTableArea .od-table tbody { display: block; }
+            #peopleTableArea .od-table tr {
+                display: grid; grid-template-columns: 1fr auto; gap: 0.15rem 0.75rem; align-items: center;
+                padding: 0.9rem 0.25rem; border-bottom: 1px solid var(--border);
+            }
+            #peopleTableArea .od-table td { display: block; padding: 0 !important; border: none; white-space: normal; }
+            #peopleTableArea .od-table td:nth-child(1) { grid-column: 1; font-size: 0.95rem; }
+            #peopleTableArea .od-table td:nth-child(2) { grid-column: 1; font-size: 0.8rem; color: var(--text-muted); }
+            #peopleTableArea .od-table td:nth-child(3) { display: none; }
+            #peopleTableArea .od-table td:nth-child(4) { grid-column: 2; grid-row: 1; justify-self: end; }
+            #peopleTableArea .od-table td:nth-child(5) { grid-column: 2; grid-row: 2; justify-self: end; font-size: 0.75rem; color: var(--text-muted); }
+            #peopleTableArea .od-table td:nth-child(6) { grid-column: 1 / -1; margin-top: 0.55rem; }
+            #peopleTableArea .od-row-actions { justify-content: flex-start; }
+            .od-pager { justify-content: center; text-align: center; }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .od-skel, .od-stats.loading .od-stat-value { animation: none; }
+            .od-stat, .od-tab-btn, .od-mini { transition: none; }
+            .od-stat:hover { transform: none; }
+        }
+
         /* ── Mobile / Tablet ── */
         @media (max-width: 520px) {
             .btn-label { display: none; }
@@ -525,7 +594,7 @@
               <h1 style="font-size:1.5rem;font-weight:800;color:var(--text-primary);margin-bottom:0.2rem;display:flex;align-items:center;gap:0.5rem;">
                 <i class="ph-fill ph-crown" style="color:var(--primary);"></i> Owner Dashboard
               </h1>
-              <p style="font-size:0.88rem;color:var(--text-secondary);margin:0;">Manage institute staff, student accounts, and Moodle LMS configuration.</p>
+              <p style="font-size:0.88rem;color:var(--text-secondary);margin:0;"><strong id="instName" style="color:var(--text-primary);">Your institute</strong> &middot; Signed in as <span id="ownerEmail">...</span><span id="moodleStatus"></span></p>
             </div>
           </div>
           <div class="user-chip" style="display:flex;align-items:center;gap:0.75rem;background:var(--bg-surface);border:1px solid var(--border);border-radius:99px;padding:0.35rem 0.85rem;">
@@ -538,22 +607,6 @@
         </div>
 
         <div class="od-wrap" style="max-width:1100px;width:100%;margin:0 auto;">
-          <!-- Top bar -->
-        <div class="od-top">
-            <div>
-                <h1>Owner Dashboard <span>·</span> <span id="instName" style="color:var(--text-primary);">Your institute</span></h1>
-                <div class="od-top-sub">
-                    Signed in as <strong id="ownerEmail" style="color:var(--text-primary);">…</strong><span id="moodleStatus" style="color:var(--text-secondary);"></span>
-                </div>
-            </div>
-            <div class="od-top-right">
-                <div class="user-chip">
-                    <div class="avatar"><i class="ph-fill ph-crown"></i></div>
-                    <span>Account Owner</span>
-                </div>
-            </div>
-        </div>
-
         <!-- Moodle config not set warning -->
         <div class="config-banner hidden" id="configBanner">
             <i class="ph-fill ph-warning"></i>
@@ -570,7 +623,7 @@
 
         <!-- Overview -->
         <section class="od-tab" id="tab-overview" role="tabpanel" aria-labelledby="tabbtn-overview">
-            <div class="od-stats" id="overviewStats">
+            <div class="od-stats loading" id="overviewStats">
                 <div class="od-stat"><div class="od-stat-label">Accounts</div><div class="od-stat-value" id="statTotal">-</div><div class="od-stat-sub">on your Moodle</div></div>
                 <div class="od-stat accent"><div class="od-stat-label">Active</div><div class="od-stat-value" id="statActive">-</div><div class="od-stat-sub" id="statActiveSub">can sign in</div></div>
                 <div class="od-stat warn"><div class="od-stat-label">Suspended</div><div class="od-stat-value" id="statSuspended">-</div><div class="od-stat-sub">cannot sign in</div></div>
@@ -1087,7 +1140,8 @@ function showTab(name) {
 async function refreshUsers() {
     if (state.loading) return;
     state.loading = true;
-    $id('peopleTableArea').innerHTML = '<div class="od-loading"><div class="od-spinner"></div>Loading people...</div>';
+    $id('overviewStats').classList.add('loading');
+    $id('peopleTableArea').innerHTML = '<div aria-busy="true" aria-label="Loading people">' + '<div class="od-skel od-skel-row"></div>'.repeat(7) + '</div>';
     try {
         const data = await api('list', { limit: 300 });
         state.users = data.users || [];
@@ -1098,6 +1152,7 @@ async function refreshUsers() {
         renderOverview();
         renderPeople();
     } catch (err) {
+        $id('overviewStats').classList.remove('loading');
         $id('peopleTableArea').innerHTML = '<div class="od-feedback error" style="display:flex;margin:0;"><i class="ph-fill ph-warning-circle"></i>' + esc(friendlyError(err.message)) + '</div>';
     } finally {
         state.loading = false;
@@ -1115,6 +1170,7 @@ function relTime(ts) {
 }
 
 function renderOverview() {
+    $id('overviewStats').classList.remove('loading');
     const u = state.users;
     const now = Date.now() / 1000;
     const suspended = u.filter(x => x.suspended).length;
@@ -1133,6 +1189,7 @@ function renderOverview() {
 }
 
 function renderNotConnected() {
+    $id('overviewStats').classList.remove('loading');
     ['statTotal', 'statActive', 'statSuspended', 'statRecent'].forEach(id => { $id(id).textContent = '-'; });
     $id('connInfo').textContent = 'Moodle is not connected for this institute yet, so people cannot be listed or created.';
     $id('peopleTableArea').innerHTML = '<div class="od-empty"><i class="ph ph-plugs"></i>Connect Moodle first</div>';
@@ -1161,7 +1218,9 @@ function renderPeople() {
     if (!state.loaded) return;
     const list = visibleUsers();
     if (!list.length) {
-        area.innerHTML = '<div class="od-empty"><i class="ph ph-user-circle-minus"></i>No people match.</div>';
+        area.innerHTML = state.users.length === 0
+            ? '<div class="od-empty"><i class="ph ph-users-three"></i><p>No people on this Moodle yet.</p><button type="button" class="od-btn od-btn-inline" data-goto="add"><i class="ph ph-user-plus"></i> Add the first person</button></div>'
+            : '<div class="od-empty"><i class="ph ph-user-circle-minus"></i><p>No people match.</p><button type="button" class="od-mini" data-clear="1">Clear search and filters</button></div>';
         return;
     }
     const pages = Math.max(1, Math.ceil(list.length / PAGE_SIZE));
@@ -1176,11 +1235,11 @@ function renderPeople() {
             : '<span class="status-badge status-active"><i class="ph ph-check-circle"></i>Active</span>';
         const uname = esc(u.username);
         return '<tr data-username="' + uname + '">' +
-            '<td><strong>' + esc(u.fullname) + '</strong></td>' +
-            '<td>' + uname + '</td>' +
-            '<td>' + esc(u.email) + '</td>' +
-            '<td>' + badge + '</td>' +
-            '<td>' + esc(relTime(u.lastaccess)) + '</td>' +
+            '<td data-label="Name"><strong>' + esc(u.fullname) + '</strong></td>' +
+            '<td data-label="Username">' + uname + '</td>' +
+            '<td data-label="Email">' + esc(u.email) + '</td>' +
+            '<td data-label="Status">' + badge + '</td>' +
+            '<td data-label="Last access">' + esc(relTime(u.lastaccess)) + '</td>' +
             '<td><div class="od-row-actions">' +
                 '<button type="button" class="od-mini danger" data-act="toggle" data-username="' + uname + '" data-suspend="' + (u.suspended ? '0' : '1') + '">' + (u.suspended ? 'Reactivate' : 'Suspend') + '</button>' +
                 '<button type="button" class="od-mini" data-act="reset" data-username="' + uname + '">Reset password</button>' +
@@ -1209,6 +1268,10 @@ async function onPeopleClick(e) {
         renderPeople();
         return;
     }
+    const clr = e.target.closest('button[data-clear]');
+    if (clr) { state.q = ''; state.status = 'all'; state.page = 1; $id('peopleSearch').value = ''; $id('peopleStatus').value = 'all'; renderPeople(); return; }
+    const go = e.target.closest('[data-goto]');
+    if (go) { showTab(go.dataset.goto); return; }
     const pg = e.target.closest('button[data-page]');
     if (pg && !pg.disabled) { state.page = parseInt(pg.dataset.page, 10) || 1; renderPeople(); return; }
 
@@ -1428,6 +1491,7 @@ function loadImportFile(file) {
 function initPhase2() {
     const own = (() => { try { return JSON.parse(localStorage.getItem('pg_memberships') || '[]').find(x => x.role === 'owner'); } catch (_) { return null; } })();
     $id('instName').textContent = (own && own.institutes && own.institutes.name) || 'Your institute';
+    try { const u = JSON.parse(localStorage.getItem('pg_user') || '{}'); if (u.email && $id('ownerEmailTop')) $id('ownerEmailTop').textContent = u.email; } catch (_) {}
 
     document.querySelectorAll('.od-tab-btn').forEach(b => {
         b.addEventListener('click', () => showTab(b.dataset.tab));
