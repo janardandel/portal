@@ -265,7 +265,7 @@
             margin: 0 auto 0.75rem;
         }
 
-        /* Moodle config notice */
+        /* Platform config notice */
         .config-banner {
             background: var(--warning-light);
             border: 1px solid rgba(245,158,11,0.3);
@@ -611,10 +611,10 @@
         </div>
 
         <div class="od-wrap" style="max-width:1100px;width:100%;margin:0 auto;">
-        <!-- Moodle config not set warning -->
+        <!-- Platform config not set warning -->
         <div class="config-banner hidden" id="configBanner">
             <i class="ph-fill ph-warning"></i>
-            <span id="configBannerText">Moodle isn't connected for this institute yet. Your Pitthugram team connects it during setup; if this stays for more than a day, write to support@pitthugram.com.</span>
+            <span id="configBannerText">Your learning platform isn't connected for this institute yet. Your Pitthugram team connects it during setup; if this stays for more than a day, write to support@pitthugram.com.</span>
         </div>
 
         <nav class="od-tabs" role="tablist" aria-label="Dashboard sections">
@@ -629,7 +629,7 @@
         <!-- Overview -->
         <section class="od-tab" id="tab-overview" role="tabpanel" aria-labelledby="tabbtn-overview">
             <div class="od-stats loading" id="overviewStats">
-                <div class="od-stat"><div class="od-stat-label">Accounts</div><div class="od-stat-value" id="statTotal">-</div><div class="od-stat-sub">on your Moodle</div></div>
+                <div class="od-stat"><div class="od-stat-label">Accounts</div><div class="od-stat-value" id="statTotal">-</div><div class="od-stat-sub">on your platform</div></div>
                 <div class="od-stat accent"><div class="od-stat-label">Active</div><div class="od-stat-value" id="statActive">-</div><div class="od-stat-sub" id="statActiveSub">can sign in</div></div>
                 <div class="od-stat warn"><div class="od-stat-label">Suspended</div><div class="od-stat-value" id="statSuspended">-</div><div class="od-stat-sub">cannot sign in</div></div>
                 <div class="od-stat"><div class="od-stat-label">Signed in, last 30 days</div><div class="od-stat-value" id="statRecent">-</div><div class="od-stat-sub" id="statRecentSub">recent activity</div></div>
@@ -638,7 +638,7 @@
                 <div class="od-panel">
                     <div class="od-panel-head">
                         <div class="od-panel-icon"><i class="ph-fill ph-plugs-connected"></i></div>
-                        <div><h2>Moodle connection</h2><p>The site your accounts are created on</p></div>
+                        <div><h2>Platform connection</h2><p>The site your accounts are created on</p></div>
                     </div>
                     <p class="od-note" id="connInfo">Checking the connection...</p>
                 </div>
@@ -670,7 +670,7 @@
                         <option value="active">Active</option>
                         <option value="suspended">Suspended</option>
                     </select>
-                    <button type="button" class="od-mini" id="peopleRefresh" title="Reload from Moodle"><i class="ph ph-arrow-clockwise"></i> Refresh</button>
+                    <button type="button" class="od-mini" id="peopleRefresh" title="Reload from the server"><i class="ph ph-arrow-clockwise"></i> Refresh</button>
                 </div>
                 <div id="peopleTableArea"><div class="od-empty"><i class="ph ph-users-three"></i>Open this tab to load your people</div></div>
             </div>
@@ -713,7 +713,7 @@
                     <div class="od-panel-icon"><i class="ph-fill ph-chalkboard-teacher"></i></div>
                     <div>
                         <h2>Create Teacher Account</h2>
-                        <p>Add a new teacher to your Moodle platform</p>
+                        <p>Add a new teacher to your platform</p>
                     </div>
                 </div>
                 <form onsubmit="createUser(event,'teacher')">
@@ -751,7 +751,7 @@
                     <div class="od-panel-icon"><i class="ph-fill ph-student"></i></div>
                     <div>
                         <h2>Create Student Account</h2>
-                        <p>Add a new student to your Moodle platform</p>
+                        <p>Add a new student to your platform</p>
                     </div>
                 </div>
                 <form onsubmit="createUser(event,'student')">
@@ -823,7 +823,7 @@
                     </div>
                     <div>
                         <h2>Disable Account</h2>
-                        <p>Suspend a user from accessing Moodle</p>
+                        <p>Suspend a user's access</p>
                     </div>
                 </div>
                 <form onsubmit="disableAccount(event)">
@@ -850,7 +850,7 @@
                     <div class="od-panel-icon"><i class="ph-fill ph-key"></i></div>
                     <div>
                         <h2>Reset Password</h2>
-                        <p>Set a new password for any Moodle user</p>
+                        <p>Set a new password for any account</p>
                     </div>
                 </div>
                 <form onsubmit="resetPassword(event)">
@@ -934,7 +934,7 @@ function clearSession() {
         return;
     }
 
-    await loadMoodleConfig();
+    await loadPlatformConfig();
     initPhase2();
     document.body.style.opacity = '1';
 })();
@@ -946,7 +946,7 @@ function ownerInstituteId() {
     } catch (_) { return null; }
 }
 
-// All Moodle work happens on the server (owner-only); the browser never sees the Moodle token.
+// All LMS work happens on the server (owner-only); the browser never sees the connection token.
 async function api(action, body) {
     const res = await fetch(`${API_BASE}/api/moodle-users/${action}`, {
         method: 'POST',
@@ -973,13 +973,13 @@ function showBanner(text) {
     document.getElementById('configBanner').classList.remove('hidden');
 }
 
-async function loadMoodleConfig() {
+async function loadPlatformConfig() {
     instituteId = ownerInstituteId();
     if (!instituteId) { showBanner('No institute is linked to this login yet.'); return; }
     try {
         const s = await api('status');
         document.getElementById('configBanner').classList.add('hidden');
-        document.getElementById('moodleStatus').textContent = ' · Connected to ' + (s.site || s.host);
+        document.getElementById('moodleStatus').textContent = ' · Connected to ' + s.host;
         state.site = s; state.connected = true;
     } catch (err) {
         if (err.code === 'moodle_not_configured') showBanner();
@@ -1120,7 +1120,7 @@ const $id = id => document.getElementById(id);
 
 function friendlyError(msg) {
     return /invalid parameter value/i.test(msg || '')
-        ? 'That username or email is already in use, or Moodle rejected the details.'
+        ? 'That username or email is already in use, or the details were rejected.'
         : (msg || 'Something went wrong. Please try again.');
 }
 
@@ -1219,15 +1219,15 @@ function renderOverview() {
     $id('statRecentSub').textContent = partial ? 'of the first ' + u.length : 'recent activity';
     const s = state.site;
     $id('connInfo').textContent = s
-        ? 'Connected to ' + (s.site || s.host) + ' (' + s.host + '), Moodle ' + (s.release || '').split(' ')[0] + '.'
+        ? 'Connected to ' + s.host + '.'
         : 'Not connected.';
 }
 
 function renderNotConnected() {
     $id('overviewStats').classList.remove('loading');
     ['statTotal', 'statActive', 'statSuspended', 'statRecent'].forEach(id => { $id(id).textContent = '-'; });
-    $id('connInfo').textContent = 'Moodle is not connected for this institute yet, so people cannot be listed or created.';
-    $id('peopleTableArea').innerHTML = '<div class="od-empty"><i class="ph ph-plugs"></i>Connect Moodle first</div>';
+    $id('connInfo').textContent = 'Not connected for this institute yet, so people cannot be listed or created.';
+    $id('peopleTableArea').innerHTML = '<div class="od-empty"><i class="ph ph-plugs"></i>Set up the connection first</div>';
 }
 
 function visibleUsers() {
@@ -1254,7 +1254,7 @@ function renderPeople() {
     const list = visibleUsers();
     if (!list.length) {
         area.innerHTML = state.users.length === 0
-            ? '<div class="od-empty"><i class="ph ph-users-three"></i><p>No people on this Moodle yet.</p><button type="button" class="od-btn od-btn-inline" data-goto="add"><i class="ph ph-user-plus"></i> Add the first person</button></div>'
+            ? '<div class="od-empty"><i class="ph ph-users-three"></i><p>No people yet.</p><button type="button" class="od-btn od-btn-inline" data-goto="add"><i class="ph ph-user-plus"></i> Add the first person</button></div>'
             : '<div class="od-empty"><i class="ph ph-user-circle-minus"></i><p>No people match.</p><button type="button" class="od-mini" data-clear="1">Clear search and filters</button></div>';
         return;
     }
