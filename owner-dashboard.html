@@ -495,8 +495,10 @@
 
 
         .od-cohorts { display: flex; flex-direction: column; gap: 0.5rem; }
-        .od-cohort { display: flex; justify-content: space-between; gap: 1rem; padding: 0.75rem 1rem; background: var(--bg-input); border: 1px solid var(--border); border-radius: var(--radius); font-size: 0.9rem; }
-        .od-cohort span { color: var(--text-muted); font-size: 0.8rem; }
+        .od-cohort { display: flex; align-items: center; gap: 1rem; padding: 0.75rem 1rem; background: var(--bg-input); border: 1px solid var(--border); border-radius: var(--radius); font-size: 0.9rem; }
+        .od-cohort strong { flex: 1; }
+        .od-cohort span { color: var(--text-muted); font-size: 0.8rem; white-space: nowrap; }
+        .od-cohort .od-mini.danger { padding: 0.35rem 0.55rem; }
         /* ── Mobile / Tablet ── */
         @media (max-width: 520px) {
             .btn-label { display: none; }
@@ -1544,6 +1546,7 @@ function initPhase2() {
     $id('peopleStatus').addEventListener('change', e => { state.status = e.target.value; state.page = 1; renderPeople(); });
     $id('peopleRefresh').addEventListener('click', () => { state.loaded = false; refreshUsers(); });
 
+    $id('cohortList').addEventListener('click', onCohortListClick);
     $id('cohortCreateForm').addEventListener('submit', createCohort);
     $id('cohortAdd').addEventListener('click', () => changeCohort('add-to-cohort'));
     $id('cohortRemove').addEventListener('click', () => changeCohort('remove-from-cohort'));
@@ -1573,7 +1576,7 @@ async function loadCohorts() {
         state.cohorts = d.cohorts || [];
         state.cohortsLoaded = true;
         list.innerHTML = state.cohorts.length
-            ? '<div class="od-cohorts">' + state.cohorts.map(c => '<div class="od-cohort"><strong>' + esc(c.name) + '</strong><span>' + (c.members == null ? '' : c.members + (c.members === 1 ? ' person' : ' people')) + '</span></div>').join('') + '</div>'
+            ? '<div class="od-cohorts">' + state.cohorts.map(c => '<div class="od-cohort"><strong>' + esc(c.name) + '</strong><span>' + (c.members == null ? '' : c.members + (c.members === 1 ? ' person' : ' people')) + '</span><button type="button" class="od-mini danger" data-delete-cohort="' + esc(String(c.id)) + '" title="Delete this cohort"><i class="ph ph-trash"></i></button></div>').join('') + '</div>'
             : '<div class="od-empty"><i class="ph ph-graduation-cap"></i><p>No cohorts yet. Create your first below.</p></div>';
         const pick = $id('cohortPick'), keep = pick.value;
         pick.innerHTML = '<option value="">Choose a cohort...</option>' + state.cohorts.map(c => '<option value="' + esc(String(c.id)) + '">' + esc(c.name) + '</option>').join('');
@@ -1593,6 +1596,30 @@ async function createCohort(e) {
         toast('Cohort "' + name + '" created.', 'success');
         loadCohorts();
     } catch (err) { toast(friendlyError(err.message), 'error'); }
+}
+
+async function onCohortListClick(e) {
+    const btn = e.target.closest('button[data-delete-cohort]');
+    if (!btn || btn.disabled) return;
+    const id = btn.dataset.deleteCohort;
+    const key = 'delete:' + id;
+    if (armed.key !== key) {
+        disarm();
+        armed.key = key;
+        btn.classList.add('armed');
+        btn.innerHTML = 'Confirm?';
+        armed.timer = setTimeout(() => { disarm(); loadCohorts(); }, 4000);
+        return;
+    }
+    disarm();
+    btn.disabled = true;
+    try {
+        await api('delete-cohort', { cohort_id: Number(id) });
+        toast('Cohort deleted.', 'success');
+        const pick = $id('cohortPick');
+        if (pick.value === id) pick.value = '';
+        loadCohorts();
+    } catch (err) { toast(friendlyError(err.message), 'error'); loadCohorts(); }
 }
 
 async function changeCohort(action) {
