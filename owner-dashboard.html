@@ -280,6 +280,149 @@
         }
         .config-banner.hidden { display: none; }
 
+        /* ── Phase 2: tabs, overview, people, import ── */
+        .od-tabs {
+            display: flex;
+            gap: 0.4rem;
+            flex-wrap: wrap;
+            margin-bottom: 1.75rem;
+            border-bottom: 1px solid var(--border);
+        }
+        .od-tab-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1.1rem;
+            background: transparent;
+            border: none;
+            border-bottom: 2px solid transparent;
+            color: var(--text-secondary);
+            font-family: var(--font-body);
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            margin-bottom: -1px;
+        }
+        .od-tab-btn:hover { color: var(--text-primary); }
+        .od-tab-btn.active { color: var(--text-primary); border-bottom-color: var(--primary); }
+        .od-tab-btn:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; border-radius: 6px; }
+        .od-tab.hidden { display: none; }
+
+        .od-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(min(200px, 100%), 1fr));
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+        .od-stat {
+            background: var(--bg-surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: 1.25rem 1.4rem;
+        }
+        .od-stat .od-stat-label { font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); }
+        .od-stat .od-stat-value { font-size: 2rem; font-weight: 800; margin-top: 0.35rem; color: var(--text-primary); line-height: 1.1; }
+        .od-stat .od-stat-sub { font-size: 0.8rem; color: var(--text-secondary); margin-top: 0.3rem; }
+        .od-stat.accent .od-stat-value { color: var(--primary); }
+        .od-stat.warn .od-stat-value { color: var(--warning); }
+
+        .od-actions-row { display: flex; gap: 0.75rem; flex-wrap: wrap; }
+        .od-btn-inline {
+            width: auto;
+            margin-top: 0;
+            padding: 0.7rem 1.25rem;
+        }
+
+        .od-filters { display: flex; gap: 0.75rem; flex-wrap: wrap; align-items: center; margin-bottom: 1.25rem; }
+        .od-filters input[type="search"], .od-filters select {
+            padding: 0.7rem 1rem;
+            background: var(--bg-input);
+            border: 1.5px solid var(--border-light);
+            border-radius: var(--radius);
+            font-family: var(--font-body);
+            font-size: 0.9rem;
+            color: var(--text-primary);
+        }
+        .od-filters input[type="search"] { flex: 1; min-width: 200px; }
+        .od-filters input:focus, .od-filters select:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-glow); }
+        .od-filters select option { background: var(--bg-elevated); }
+
+        .od-table th.sortable { cursor: pointer; user-select: none; }
+        .od-table th.sortable:hover { color: var(--text-primary); }
+        .od-table th .od-sort { margin-left: 0.3rem; color: var(--primary); }
+        .od-row-actions { display: flex; gap: 0.4rem; justify-content: flex-end; flex-wrap: wrap; }
+        .od-mini {
+            padding: 0.35rem 0.7rem;
+            background: transparent;
+            border: 1.5px solid var(--border-light);
+            border-radius: 8px;
+            color: var(--text-secondary);
+            font-family: var(--font-body);
+            font-size: 0.78rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            white-space: nowrap;
+        }
+        .od-mini:hover:not(:disabled) { color: var(--text-primary); border-color: var(--text-secondary); }
+        .od-mini.danger:hover:not(:disabled) { color: var(--danger); border-color: rgba(239,68,68,0.5); }
+        .od-mini.armed { color: #fff; background: var(--danger); border-color: var(--danger); }
+        .od-mini:disabled { opacity: 0.5; cursor: not-allowed; }
+        .od-pager { display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap; margin-top: 1rem; font-size: 0.82rem; color: var(--text-muted); }
+        .od-pager .od-mini:disabled { opacity: 0.35; }
+        .od-note { font-size: 0.82rem; color: var(--text-secondary); margin: 0 0 1rem; line-height: 1.5; }
+        .od-note code, .od-toast code { background: rgba(255,255,255,0.08); padding: 0.1rem 0.4rem; border-radius: 4px; }
+
+        .od-drop {
+            border: 1.5px dashed var(--border-light);
+            border-radius: var(--radius-lg);
+            padding: 1.5rem;
+            text-align: center;
+            color: var(--text-secondary);
+            margin-bottom: 1rem;
+        }
+        .od-drop.drag { border-color: var(--primary); background: var(--primary-light); }
+        .od-textarea {
+            width: 100%;
+            min-height: 120px;
+            padding: 0.75rem 1rem;
+            background: var(--bg-input);
+            border: 1.5px solid var(--border-light);
+            border-radius: var(--radius);
+            color: var(--text-primary);
+            font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+            font-size: 0.8rem;
+            resize: vertical;
+        }
+        .od-textarea:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-glow); }
+        .od-progress { height: 8px; background: var(--bg-input); border-radius: 9999px; overflow: hidden; margin: 1rem 0 0.5rem; }
+        .od-progress > span { display: block; height: 100%; width: 0; background: var(--primary); transition: width 0.2s ease; }
+        .od-err { color: #FCA5A5; font-size: 0.8rem; }
+        .od-ok { color: #6EE7B7; font-size: 0.8rem; }
+
+        .od-toast-wrap { position: fixed; right: 1.25rem; bottom: 1.25rem; z-index: 2000; display: flex; flex-direction: column; gap: 0.6rem; max-width: min(420px, calc(100vw - 2.5rem)); }
+        .od-toast {
+            background: var(--bg-elevated);
+            border: 1px solid var(--border-light);
+            border-left: 4px solid var(--text-secondary);
+            border-radius: var(--radius);
+            padding: 0.8rem 1rem;
+            font-size: 0.85rem;
+            color: var(--text-primary);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            word-break: break-word;
+        }
+        .od-toast.success { border-left-color: var(--success); }
+        .od-toast.error { border-left-color: var(--danger); }
+        .od-toast .od-toast-x { float: right; margin-left: 0.75rem; background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 1rem; line-height: 1; }
+        .od-toast .od-mini { margin-left: 0.5rem; }
+
+        @media (max-width: 720px) {
+            .od-tab-btn { padding: 0.65rem 0.8rem; font-size: 0.85rem; }
+            #peopleTableArea .od-table th:nth-child(3), #peopleTableArea .od-table td:nth-child(3) { display: none; }
+        }
+
         /* ── Mobile / Tablet ── */
         @media (max-width: 520px) {
             .btn-label { display: none; }
@@ -357,7 +500,7 @@
             <a href="./reports.html" class="btn btn-outline btn-sm" style="justify-content:flex-start;gap:0.5rem;width:100%;font-size:0.82rem;">
               <i class="ph-bold ph-chart-line-up"></i> Open Analytics
             </a>
-            <button onclick="loadAllUsers()" class="btn btn-outline btn-sm" style="justify-content:flex-start;gap:0.5rem;width:100%;font-size:0.82rem;">
+            <button onclick="showTab('people'); state.loaded = false; refreshUsers();" class="btn btn-outline btn-sm" style="justify-content:flex-start;gap:0.5rem;width:100%;font-size:0.82rem;">
               <i class="ph ph-arrows-clockwise"></i> Refresh Users
             </button>
           </div>
@@ -397,7 +540,7 @@
           <!-- Top bar -->
         <div class="od-top">
             <div>
-                <h1>Owner Dashboard <span>·</span> Moodle Manager</h1>
+                <h1>Owner Dashboard <span>·</span> <span id="instName" style="color:var(--text-primary);">Your institute</span></h1>
                 <div class="od-top-sub">
                     Signed in as <strong id="ownerEmail" style="color:var(--text-primary);">…</strong><span id="moodleStatus" style="color:var(--text-secondary);"></span>
                 </div>
@@ -416,9 +559,67 @@
             <span id="configBannerText">Moodle isn't connected for this institute yet. Your Pitthugram team connects it during setup; if this stays for more than a day, write to support@pitthugram.com.</span>
         </div>
 
-        <div class="od-grid">
+        <nav class="od-tabs" role="tablist" aria-label="Dashboard sections">
+            <button type="button" class="od-tab-btn active" role="tab" id="tabbtn-overview" data-tab="overview" aria-selected="true" aria-controls="tab-overview"><i class="ph ph-squares-four"></i> Overview</button>
+            <button type="button" class="od-tab-btn" role="tab" id="tabbtn-people" data-tab="people" aria-selected="false" aria-controls="tab-people"><i class="ph ph-users-three"></i> People</button>
+            <button type="button" class="od-tab-btn" role="tab" id="tabbtn-add" data-tab="add" aria-selected="false" aria-controls="tab-add"><i class="ph ph-user-plus"></i> Add people</button>
+            <button type="button" class="od-tab-btn" role="tab" id="tabbtn-import" data-tab="import" aria-selected="false" aria-controls="tab-import"><i class="ph ph-upload-simple"></i> Bulk import</button>
+            <button type="button" class="od-tab-btn" role="tab" id="tabbtn-tools" data-tab="tools" aria-selected="false" aria-controls="tab-tools"><i class="ph ph-wrench"></i> Account tools</button>
+        </nav>
 
-            <!-- Panel 1: Create Teacher Account -->
+        <!-- Overview -->
+        <section class="od-tab" id="tab-overview" role="tabpanel" aria-labelledby="tabbtn-overview">
+            <div class="od-stats" id="overviewStats">
+                <div class="od-stat"><div class="od-stat-label">Accounts</div><div class="od-stat-value" id="statTotal">-</div><div class="od-stat-sub">on your Moodle</div></div>
+                <div class="od-stat accent"><div class="od-stat-label">Active</div><div class="od-stat-value" id="statActive">-</div><div class="od-stat-sub" id="statActiveSub">can sign in</div></div>
+                <div class="od-stat warn"><div class="od-stat-label">Suspended</div><div class="od-stat-value" id="statSuspended">-</div><div class="od-stat-sub">cannot sign in</div></div>
+                <div class="od-stat"><div class="od-stat-label">Signed in, last 30 days</div><div class="od-stat-value" id="statRecent">-</div><div class="od-stat-sub" id="statRecentSub">recent activity</div></div>
+            </div>
+            <div class="od-grid">
+                <div class="od-panel">
+                    <div class="od-panel-head">
+                        <div class="od-panel-icon"><i class="ph-fill ph-plugs-connected"></i></div>
+                        <div><h2>Moodle connection</h2><p>The site your accounts are created on</p></div>
+                    </div>
+                    <p class="od-note" id="connInfo">Checking the connection...</p>
+                </div>
+                <div class="od-panel">
+                    <div class="od-panel-head">
+                        <div class="od-panel-icon"><i class="ph-fill ph-lightning"></i></div>
+                        <div><h2>Quick actions</h2><p>The most common jobs</p></div>
+                    </div>
+                    <div class="od-actions-row">
+                        <button type="button" class="od-btn od-btn-inline" data-goto="add"><i class="ph ph-user-plus"></i> Add a person</button>
+                        <button type="button" class="od-btn od-btn-inline od-btn-outline" data-goto="import"><i class="ph ph-upload-simple"></i> Import a CSV</button>
+                        <button type="button" class="od-btn od-btn-inline od-btn-outline" data-goto="people"><i class="ph ph-users-three"></i> Manage people</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- People -->
+        <section class="od-tab hidden" id="tab-people" role="tabpanel" aria-labelledby="tabbtn-people">
+            <div class="od-panel">
+                <div class="od-panel-head">
+                    <div class="od-panel-icon"><i class="ph-fill ph-users-three"></i></div>
+                    <div><h2>People</h2><p>Search, suspend, reactivate and reset passwords</p></div>
+                </div>
+                <div class="od-filters">
+                    <input type="search" id="peopleSearch" placeholder="Search name, username or email..." aria-label="Search people" autocomplete="off">
+                    <select id="peopleStatus" aria-label="Filter by status">
+                        <option value="all">All statuses</option>
+                        <option value="active">Active</option>
+                        <option value="suspended">Suspended</option>
+                    </select>
+                    <button type="button" class="od-mini" id="peopleRefresh" title="Reload from Moodle"><i class="ph ph-arrow-clockwise"></i> Refresh</button>
+                </div>
+                <div id="peopleTableArea"><div class="od-empty"><i class="ph ph-users-three"></i>Open this tab to load your people</div></div>
+            </div>
+        </section>
+
+        <!-- Add people -->
+        <section class="od-tab hidden" id="tab-add" role="tabpanel" aria-labelledby="tabbtn-add">
+            <div class="od-grid">
             <div class="od-panel">
                 <div class="od-panel-head">
                     <div class="od-panel-icon"><i class="ph-fill ph-chalkboard-teacher"></i></div>
@@ -457,7 +658,6 @@
                 </form>
             </div>
 
-            <!-- Panel 2: Create Student Account -->
             <div class="od-panel">
                 <div class="od-panel-head">
                     <div class="od-panel-icon"><i class="ph-fill ph-student"></i></div>
@@ -496,7 +696,38 @@
                 </form>
             </div>
 
-            <!-- Panel 3: Disable / Suspend Account -->
+            </div>
+        </section>
+
+        <!-- Bulk import -->
+        <section class="od-tab hidden" id="tab-import" role="tabpanel" aria-labelledby="tabbtn-import">
+            <div class="od-panel">
+                <div class="od-panel-head">
+                    <div class="od-panel-icon"><i class="ph-fill ph-upload-simple"></i></div>
+                    <div><h2>Bulk import</h2><p>Create many teachers and students from a CSV file</p></div>
+                </div>
+                <p class="od-note">Columns: <code>firstname</code>, <code>lastname</code>, <code>username</code>, <code>email</code>, <code>role</code> (teacher or student, default student) and an optional <code>password</code>. Leave the password empty to have a strong one generated for each person. Up to 200 rows at a time.</p>
+                <div class="od-actions-row" style="margin-bottom:1rem;">
+                    <button type="button" class="od-mini" id="importTemplate"><i class="ph ph-download-simple"></i> Download CSV template</button>
+                </div>
+                <div class="od-drop" id="importDrop">
+                    <i class="ph ph-file-csv" style="font-size:1.6rem;display:block;margin-bottom:0.4rem;"></i>
+                    Drop a CSV file here, or
+                    <label style="color:var(--primary);cursor:pointer;font-weight:600;">choose a file<input type="file" id="importFile" accept=".csv,text/csv" style="display:none;"></label>
+                </div>
+                <textarea class="od-textarea" id="importText" placeholder="...or paste CSV text here" aria-label="Paste CSV text" spellcheck="false"></textarea>
+                <div class="od-actions-row" style="margin-top:0.75rem;">
+                    <button type="button" class="od-btn od-btn-inline" id="importPreviewBtn"><i class="ph ph-list-checks"></i> Check the file</button>
+                </div>
+                <div id="importPreview"></div>
+                <div id="importResult"></div>
+            </div>
+        </section>
+
+        <!-- Account tools -->
+        <section class="od-tab hidden" id="tab-tools" role="tabpanel" aria-labelledby="tabbtn-tools">
+            <p class="od-note">These work by typing a username or email. For everyday changes, use the buttons on each row in <strong>People</strong>.</p>
+            <div class="od-grid">
             <div class="od-panel">
                 <div class="od-panel-head">
                     <div class="od-panel-icon" style="background:var(--danger-light);border-color:rgba(239,68,68,0.2);color:var(--danger);">
@@ -526,7 +757,6 @@
                 </form>
             </div>
 
-            <!-- Panel 4: Reset Password -->
             <div class="od-panel">
                 <div class="od-panel-head">
                     <div class="od-panel-icon"><i class="ph-fill ph-key"></i></div>
@@ -551,32 +781,10 @@
                 </form>
             </div>
 
-            <!-- Panel 5: View All Users (full width) -->
-            <div class="od-panel od-panel-full">
-                <div class="od-panel-head">
-                    <div class="od-panel-icon"><i class="ph-fill ph-users-three"></i></div>
-                    <div>
-                        <h2>All Users</h2>
-                        <p>Browse and search all accounts on your Moodle platform</p>
-                    </div>
-                </div>
-                <div class="od-search-bar">
-                    <input type="text" id="userSearchInput" placeholder="Search by name, username, or email…">
-                    <button onclick="searchUsers()">
-                        <i class="ph ph-magnifying-glass"></i> Search
-                    </button>
-                    <button onclick="loadAllUsers()" style="background:var(--bg-elevated);border:1.5px solid var(--border-light);color:var(--text-secondary);">
-                        <i class="ph ph-arrow-clockwise"></i>
-                    </button>
-                </div>
-                <div id="usersTableArea">
-                    <div class="od-empty">
-                        <i class="ph ph-users-three"></i>
-                        Click Search or load all users to view accounts
-                    </div>
-                </div>
             </div>
-          </div>
+        </section>
+
+        <div class="od-toast-wrap" id="odToastWrap" aria-live="polite"></div>
         </div>
       </main>
     </div>
@@ -601,6 +809,9 @@ const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZ
 let ownerToken  = null;
 let instituteId = null;
 const API_BASE  = 'https://api.classes.institute';
+const PAGE_SIZE = 25;
+const TABS = ['overview', 'people', 'add', 'import', 'tools'];
+const state = { users: [], total: 0, loaded: false, loading: false, q: '', status: 'all', sortKey: 'fullname', sortDir: 1, page: 1, connected: false, site: null, serverSearch: false, remote: null };
 
 // ── Auth guard + role check ──
 function clearSession() {
@@ -636,6 +847,7 @@ function clearSession() {
     }
 
     await loadMoodleConfig();
+    initPhase2();
     document.body.style.opacity = '1';
 })();
 
@@ -680,6 +892,7 @@ async function loadMoodleConfig() {
         const s = await api('status');
         document.getElementById('configBanner').classList.add('hidden');
         document.getElementById('moodleStatus').textContent = ' · Connected to ' + (s.site || s.host);
+        state.site = s; state.connected = true;
     } catch (err) {
         if (err.code === 'moodle_not_configured') showBanner();
         else showBanner(err.message);
@@ -742,11 +955,13 @@ async function createUser(e, role) {
     try {
         const r = await api('create', payload);
         const msg = `${role === 'teacher' ? 'Teacher' : 'Student'} account "${r.username}" created.`;
+        state.loaded = false;
+        if (state.connected) refreshUsers();
         if (r.password) setFeedbackWithPassword(fbId, msg, r.password);
         else setFeedback(fbId, msg, 'success');
         form.reset();
     } catch (err) {
-        setFeedback(fbId, err.message, 'error');
+        setFeedback(fbId, friendlyError(err.message), 'error');
     } finally {
         btn.disabled = false;
     }
@@ -768,7 +983,7 @@ async function disableAccount(e) {
         setFeedback(fbId, `User "${identifier}" has been ${suspended ? 'suspended' : 'reactivated'} successfully.`, 'success');
         form.reset();
     } catch (err) {
-        setFeedback(fbId, err.message, 'error');
+        setFeedback(fbId, friendlyError(err.message), 'error');
     } finally {
         btn.disabled = false;
     }
@@ -793,86 +1008,10 @@ async function resetPassword(e) {
         else setFeedback(fbId, msg, 'success');
         form.reset();
     } catch (err) {
-        setFeedback(fbId, err.message, 'error');
+        setFeedback(fbId, friendlyError(err.message), 'error');
     } finally {
         btn.disabled = false;
     }
-}
-
-// ── View all users ──
-async function loadAllUsers() {
-    document.getElementById('userSearchInput').value = '';
-    renderUsersLoading();
-    try {
-        const data = await api('list', { limit: 300 });
-        renderUsersTable(data.users || [], data.total);
-    } catch (err) {
-        renderUsersError(err.message);
-    }
-}
-
-async function searchUsers() {
-    const q = document.getElementById('userSearchInput').value.trim();
-    if (!q) { loadAllUsers(); return; }
-    renderUsersLoading();
-    try {
-        const data = await api('list', { query: q, limit: 300 });
-        renderUsersTable(data.users || [], data.total);
-    } catch (err) {
-        renderUsersError(err.message);
-    }
-}
-
-document.getElementById('userSearchInput').addEventListener('keydown', function(e) {
-    if (e.key === 'Enter') searchUsers();
-});
-
-function renderUsersLoading() {
-    document.getElementById('usersTableArea').innerHTML =
-        '<div class="od-loading"><div class="od-spinner"></div>Loading users…</div>';
-}
-
-function renderUsersError(msg) {
-    document.getElementById('usersTableArea').innerHTML =
-        `<div class="od-feedback error" style="display:flex;margin:0;"><i class="ph-fill ph-warning-circle"></i>${esc(msg)}</div>`;
-}
-
-function renderUsersTable(users, total) {
-    if (!users.length) {
-        document.getElementById('usersTableArea').innerHTML =
-            '<div class="od-empty"><i class="ph ph-user-circle-minus"></i>No users found.</div>';
-        return;
-    }
-    const rows = users.map(u => {
-        const status = u.suspended
-            ? '<span class="status-badge status-inactive"><i class="ph ph-prohibit"></i>Suspended</span>'
-            : '<span class="status-badge status-active"><i class="ph ph-check-circle"></i>Active</span>';
-        return `
-            <tr>
-                <td><strong>${esc(u.fullname)}</strong></td>
-                <td>${esc(u.username)}</td>
-                <td>${esc(u.email)}</td>
-                <td>${status}</td>
-                <td><span style="font-size:0.8rem;color:var(--text-muted);">${esc((u.roles || []).join(', ')) || '—'}</span></td>
-            </tr>`;
-    }).join('');
-
-    document.getElementById('usersTableArea').innerHTML = `
-        <div class="od-table-wrap">
-            <table class="od-table">
-                <thead>
-                    <tr>
-                        <th>Full Name</th>
-                        <th>Username</th>
-                        <th>Email</th>
-                        <th>Status</th>
-                        <th>Roles</th>
-                    </tr>
-                </thead>
-                <tbody>${rows}</tbody>
-            </table>
-        </div>
-        <p style="font-size:0.8rem;color:var(--text-muted);margin-top:0.875rem;">${users.length} user${users.length !== 1 ? 's' : ''} shown${total && total > users.length ? ' of ' + total : ''}</p>`;
 }
 
 function esc(str) {
@@ -886,6 +1025,439 @@ function logout() {
     localStorage.removeItem('pg_user');
     localStorage.removeItem('pg_role');
     window.location.href = 'index.html';
+}
+
+// ── Phase 2: overview, people, bulk import ─────────────────────────────────
+const $id = id => document.getElementById(id);
+
+function friendlyError(msg) {
+    return /invalid parameter value/i.test(msg || '')
+        ? 'That username or email is already in use, or Moodle rejected the details.'
+        : (msg || 'Something went wrong. Please try again.');
+}
+
+function toast(msg, type, opts) {
+    opts = opts || {};
+    const t = document.createElement('div');
+    t.className = 'od-toast ' + (type || '');
+    const x = document.createElement('button');
+    x.type = 'button'; x.className = 'od-toast-x'; x.textContent = '×'; x.setAttribute('aria-label', 'Dismiss');
+    x.addEventListener('click', () => t.remove());
+    t.append(x);
+    t.append(msg);
+    if (opts.password) {
+        t.append(' Temporary password: ');
+        const code = document.createElement('code');
+        code.textContent = opts.password; code.style.userSelect = 'all';
+        t.append(code);
+        const b = document.createElement('button');
+        b.type = 'button'; b.className = 'od-mini'; b.textContent = 'Copy';
+        b.addEventListener('click', async () => {
+            try { await navigator.clipboard.writeText(opts.password); b.textContent = 'Copied'; }
+            catch (_) { b.textContent = 'Select and copy'; }
+        });
+        t.append(b);
+        const n = document.createElement('div');
+        n.style.cssText = 'font-size:0.75rem;color:var(--text-muted);margin-top:0.35rem;';
+        n.textContent = 'Shown once. Share it securely.';
+        t.append(n);
+    } else {
+        setTimeout(() => t.remove(), 6000);
+    }
+    $id('odToastWrap').append(t);
+    return t;
+}
+
+// ── Tabs ──
+function showTab(name) {
+    if (!TABS.includes(name)) name = 'overview';
+    TABS.forEach(n => {
+        $id('tab-' + n).classList.toggle('hidden', n !== name);
+        const b = $id('tabbtn-' + n);
+        b.classList.toggle('active', n === name);
+        b.setAttribute('aria-selected', String(n === name));
+        b.tabIndex = n === name ? 0 : -1;
+    });
+    try { if (location.hash !== '#' + name) history.replaceState(null, '', '#' + name); } catch (_) {}
+    if (name === 'people' && state.connected && !state.loaded && !state.loading) refreshUsers();
+}
+
+// ── Users ──
+async function refreshUsers() {
+    if (state.loading) return;
+    state.loading = true;
+    $id('peopleTableArea').innerHTML = '<div class="od-loading"><div class="od-spinner"></div>Loading people...</div>';
+    try {
+        const data = await api('list', { limit: 300 });
+        state.users = data.users || [];
+        state.total = data.total != null ? data.total : state.users.length;
+        state.serverSearch = state.total > state.users.length;
+        state.remote = null;
+        state.loaded = true;
+        renderOverview();
+        renderPeople();
+    } catch (err) {
+        $id('peopleTableArea').innerHTML = '<div class="od-feedback error" style="display:flex;margin:0;"><i class="ph-fill ph-warning-circle"></i>' + esc(friendlyError(err.message)) + '</div>';
+    } finally {
+        state.loading = false;
+    }
+}
+
+function relTime(ts) {
+    if (!ts) return 'Never';
+    const s = Math.max(0, Date.now() / 1000 - ts);
+    if (s < 3600) return 'Just now';
+    if (s < 86400) return Math.floor(s / 3600) + ' h ago';
+    const d = Math.floor(s / 86400);
+    if (d < 60) return d + ' day' + (d === 1 ? '' : 's') + ' ago';
+    return Math.floor(d / 30) + ' months ago';
+}
+
+function renderOverview() {
+    const u = state.users;
+    const now = Date.now() / 1000;
+    const suspended = u.filter(x => x.suspended).length;
+    const recent = u.filter(x => x.lastaccess && now - x.lastaccess < 30 * 86400).length;
+    const partial = state.total > u.length;
+    $id('statTotal').textContent = state.total;
+    $id('statActive').textContent = u.length - suspended;
+    $id('statSuspended').textContent = suspended;
+    $id('statRecent').textContent = recent;
+    $id('statActiveSub').textContent = partial ? 'of the first ' + u.length : 'can sign in';
+    $id('statRecentSub').textContent = partial ? 'of the first ' + u.length : 'recent activity';
+    const s = state.site;
+    $id('connInfo').textContent = s
+        ? 'Connected to ' + (s.site || s.host) + ' (' + s.host + '), Moodle ' + (s.release || '').split(' ')[0] + '.'
+        : 'Not connected.';
+}
+
+function renderNotConnected() {
+    ['statTotal', 'statActive', 'statSuspended', 'statRecent'].forEach(id => { $id(id).textContent = '-'; });
+    $id('connInfo').textContent = 'Moodle is not connected for this institute yet, so people cannot be listed or created.';
+    $id('peopleTableArea').innerHTML = '<div class="od-empty"><i class="ph ph-plugs"></i>Connect Moodle first</div>';
+}
+
+function visibleUsers() {
+    const q = state.q.trim().toLowerCase();
+    const base = state.serverSearch && state.remote && state.remote.q === state.q.trim() ? state.remote.users : state.users;
+    const list = base.filter(u => {
+        if (state.status === 'active' && u.suspended) return false;
+        if (state.status === 'suspended' && !u.suspended) return false;
+        if (!q || (state.serverSearch && state.remote && state.remote.q === state.q.trim())) return true;
+        return [u.fullname, u.username, u.email].some(v => String(v || '').toLowerCase().includes(q));
+    });
+    const k = state.sortKey, d = state.sortDir;
+    list.sort((a, b) => {
+        const va = k === 'lastaccess' ? (a.lastaccess || 0) : String(a[k] || '').toLowerCase();
+        const vb = k === 'lastaccess' ? (b.lastaccess || 0) : String(b[k] || '').toLowerCase();
+        return (va > vb ? 1 : va < vb ? -1 : 0) * d;
+    });
+    return list;
+}
+
+function renderPeople() {
+    const area = $id('peopleTableArea');
+    if (!state.loaded) return;
+    const list = visibleUsers();
+    if (!list.length) {
+        area.innerHTML = '<div class="od-empty"><i class="ph ph-user-circle-minus"></i>No people match.</div>';
+        return;
+    }
+    const pages = Math.max(1, Math.ceil(list.length / PAGE_SIZE));
+    if (state.page > pages) state.page = pages;
+    const start = (state.page - 1) * PAGE_SIZE;
+    const slice = list.slice(start, start + PAGE_SIZE);
+    const th = (key, label) => '<th class="sortable" data-sort="' + key + '" aria-sort="' + (state.sortKey === key ? (state.sortDir > 0 ? 'ascending' : 'descending') : 'none') + '">' + label +
+        (state.sortKey === key ? '<span class="od-sort">' + (state.sortDir > 0 ? '▲' : '▼') + '</span>' : '') + '</th>';
+    const rows = slice.map(u => {
+        const badge = u.suspended
+            ? '<span class="status-badge status-inactive"><i class="ph ph-prohibit"></i>Suspended</span>'
+            : '<span class="status-badge status-active"><i class="ph ph-check-circle"></i>Active</span>';
+        const uname = esc(u.username);
+        return '<tr data-username="' + uname + '">' +
+            '<td><strong>' + esc(u.fullname) + '</strong></td>' +
+            '<td>' + uname + '</td>' +
+            '<td>' + esc(u.email) + '</td>' +
+            '<td>' + badge + '</td>' +
+            '<td>' + esc(relTime(u.lastaccess)) + '</td>' +
+            '<td><div class="od-row-actions">' +
+                '<button type="button" class="od-mini danger" data-act="toggle" data-username="' + uname + '" data-suspend="' + (u.suspended ? '0' : '1') + '">' + (u.suspended ? 'Reactivate' : 'Suspend') + '</button>' +
+                '<button type="button" class="od-mini" data-act="reset" data-username="' + uname + '">Reset password</button>' +
+            '</div></td></tr>';
+    }).join('');
+    const partial = state.serverSearch && !(state.remote && state.remote.q === state.q.trim() && state.q.trim());
+    area.innerHTML =
+        '<div class="od-table-wrap"><table class="od-table"><thead><tr>' +
+            th('fullname', 'Name') + th('username', 'Username') + th('email', 'Email') + '<th>Status</th>' + th('lastaccess', 'Last access') + '<th></th>' +
+        '</tr></thead><tbody>' + rows + '</tbody></table></div>' +
+        '<div class="od-pager"><span>Showing ' + (start + 1) + '-' + (start + slice.length) + ' of ' + list.length + (partial ? ' (first ' + state.users.length + ' of ' + state.total + '; search to find others)' : '') + '</span>' +
+        '<span><button type="button" class="od-mini" data-page="' + (state.page - 1) + '"' + (state.page <= 1 ? ' disabled' : '') + '>Previous</button> ' +
+        '<button type="button" class="od-mini" data-page="' + (state.page + 1) + '"' + (state.page >= pages ? ' disabled' : '') + '>Next</button></span></div>';
+}
+
+// Row buttons ask twice ("Confirm?") so a stray click cannot suspend someone.
+const armed = { key: null, timer: null };
+function disarm() { clearTimeout(armed.timer); armed.key = null; armed.timer = null; }
+
+async function onPeopleClick(e) {
+    const sortTh = e.target.closest('th[data-sort]');
+    if (sortTh) {
+        const k = sortTh.dataset.sort;
+        state.sortDir = state.sortKey === k ? -state.sortDir : 1;
+        state.sortKey = k; state.page = 1;
+        renderPeople();
+        return;
+    }
+    const pg = e.target.closest('button[data-page]');
+    if (pg && !pg.disabled) { state.page = parseInt(pg.dataset.page, 10) || 1; renderPeople(); return; }
+
+    const btn = e.target.closest('button[data-act]');
+    if (!btn || btn.disabled) return;
+    const username = btn.dataset.username, act = btn.dataset.act;
+    const key = act + ':' + username;
+    if (armed.key !== key) {
+        disarm();
+        armed.key = key;
+        btn.classList.add('armed');
+        btn.textContent = 'Confirm?';
+        armed.timer = setTimeout(() => { disarm(); renderPeople(); }, 4000);
+        return;
+    }
+    disarm();
+    btn.disabled = true;
+    try {
+        if (act === 'toggle') {
+            const suspend = btn.dataset.suspend === '1';
+            await api('set-suspended', { user: username, suspended: suspend });
+            const u = state.users.find(x => x.username === username);
+            if (u) u.suspended = suspend;
+            if (state.remote) { const r = state.remote.users.find(x => x.username === username); if (r) r.suspended = suspend; }
+            toast(username + (suspend ? ' was suspended.' : ' was reactivated.'), 'success');
+        } else if (act === 'reset') {
+            const r = await api('reset-password', { user: username });
+            toast('Password reset for ' + username + '.', 'success', { password: r.password });
+        }
+    } catch (err) {
+        toast(friendlyError(err.message), 'error');
+    }
+    renderOverview();
+    renderPeople();
+}
+
+let searchTimer = null;
+function onPeopleSearch() {
+    state.q = $id('peopleSearch').value;
+    state.page = 1;
+    clearTimeout(searchTimer);
+    const q = state.q.trim();
+    if (state.serverSearch && q.length >= 2) {
+        searchTimer = setTimeout(async () => {
+            try {
+                const d = await api('list', { query: q, limit: 300 });
+                if (q === state.q.trim()) { state.remote = { q, users: d.users || [] }; renderPeople(); }
+            } catch (err) { toast(friendlyError(err.message), 'error'); }
+        }, 250);
+    }
+    renderPeople();
+}
+
+// ── Bulk import ──
+const IMPORT_MAX = 200;
+const USERNAME_RE = /^[a-z0-9][a-z0-9._-]{2,39}$/;
+const EMAIL_RE = /^[^\s@]{1,64}@[^\s@]{1,190}\.[^\s@]{2,}$/;
+let importRows = [];
+
+function parseCsv(text) {
+    const rows = []; let row = [], cur = '', inQ = false;
+    text = String(text || '').replace(/^﻿/, '');
+    for (let i = 0; i < text.length; i++) {
+        const c = text[i];
+        if (inQ) {
+            if (c === '"') { if (text[i + 1] === '"') { cur += '"'; i++; } else inQ = false; }
+            else cur += c;
+        } else if (c === '"') inQ = true;
+        else if (c === ',') { row.push(cur); cur = ''; }
+        else if (c === '\n' || c === '\r') {
+            if (c === '\r' && text[i + 1] === '\n') i++;
+            row.push(cur); cur = '';
+            if (row.some(x => x.trim() !== '')) rows.push(row);
+            row = [];
+        } else cur += c;
+    }
+    row.push(cur);
+    if (row.some(x => x.trim() !== '')) rows.push(row);
+    return rows;
+}
+
+const HEADER_ALIASES = { firstname: 'firstname', 'first name': 'firstname', first_name: 'firstname', lastname: 'lastname', 'last name': 'lastname', last_name: 'lastname', username: 'username', user: 'username', email: 'email', 'email address': 'email', role: 'role', password: 'password' };
+
+function buildImportRows(text) {
+    const grid = parseCsv(text);
+    if (!grid.length) return { error: 'The file is empty.' };
+    const head = grid[0].map(h => HEADER_ALIASES[String(h).trim().toLowerCase()] || null);
+    for (const need of ['firstname', 'lastname', 'username', 'email']) {
+        if (!head.includes(need)) return { error: 'The first row must be a header with: firstname, lastname, username, email (role and password are optional).' };
+    }
+    const body = grid.slice(1);
+    if (!body.length) return { error: 'There are no people under the header row.' };
+    if (body.length > IMPORT_MAX) return { error: 'That file has ' + body.length + ' rows. Please import at most ' + IMPORT_MAX + ' at a time.' };
+    const seen = new Set();
+    const rows = body.map((cells, i) => {
+        const r = { line: i + 2, errors: [], result: null };
+        head.forEach((k, j) => { if (k) r[k] = (cells[j] || '').trim(); });
+        r.username = (r.username || '').toLowerCase();
+        r.role = (r.role || '').toLowerCase() || 'student';
+        if (!r.firstname || r.firstname.length > 60) r.errors.push('first name required (max 60)');
+        if (!r.lastname || r.lastname.length > 60) r.errors.push('last name required (max 60)');
+        if (!USERNAME_RE.test(r.username)) r.errors.push('username must be 3-40 of a-z 0-9 . _ -');
+        else if (seen.has(r.username)) r.errors.push('username repeated in this file');
+        seen.add(r.username);
+        if (!EMAIL_RE.test(r.email || '')) r.errors.push('invalid email');
+        if (r.role !== 'teacher' && r.role !== 'student') r.errors.push('role must be teacher or student');
+        if (r.password && (r.password.length < 8 || r.password.length > 64)) r.errors.push('password must be 8-64 characters');
+        return r;
+    });
+    return { rows };
+}
+
+function previewImport() {
+    const out = $id('importPreview');
+    $id('importResult').innerHTML = '';
+    const built = buildImportRows($id('importText').value);
+    if (built.error) {
+        importRows = [];
+        out.innerHTML = '<div class="od-feedback error" style="display:flex;"><i class="ph-fill ph-warning-circle"></i>' + esc(built.error) + '</div>';
+        return;
+    }
+    importRows = built.rows;
+    const good = importRows.filter(r => !r.errors.length).length;
+    const bad = importRows.length - good;
+    const shown = importRows.slice(0, 50).map(r =>
+        '<tr><td>' + r.line + '</td><td>' + esc(r.firstname + ' ' + r.lastname) + '</td><td>' + esc(r.username) + '</td><td>' + esc(r.role) + '</td>' +
+        '<td>' + (r.errors.length ? '<span class="od-err">' + esc(r.errors.join('; ')) + '</span>' : '<span class="od-ok">Ready</span>') + '</td></tr>').join('');
+    out.innerHTML =
+        '<p class="od-note" style="margin-top:1rem;"><strong>' + good + '</strong> ready' + (bad ? ', <strong class="od-err">' + bad + '</strong> with problems (these will be skipped)' : '') + '.' + (importRows.length > 50 ? ' Showing the first 50 rows.' : '') + '</p>' +
+        '<div class="od-table-wrap"><table class="od-table"><thead><tr><th>Line</th><th>Name</th><th>Username</th><th>Role</th><th>Check</th></tr></thead><tbody>' + shown + '</tbody></table></div>' +
+        (good ? '<div class="od-actions-row" style="margin-top:1rem;"><button type="button" class="od-btn od-btn-inline" id="importRunBtn"><i class="ph ph-cloud-arrow-up"></i> Import ' + good + ' ' + (good === 1 ? 'person' : 'people') + '</button></div>' : '');
+    const run = $id('importRunBtn');
+    if (run) run.addEventListener('click', runImport);
+}
+
+function csvCell(v, raw) {
+    v = String(v == null ? '' : v);
+    if (!raw && /^[=+\-@\t\r]/.test(v)) v = "'" + v;   // stop spreadsheet formula injection
+    return /[",\n\r]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v;
+}
+
+function downloadCsv(name, lines) {
+    const blob = new Blob([lines.join('\r\n')], { type: 'text/csv;charset=utf-8' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = name;
+    document.body.append(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 1500);
+}
+
+async function runImport() {
+    const todo = importRows.filter(r => !r.errors.length);
+    if (!todo.length) return;
+    const runBtn = $id('importRunBtn');
+    if (runBtn) runBtn.disabled = true;
+    $id('importPreviewBtn').disabled = true;
+    const box = $id('importResult');
+    box.innerHTML = '<div class="od-progress"><span id="importBar"></span></div><p class="od-note" id="importProgressText">Starting...</p>';
+    let next = 0, done = 0, stop = false;
+    const tick = () => {
+        $id('importBar').style.width = Math.round(done / todo.length * 100) + '%';
+        $id('importProgressText').textContent = 'Creating accounts: ' + done + ' of ' + todo.length;
+    };
+    const worker = async () => {
+        while (!stop && next < todo.length) {
+            const r = todo[next++];
+            try {
+                const payload = { role: r.role, firstname: r.firstname, lastname: r.lastname, username: r.username, email: r.email };
+                if (r.password) payload.password = r.password;
+                const d = await api('create', payload);
+                r.result = { ok: true, password: d.password || '' };
+            } catch (err) {
+                r.result = { ok: false, error: friendlyError(err.message) };
+                if (/session expired/i.test(err.message)) stop = true;
+            }
+            done++;
+            tick();
+        }
+    };
+    await Promise.all([worker(), worker(), worker()]);
+    const ok = todo.filter(r => r.result && r.result.ok);
+    const failed = todo.filter(r => r.result && !r.result.ok);
+    const notRun = todo.filter(r => !r.result).length;
+    const gen = ok.filter(r => r.result.password).length;
+    const rowsHtml = todo.filter(r => r.result).map(r =>
+        '<tr><td>' + esc(r.username) + '</td><td>' + esc(r.role) + '</td><td>' + (r.result.ok ? '<span class="od-ok">Created</span>' : '<span class="od-err">' + esc(r.result.error) + '</span>') + '</td></tr>').join('');
+    box.innerHTML =
+        '<div class="od-feedback ' + (failed.length || notRun ? 'error' : 'success') + '" style="display:flex;margin-top:1rem;"><i class="ph-fill ph-info"></i>' +
+        ok.length + ' created' + (failed.length ? ', ' + failed.length + ' failed' : '') + (notRun ? ', ' + notRun + ' not started' : '') + '.</div>' +
+        '<div class="od-actions-row" style="margin:1rem 0;"><button type="button" class="od-btn od-btn-inline od-btn-outline" id="importDownload"><i class="ph ph-download-simple"></i> Download results (CSV)</button></div>' +
+        (gen ? '<p class="od-note">The results file contains the <strong>' + gen + '</strong> generated passwords. This is the only time they are shown, so store the file securely and delete it after sharing.</p>' : '') +
+        '<div class="od-table-wrap"><table class="od-table"><thead><tr><th>Username</th><th>Role</th><th>Result</th></tr></thead><tbody>' + rowsHtml + '</tbody></table></div>';
+    $id('importDownload').addEventListener('click', () => {
+        const lines = ['username,email,role,status,generated_password,error'];
+        todo.filter(r => r.result).forEach(r => lines.push([
+            csvCell(r.username), csvCell(r.email), csvCell(r.role), r.result.ok ? 'created' : 'failed',
+            csvCell(r.result.password || '', true), csvCell(r.result.error || '')
+        ].join(',')));
+        downloadCsv('import-results.csv', lines);
+    });
+    $id('importPreviewBtn').disabled = false;
+    state.loaded = false;
+    if (ok.length) { toast(ok.length + ' account' + (ok.length === 1 ? '' : 's') + ' created.', 'success'); if (state.connected) refreshUsers(); }
+}
+
+function loadImportFile(file) {
+    if (!file) return;
+    if (file.size > 1024 * 1024) { toast('That file is larger than 1 MB.', 'error'); return; }
+    const rd = new FileReader();
+    rd.onload = () => { $id('importText').value = String(rd.result || ''); previewImport(); };
+    rd.readAsText(file);
+}
+
+// ── Wiring ──
+function initPhase2() {
+    const own = (() => { try { return JSON.parse(localStorage.getItem('pg_memberships') || '[]').find(x => x.role === 'owner'); } catch (_) { return null; } })();
+    $id('instName').textContent = (own && own.institutes && own.institutes.name) || 'Your institute';
+
+    document.querySelectorAll('.od-tab-btn').forEach(b => {
+        b.addEventListener('click', () => showTab(b.dataset.tab));
+        b.addEventListener('keydown', e => {
+            if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return;
+            const i = TABS.indexOf(b.dataset.tab) + (e.key === 'ArrowRight' ? 1 : -1);
+            const n = TABS[(i + TABS.length) % TABS.length];
+            showTab(n); $id('tabbtn-' + n).focus();
+        });
+    });
+    document.querySelectorAll('[data-goto]').forEach(b => b.addEventListener('click', () => showTab(b.dataset.goto)));
+
+    $id('peopleTableArea').addEventListener('click', onPeopleClick);
+    $id('peopleSearch').addEventListener('input', onPeopleSearch);
+    $id('peopleStatus').addEventListener('change', e => { state.status = e.target.value; state.page = 1; renderPeople(); });
+    $id('peopleRefresh').addEventListener('click', () => { state.loaded = false; refreshUsers(); });
+
+    $id('importPreviewBtn').addEventListener('click', previewImport);
+    $id('importFile').addEventListener('change', e => loadImportFile(e.target.files[0]));
+    $id('importTemplate').addEventListener('click', () => downloadCsv('people-template.csv', [
+        'firstname,lastname,username,email,role,password',
+        'Asha,Verma,asha.verma,asha@example.com,teacher,',
+        'Ravi,Sharma,ravi.sharma,ravi@example.com,student,'
+    ]));
+    const drop = $id('importDrop');
+    ['dragenter', 'dragover'].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.add('drag'); }));
+    ['dragleave', 'drop'].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.remove('drag'); }));
+    drop.addEventListener('drop', e => loadImportFile(e.dataTransfer && e.dataTransfer.files[0]));
+
+    showTab((location.hash || '#overview').slice(1));
+    if (state.connected) refreshUsers(); else renderNotConnected();
 }
 </script>
 </body>
