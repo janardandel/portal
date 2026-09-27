@@ -399,7 +399,7 @@
             <div>
                 <h1>Owner Dashboard <span>·</span> Moodle Manager</h1>
                 <div class="od-top-sub">
-                    Signed in as <strong id="ownerEmail" style="color:var(--text-primary);">…</strong>
+                    Signed in as <strong id="ownerEmail" style="color:var(--text-primary);">…</strong><span id="moodleStatus" style="color:var(--text-secondary);"></span>
                 </div>
             </div>
             <div class="od-top-right">
@@ -413,7 +413,7 @@
         <!-- Moodle config not set warning -->
         <div class="config-banner hidden" id="configBanner">
             <i class="ph-fill ph-warning"></i>
-            Moodle is not configured. Add your Moodle URL and token in the database (<code>moodle_config</code> table) to enable account management.
+            <span id="configBannerText">Moodle isn't connected for this institute yet. Your Pitthugram team connects it during setup; if this stays for more than a day, write to support@pitthugram.com.</span>
         </div>
 
         <div class="od-grid">
@@ -447,8 +447,8 @@
                         <input type="email" name="email" placeholder="jane@yourschool.com" required>
                     </div>
                     <div class="od-field">
-                        <label>Temporary Password</label>
-                        <input type="text" name="password" placeholder="Min 8 chars, 1 digit, 1 uppercase" required autocomplete="new-password">
+                        <label>Temporary Password <span style="color:var(--text-muted);font-weight:400;">(optional)</span></label>
+                        <input type="text" name="password" placeholder="Leave blank to generate a strong one" autocomplete="new-password">
                     </div>
                     <button type="submit" class="od-btn" id="createTeacherBtn">
                         <i class="ph ph-plus"></i> Create Teacher Account
@@ -486,8 +486,8 @@
                         <input type="email" name="email" placeholder="ravi@yourschool.com" required>
                     </div>
                     <div class="od-field">
-                        <label>Temporary Password</label>
-                        <input type="text" name="password" placeholder="Min 8 chars, 1 digit, 1 uppercase" required autocomplete="new-password">
+                        <label>Temporary Password <span style="color:var(--text-muted);font-weight:400;">(optional)</span></label>
+                        <input type="text" name="password" placeholder="Leave blank to generate a strong one" autocomplete="new-password">
                     </div>
                     <button type="submit" class="od-btn" id="createStudentBtn">
                         <i class="ph ph-plus"></i> Create Student Account
@@ -541,8 +541,8 @@
                         <input type="text" name="username" placeholder="username" required autocomplete="off">
                     </div>
                     <div class="od-field">
-                        <label>New Password</label>
-                        <input type="text" name="newpassword" placeholder="Min 8 chars, 1 digit, 1 uppercase" required autocomplete="new-password">
+                        <label>New Password <span style="color:var(--text-muted);font-weight:400;">(optional)</span></label>
+                        <input type="text" name="newpassword" placeholder="Leave blank to generate a strong one" autocomplete="new-password">
                     </div>
                     <button type="submit" class="od-btn" id="resetPwBtn">
                         <i class="ph ph-key"></i> Reset Password
@@ -599,8 +599,8 @@ const SUPABASE_URL = 'https://lekvzyoarawotlsbeoqa.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imxla3Z6eW9hcmF3b3Rsc2Jlb3FhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgyOTgzNTIsImV4cCI6MjA5Mzg3NDM1Mn0.KO-UyQerUdbxxhqBDX5F51ZMU2WGIi6BLg-b-rDALmk';
 
 let ownerToken  = null;
-let moodleURL   = null;
-let moodleToken = null;
+let instituteId = null;
+const API_BASE  = 'https://api.classes.institute';
 
 // ── Auth guard + role check ──
 function clearSession() {
@@ -639,37 +639,51 @@ function clearSession() {
     document.body.style.opacity = '1';
 })();
 
-async function loadMoodleConfig() {
+function ownerInstituteId() {
     try {
-        const res  = await fetch(`${SUPABASE_URL}/rest/v1/moodle_config?id=eq.1&select=moodle_url,moodle_token`, {
-            headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${ownerToken}` }
-        });
-        const rows = await res.json();
-        if (rows && rows[0] && rows[0].moodle_url && rows[0].moodle_token) {
-            moodleURL   = rows[0].moodle_url.replace(/\/$/, '');
-            moodleToken = rows[0].moodle_token;
-        } else {
-            document.getElementById('configBanner').classList.remove('hidden');
-        }
-    } catch (_) {}
+        const m = JSON.parse(localStorage.getItem('pg_memberships') || '[]').find(x => x.role === 'owner');
+        return m ? m.institute_id : null;
+    } catch (_) { return null; }
 }
 
-// ── Moodle REST helper ──
-async function moodleCall(wsfunction, params) {
-    if (!moodleURL || !moodleToken) {
-        throw new Error('Moodle is not configured. Add your credentials to the moodle_config table in Supabase.');
-    }
-    const body = new URLSearchParams({ wstoken: moodleToken, wsfunction, moodlewsrestformat: 'json' });
-    for (const [k, v] of Object.entries(params)) body.append(k, v);
-
-    const res = await fetch(moodleURL + '/webservice/rest/server.php', {
+// All Moodle work happens on the server (owner-only); the browser never sees the Moodle token.
+async function api(action, body) {
+    const res = await fetch(`${API_BASE}/api/moodle-users/${action}`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: body.toString()
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${ownerToken}` },
+        body: JSON.stringify(Object.assign({ institute_id: instituteId }, body || {}))
     });
-    const data = await res.json();
-    if (data && data.exception) throw new Error(data.message || data.errorcode || 'Moodle API error');
+    let data = {};
+    try { data = await res.json(); } catch (_) {}
+    if (res.status === 401) {
+        clearSession();
+        window.location.href = 'index.html';
+        throw new Error('Your session expired. Please sign in again.');
+    }
+    if (!res.ok) {
+        const err = new Error(data.error || 'Something went wrong. Please try again.');
+        err.code = data.code;
+        throw err;
+    }
     return data;
+}
+
+function showBanner(text) {
+    if (text) document.getElementById('configBannerText').textContent = text;
+    document.getElementById('configBanner').classList.remove('hidden');
+}
+
+async function loadMoodleConfig() {
+    instituteId = ownerInstituteId();
+    if (!instituteId) { showBanner('No institute is linked to this login yet.'); return; }
+    try {
+        const s = await api('status');
+        document.getElementById('configBanner').classList.add('hidden');
+        document.getElementById('moodleStatus').textContent = ' · Connected to ' + (s.site || s.host);
+    } catch (err) {
+        if (err.code === 'moodle_not_configured') showBanner();
+        else showBanner(err.message);
+    }
 }
 
 // ── Panel helpers ──
@@ -682,34 +696,54 @@ function clearFeedback(id) {
     const el = document.getElementById(id);
     el.className = 'od-feedback';
 }
+// Success message that also shows a generated password once, with a copy button.
+function setFeedbackWithPassword(id, msg, password) {
+    const el = document.getElementById(id);
+    el.textContent = '';
+    el.className = 'od-feedback success';
+    el.append(msg + ' Temporary password: ');
+    const code = document.createElement('code');
+    code.textContent = password;
+    code.style.cssText = 'background:rgba(255,255,255,0.08);padding:0.15rem 0.4rem;border-radius:4px;user-select:all;';
+    el.append(code);
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.textContent = 'Copy';
+    btn.style.cssText = 'margin-left:0.6rem;padding:0.15rem 0.6rem;border-radius:6px;border:1px solid var(--border-light);background:transparent;color:inherit;cursor:pointer;font-size:0.8rem;';
+    btn.addEventListener('click', async () => {
+        try { await navigator.clipboard.writeText(password); btn.textContent = 'Copied'; }
+        catch (_) { btn.textContent = 'Select and copy'; }
+    });
+    el.append(btn);
+    el.append(document.createElement('br'));
+    const note = document.createElement('small');
+    note.textContent = 'Shown once. Share it securely and ask the user to change it after signing in.';
+    el.append(note);
+}
 
 // ── Create user (teacher or student) ──
 async function createUser(e, role) {
     e.preventDefault();
     const form = e.target;
-    const btnId = role === 'teacher' ? 'createTeacherBtn' : 'createStudentBtn';
-    const fbId  = role === 'teacher' ? 'createTeacherFeedback' : 'createStudentFeedback';
-
-    const btn = document.getElementById(btnId);
+    const btn  = document.getElementById(role === 'teacher' ? 'createTeacherBtn' : 'createStudentBtn');
+    const fbId = role === 'teacher' ? 'createTeacherFeedback' : 'createStudentFeedback';
     btn.disabled = true;
     clearFeedback(fbId);
 
-    const firstname = form.firstname.value.trim();
-    const lastname  = form.lastname.value.trim();
-    const username  = form.username.value.trim().toLowerCase();
-    const email     = form.email.value.trim();
-    const password  = form.password.value;
+    const payload = {
+        role,
+        firstname: form.firstname.value.trim(),
+        lastname:  form.lastname.value.trim(),
+        username:  form.username.value.trim().toLowerCase(),
+        email:     form.email.value.trim()
+    };
+    if (form.password.value) payload.password = form.password.value;
 
     try {
-        await moodleCall('core_user_create_users', {
-            'users[0][username]':  username,
-            'users[0][firstname]': firstname,
-            'users[0][lastname]':  lastname,
-            'users[0][email]':     email,
-            'users[0][password]':  password,
-            'users[0][auth]':      'manual'
-        });
-        setFeedback(fbId, `${role === 'teacher' ? 'Teacher' : 'Student'} account for "${username}" created successfully.`, 'success');
+        const r = await api('create', payload);
+        const msg = `${role === 'teacher' ? 'Teacher' : 'Student'} account "${r.username}" created.`;
+        if (r.password) setFeedbackWithPassword(fbId, msg, r.password);
+        else setFeedback(fbId, msg, 'success');
         form.reset();
     } catch (err) {
         setFeedback(fbId, err.message, 'error');
@@ -721,37 +755,17 @@ async function createUser(e, role) {
 // ── Disable / reactivate account ──
 async function disableAccount(e) {
     e.preventDefault();
-    const form  = e.target;
-    const btn   = document.getElementById('disableBtn');
-    const fbId  = 'disableFeedback';
-
+    const form = e.target;
+    const btn  = document.getElementById('disableBtn');
+    const fbId = 'disableFeedback';
     btn.disabled = true;
     clearFeedback(fbId);
 
     const identifier = form.identifier.value.trim();
-    const suspended  = form.suspended.value;
-
+    const suspended  = form.suspended.value === '1';
     try {
-        // First find the user to get their Moodle ID
-        const isEmail   = identifier.includes('@');
-        const field     = isEmail ? 'email' : 'username';
-        const searchRes = await moodleCall('core_user_get_users', {
-            [`criteria[0][key]`]:   field,
-            [`criteria[0][value]`]: identifier
-        });
-
-        if (!searchRes.users || searchRes.users.length === 0) {
-            throw new Error(`No Moodle user found with ${field} "${identifier}".`);
-        }
-
-        const userId = searchRes.users[0].id;
-        await moodleCall('core_user_update_users', {
-            'users[0][id]':        userId,
-            'users[0][suspended]': suspended
-        });
-
-        const action = suspended === '1' ? 'suspended' : 'reactivated';
-        setFeedback(fbId, `User "${identifier}" has been ${action} successfully.`, 'success');
+        await api('set-suspended', { user: identifier, suspended });
+        setFeedback(fbId, `User "${identifier}" has been ${suspended ? 'suspended' : 'reactivated'} successfully.`, 'success');
         form.reset();
     } catch (err) {
         setFeedback(fbId, err.message, 'error');
@@ -766,30 +780,17 @@ async function resetPassword(e) {
     const form = e.target;
     const btn  = document.getElementById('resetPwBtn');
     const fbId = 'resetPwFeedback';
-
     btn.disabled = true;
     clearFeedback(fbId);
 
-    const username    = form.username.value.trim();
-    const newpassword = form.newpassword.value;
-
+    const username = form.username.value.trim();
+    const payload = { user: username };
+    if (form.newpassword.value) payload.password = form.newpassword.value;
     try {
-        const searchRes = await moodleCall('core_user_get_users', {
-            'criteria[0][key]':   'username',
-            'criteria[0][value]': username
-        });
-
-        if (!searchRes.users || searchRes.users.length === 0) {
-            throw new Error(`No Moodle user found with username "${username}".`);
-        }
-
-        const userId = searchRes.users[0].id;
-        await moodleCall('core_user_update_users', {
-            'users[0][id]':       userId,
-            'users[0][password]': newpassword
-        });
-
-        setFeedback(fbId, `Password for "${username}" has been reset successfully.`, 'success');
+        const r = await api('reset-password', payload);
+        const msg = `Password for "${r.username}" has been reset.`;
+        if (r.password) setFeedbackWithPassword(fbId, msg, r.password);
+        else setFeedback(fbId, msg, 'success');
         form.reset();
     } catch (err) {
         setFeedback(fbId, err.message, 'error');
@@ -803,11 +804,8 @@ async function loadAllUsers() {
     document.getElementById('userSearchInput').value = '';
     renderUsersLoading();
     try {
-        const data = await moodleCall('core_user_get_users', {
-            'criteria[0][key]': 'email',
-            'criteria[0][value]': '%'
-        });
-        renderUsersTable(data.users || []);
+        const data = await api('list', { limit: 300 });
+        renderUsersTable(data.users || [], data.total);
     } catch (err) {
         renderUsersError(err.message);
     }
@@ -816,26 +814,10 @@ async function loadAllUsers() {
 async function searchUsers() {
     const q = document.getElementById('userSearchInput').value.trim();
     if (!q) { loadAllUsers(); return; }
-
     renderUsersLoading();
     try {
-        // Search by username first, then email if no results
-        let users = [];
-        const byUsername = await moodleCall('core_user_get_users', {
-            'criteria[0][key]': 'username',
-            'criteria[0][value]': '%' + q + '%'
-        });
-        users = byUsername.users || [];
-
-        if (users.length === 0) {
-            const byEmail = await moodleCall('core_user_get_users', {
-                'criteria[0][key]': 'email',
-                'criteria[0][value]': '%' + q + '%'
-            });
-            users = byEmail.users || [];
-        }
-
-        renderUsersTable(users);
+        const data = await api('list', { query: q, limit: 300 });
+        renderUsersTable(data.users || [], data.total);
     } catch (err) {
         renderUsersError(err.message);
     }
@@ -847,15 +829,15 @@ document.getElementById('userSearchInput').addEventListener('keydown', function(
 
 function renderUsersLoading() {
     document.getElementById('usersTableArea').innerHTML =
-        '<div class="od-loading"><div class="od-spinner"></div>Fetching users from Moodle…</div>';
+        '<div class="od-loading"><div class="od-spinner"></div>Loading users…</div>';
 }
 
 function renderUsersError(msg) {
     document.getElementById('usersTableArea').innerHTML =
-        `<div class="od-feedback error" style="display:flex;margin:0;"><i class="ph-fill ph-warning-circle"></i>${msg}</div>`;
+        `<div class="od-feedback error" style="display:flex;margin:0;"><i class="ph-fill ph-warning-circle"></i>${esc(msg)}</div>`;
 }
 
-function renderUsersTable(users) {
+function renderUsersTable(users, total) {
     if (!users.length) {
         document.getElementById('usersTableArea').innerHTML =
             '<div class="od-empty"><i class="ph ph-user-circle-minus"></i>No users found.</div>';
@@ -871,7 +853,7 @@ function renderUsersTable(users) {
                 <td>${esc(u.username)}</td>
                 <td>${esc(u.email)}</td>
                 <td>${status}</td>
-                <td><span style="font-size:0.8rem;color:var(--text-muted);">${u.roles?.map(r=>r.shortname).join(', ') || '—'}</span></td>
+                <td><span style="font-size:0.8rem;color:var(--text-muted);">${esc((u.roles || []).join(', ')) || '—'}</span></td>
             </tr>`;
     }).join('');
 
@@ -890,7 +872,7 @@ function renderUsersTable(users) {
                 <tbody>${rows}</tbody>
             </table>
         </div>
-        <p style="font-size:0.8rem;color:var(--text-muted);margin-top:0.875rem;">${users.length} user${users.length !== 1 ? 's' : ''} found</p>`;
+        <p style="font-size:0.8rem;color:var(--text-muted);margin-top:0.875rem;">${users.length} user${users.length !== 1 ? 's' : ''} shown${total && total > users.length ? ' of ' + total : ''}</p>`;
 }
 
 function esc(str) {
