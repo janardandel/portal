@@ -493,6 +493,10 @@
             .od-stat:hover { transform: none; }
         }
 
+
+        .od-cohorts { display: flex; flex-direction: column; gap: 0.5rem; }
+        .od-cohort { display: flex; justify-content: space-between; gap: 1rem; padding: 0.75rem 1rem; background: var(--bg-input); border: 1px solid var(--border); border-radius: var(--radius); font-size: 0.9rem; }
+        .od-cohort span { color: var(--text-muted); font-size: 0.8rem; }
         /* ── Mobile / Tablet ── */
         @media (max-width: 520px) {
             .btn-label { display: none; }
@@ -616,6 +620,7 @@
         <nav class="od-tabs" role="tablist" aria-label="Dashboard sections">
             <button type="button" class="od-tab-btn active" role="tab" id="tabbtn-overview" data-tab="overview" aria-selected="true" aria-controls="tab-overview"><i class="ph ph-squares-four"></i> Overview</button>
             <button type="button" class="od-tab-btn" role="tab" id="tabbtn-people" data-tab="people" aria-selected="false" aria-controls="tab-people"><i class="ph ph-users-three"></i> People</button>
+            <button type="button" class="od-tab-btn" role="tab" id="tabbtn-cohorts" data-tab="cohorts" aria-selected="false" aria-controls="tab-cohorts"><i class="ph ph-graduation-cap"></i> Cohorts</button>
             <button type="button" class="od-tab-btn" role="tab" id="tabbtn-add" data-tab="add" aria-selected="false" aria-controls="tab-add"><i class="ph ph-user-plus"></i> Add people</button>
             <button type="button" class="od-tab-btn" role="tab" id="tabbtn-import" data-tab="import" aria-selected="false" aria-controls="tab-import"><i class="ph ph-upload-simple"></i> Bulk import</button>
             <button type="button" class="od-tab-btn" role="tab" id="tabbtn-tools" data-tab="tools" aria-selected="false" aria-controls="tab-tools"><i class="ph ph-wrench"></i> Account tools</button>
@@ -668,6 +673,35 @@
                     <button type="button" class="od-mini" id="peopleRefresh" title="Reload from Moodle"><i class="ph ph-arrow-clockwise"></i> Refresh</button>
                 </div>
                 <div id="peopleTableArea"><div class="od-empty"><i class="ph ph-users-three"></i>Open this tab to load your people</div></div>
+            </div>
+        </section>
+
+        <!-- Cohorts -->
+        <section class="od-tab hidden" id="tab-cohorts" role="tabpanel" aria-labelledby="tabbtn-cohorts">
+            <div class="od-grid">
+                <div class="od-panel">
+                    <div class="od-panel-head">
+                        <div class="od-panel-icon"><i class="ph-fill ph-graduation-cap"></i></div>
+                        <div><h2>Cohorts</h2><p>Batches of students, like "JEE 2027"</p></div>
+                    </div>
+                    <div id="cohortList"><div class="od-empty"><i class="ph ph-graduation-cap"></i>Open this tab to load your cohorts</div></div>
+                    <form id="cohortCreateForm" class="od-actions-row" style="margin-top:1rem;" autocomplete="off">
+                        <input type="text" id="cohortName" maxlength="100" placeholder="New cohort name" aria-label="New cohort name" class="od-textarea" style="min-height:0;flex:1;font-family:inherit;font-size:0.9rem;">
+                        <button type="submit" class="od-btn od-btn-inline"><i class="ph ph-plus"></i> Create</button>
+                    </form>
+                </div>
+                <div class="od-panel">
+                    <div class="od-panel-head">
+                        <div class="od-panel-icon"><i class="ph-fill ph-users-three"></i></div>
+                        <div><h2>Add or remove people</h2><p>Type usernames or emails, one per line</p></div>
+                    </div>
+                    <select id="cohortPick" aria-label="Cohort" class="od-textarea" style="min-height:0;font-family:inherit;font-size:0.9rem;margin-bottom:0.75rem;"><option value="">Choose a cohort...</option></select>
+                    <textarea class="od-textarea" id="cohortUsers" placeholder="riya.s&#10;amit@example.com" aria-label="Usernames or emails" spellcheck="false"></textarea>
+                    <div class="od-actions-row" style="margin-top:0.75rem;">
+                        <button type="button" class="od-btn od-btn-inline" id="cohortAdd"><i class="ph ph-user-plus"></i> Add to cohort</button>
+                        <button type="button" class="od-btn od-btn-inline od-btn-outline" id="cohortRemove"><i class="ph ph-user-minus"></i> Remove from cohort</button>
+                    </div>
+                </div>
             </div>
         </section>
 
@@ -864,7 +898,7 @@ let ownerToken  = null;
 let instituteId = null;
 const API_BASE  = 'https://api.classes.institute';
 const PAGE_SIZE = 25;
-const TABS = ['overview', 'people', 'add', 'import', 'tools'];
+const TABS = ['overview', 'people', 'cohorts', 'add', 'import', 'tools'];
 const state = { users: [], total: 0, loaded: false, loading: false, q: '', status: 'all', sortKey: 'fullname', sortDir: 1, page: 1, connected: false, site: null, serverSearch: false, remote: null };
 
 // ── Auth guard + role check ──
@@ -1133,6 +1167,7 @@ function showTab(name) {
         b.tabIndex = n === name ? 0 : -1;
     });
     try { if (location.hash !== '#' + name) history.replaceState(null, '', '#' + name); } catch (_) {}
+    if (name === 'cohorts' && state.connected && !state.cohortsLoaded) loadCohorts();
     if (name === 'people' && state.connected && !state.loaded && !state.loading) refreshUsers();
 }
 
@@ -1509,6 +1544,9 @@ function initPhase2() {
     $id('peopleStatus').addEventListener('change', e => { state.status = e.target.value; state.page = 1; renderPeople(); });
     $id('peopleRefresh').addEventListener('click', () => { state.loaded = false; refreshUsers(); });
 
+    $id('cohortCreateForm').addEventListener('submit', createCohort);
+    $id('cohortAdd').addEventListener('click', () => changeCohort('add-to-cohort'));
+    $id('cohortRemove').addEventListener('click', () => changeCohort('remove-from-cohort'));
     $id('importPreviewBtn').addEventListener('click', previewImport);
     $id('importFile').addEventListener('change', e => loadImportFile(e.target.files[0]));
     $id('importTemplate').addEventListener('click', () => downloadCsv('people-template.csv', [
@@ -1523,6 +1561,51 @@ function initPhase2() {
 
     showTab((location.hash || '#overview').slice(1));
     if (state.connected) refreshUsers(); else renderNotConnected();
+}
+
+
+// ── Cohorts ──
+async function loadCohorts() {
+    const list = $id('cohortList');
+    list.innerHTML = '<div aria-busy="true">' + '<div class="od-skel od-skel-row"></div>'.repeat(3) + '</div>';
+    try {
+        const d = await api('cohorts');
+        state.cohorts = d.cohorts || [];
+        state.cohortsLoaded = true;
+        list.innerHTML = state.cohorts.length
+            ? '<div class="od-cohorts">' + state.cohorts.map(c => '<div class="od-cohort"><strong>' + esc(c.name) + '</strong><span>' + (c.members == null ? '' : c.members + (c.members === 1 ? ' person' : ' people')) + '</span></div>').join('') + '</div>'
+            : '<div class="od-empty"><i class="ph ph-graduation-cap"></i><p>No cohorts yet. Create your first below.</p></div>';
+        const pick = $id('cohortPick'), keep = pick.value;
+        pick.innerHTML = '<option value="">Choose a cohort...</option>' + state.cohorts.map(c => '<option value="' + esc(String(c.id)) + '">' + esc(c.name) + '</option>').join('');
+        pick.value = keep;
+    } catch (err) {
+        list.innerHTML = '<div class="od-feedback error" style="display:flex;margin:0;"><i class="ph-fill ph-warning-circle"></i>' + esc(friendlyError(err.message)) + '</div>';
+    }
+}
+
+async function createCohort(e) {
+    e.preventDefault();
+    const name = $id('cohortName').value.trim();
+    if (!name) return;
+    try {
+        await api('create-cohort', { name });
+        $id('cohortName').value = '';
+        toast('Cohort "' + name + '" created.', 'success');
+        loadCohorts();
+    } catch (err) { toast(friendlyError(err.message), 'error'); }
+}
+
+async function changeCohort(action) {
+    const cohort_id = $id('cohortPick').value;
+    const users = $id('cohortUsers').value.split(/[\n,;]+/).map(s => s.trim()).filter(Boolean);
+    if (!cohort_id) return toast('Choose a cohort first.', 'error');
+    if (!users.length) return toast('Enter at least one username or email.', 'error');
+    try {
+        const r = await api(action, { cohort_id: Number(cohort_id), users });
+        const verb = action === 'add-to-cohort' ? 'added to' : 'removed from';
+        toast(r.changed + (r.changed === 1 ? ' person ' : ' people ') + verb + ' the cohort.' + (r.failed && r.failed.length ? ' Not found: ' + r.failed.map(f => f.user).join(', ') + '.' : ''), r.failed && r.failed.length ? 'error' : 'success');
+        if (r.changed) { $id('cohortUsers').value = (r.failed || []).map(f => f.user).join('\n'); loadCohorts(); }
+    } catch (err) { toast(friendlyError(err.message), 'error'); }
 }
 </script>
 </body>
