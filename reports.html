@@ -324,6 +324,7 @@
 
         <!-- Leaderboard Table Section -->
         <div id="resultsContent" style="display:none;">
+          <div id="analysisPanel"></div>
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.75rem;flex-wrap:wrap;gap:0.5rem;">
             <h3 style="font-size:1.05rem;font-weight:700;color:var(--text-primary);display:flex;align-items:center;gap:0.4rem;margin:0;">
               <i class="ph-fill ph-trophy" style="color:#eab308;"></i> Student Leaderboard & Performance Scorecards
@@ -368,6 +369,8 @@
   </div>
 </div>
 
+<script src="analysis.js"></script>
+<script src="demo-analysis-data.js"></script>
 <script>
 let allTests = [];
 let activeQuizId = null;
@@ -554,6 +557,24 @@ async function selectTest(quizId, quizTitle) {
     const list = data.leaderboard || [];
     document.getElementById('leaderboardSummary').textContent = `${list.length} student submission(s)`;
 
+    // Question-level analysis: webhook data if present, else same-origin /api/question-analysis,
+    // or clearly-marked demo data via ?demo=1
+    (async function () {
+      var panel = document.getElementById('analysisPanel');
+      var demo = new URLSearchParams(location.search).get('demo') === '1' && window.PG_DEMO_ANALYSIS;
+      var src = null, isDemo = false;
+      if (data.questions && data.question_results) src = data;
+      else if (demo) { src = window.PG_DEMO_ANALYSIS; isDemo = true; }
+      else {
+        try {
+          var r = await fetch('/api/question-analysis?institute_id=' + encodeURIComponent(instituteId) + '&test_id=' + encodeURIComponent(quizId),
+            { headers: { Authorization: 'Bearer ' + (localStorage.getItem('pg_access_token') || '') } });
+          if (r.ok) src = await r.json();
+        } catch (e) { /* analysis is optional; the leaderboard still renders */ }
+      }
+      window.PGAnalysis.render(panel, window.PGAnalysis.build(src), { demo: isDemo });
+    })();
+
     if (!list.length) {
       tbody.innerHTML = `
         <tr><td colspan="7" style="padding:3.5rem 1.5rem;text-align:center;color:var(--text-secondary);">
@@ -614,6 +635,14 @@ function refreshActiveReport() {
 
 if (checkAuth()) {
   loadTestsDirectory();
+  // ?demo=1 : show the analysis panel on clearly-marked DEMO data, even when no test can be loaded.
+  if (new URLSearchParams(location.search).get('demo') === '1' && window.PG_DEMO_ANALYSIS) {
+    var emptyEl = document.getElementById('emptyReportState');
+    if (emptyEl) emptyEl.style.display = 'none';
+    document.getElementById('resultsContent').style.display = 'block';
+    document.getElementById('repQuizTitle').innerHTML = 'DEMO — sample analysis (not real students)';
+    window.PGAnalysis.render(document.getElementById('analysisPanel'), window.PGAnalysis.build(window.PG_DEMO_ANALYSIS), { demo: true });
+  }
 }
 </script>
 </body>

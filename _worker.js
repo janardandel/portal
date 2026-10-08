@@ -31,6 +31,14 @@ export default {
         if (path === '/api/moodle-courses') {
             return handleMoodleCourses(request, env);
         }
+        if (path === '/api/question-bank') {
+            if (method !== 'GET') return new Response('Method Not Allowed', { status: 405 });
+            return handleQuestionBank(request, env);
+        }
+        if (path === '/api/question-analysis') {
+            if (method !== 'GET') return new Response('Method Not Allowed', { status: 405 });
+            return handleQuestionAnalysis(request, env);
+        }
         if (path === '/api/moodle-config') {
             if (method !== 'GET') return new Response('Method Not Allowed', { status: 405 });
             return handleMoodleConfig(request, env);
@@ -59,6 +67,33 @@ export default {
         return env.ASSETS.fetch(request);
     }
 };
+
+// ── Auth helper: validate the caller's Supabase session and institute role ──────
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+async function authenticateUser(request) {
+    const h = request.headers.get('Authorization') || '';
+    const token = h.startsWith('Bearer ') ? h.slice(7) : '';
+    if (!token) return { error: json({ error: 'Unauthorized.' }, 401) };
+    const uRes = await fetch(`${SUPABASE_URL}/auth/v1/user`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${token}` } });
+    if (!uRes.ok) return { error: json({ error: 'Unauthorized.' }, 401) };
+    const user = await uRes.json();
+    if (!user || !UUID_RE.test(user.id || '')) return { error: json({ error: 'Unauthorized.' }, 401) };
+    return { user, token };
+}
+
+async function authorizeInstitute(request, instituteId, roles) {
+    if (!UUID_RE.test(instituteId || '')) return { error: json({ error: 'Invalid institute_id.' }, 400) };
+    const who = await authenticateUser(request);
+    if (who.error) return who;
+    const { user, token } = who;
+    const mRes = await fetch(
+        `${SUPABASE_URL}/rest/v1/institute_members?profile_id=eq.${user.id}&institute_id=eq.${instituteId}&select=role`,
+        { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${token}` } });
+    const rows = mRes.ok ? await mRes.json() : [];
+    const role = rows[0] && rows[0].role;
+    if (!role || (roles || ['owner', 'teacher']).indexOf(role) === -1) return { error: json({ error: 'Forbidden.' }, 403) };
+    return { user, role, token };
+}
 
 async function handleLogin(request) {
     let email, password;
@@ -146,15 +181,15 @@ const TENANT_MOODLE_MAP = {
     // Default / Trial Tenant (Pitthugram Trial Institute)
     '65e4628a-a283-45a3-ab2d-84073977d4c4': {
         moodle_url: 'https://trial001.classes.institute',
-        moodle_token: (env && env.MOODLE_TOKEN) || '',
         tenant_name: 'Pitthugram Trial'
     }
 };
 
-async function getTenantMoodleConfig(instituteId, env) {
+async function getTenantMoodleConfig(instituteId, env, userToken) {
     // 1. Check in-memory mapping
     if (instituteId && TENANT_MOODLE_MAP[instituteId]) {
-        return TENANT_MOODLE_MAP[instituteId];
+        // env is only available per request, so the token is attached here, not at module load
+        return Object.assign({}, TENANT_MOODLE_MAP[instituteId], { moodle_token: (env && env.MOODLE_TOKEN) || '' });
     }
 
     // 2. Check Supabase institutes / moodle_config table if configured
@@ -164,8 +199,11 @@ async function getTenantMoodleConfig(instituteId, env) {
                 `${SUPABASE_URL}/rest/v1/moodle_config?institute_id=eq.${encodeURIComponent(instituteId)}&select=moodle_url,moodle_token,tenant_name&limit=1`,
                 {
                     headers: {
-                        'apikey': SUPABASE_KEY,
-                        'Authorization': `Bearer ${SUPABASE_KEY}`
+                        // moodle_config is RLS-protected, so the anon key sees nothing. Prefer a server-side
+                        // service key (Worker secret MOODLE_CONFIG_SERVICE_KEY, MoodleCred project) so teachers
+                        // never need read access to moodle_token; otherwise use the caller's own session token.
+                        'apikey': (env && env.MOODLE_CONFIG_SERVICE_KEY) || SUPABASE_KEY,
+                        'Authorization': `Bearer ${(env && env.MOODLE_CONFIG_SERVICE_KEY) || userToken || SUPABASE_KEY}`
                     }
                 }
             );
@@ -191,7 +229,9 @@ async function getTenantMoodleConfig(instituteId, env) {
 async function handleMoodleConfig(request, env) {
     const u = new URL(request.url);
     const instituteId = u.searchParams.get('institute_id');
-    const tenantConfig = await getTenantMoodleConfig(instituteId, env);
+    const auth = await authorizeInstitute(request, instituteId);
+    if (auth.error) return auth.error;
+    const tenantConfig = await getTenantMoodleConfig(instituteId, env, auth.token);
 
     return json({
         configured:   true,
@@ -214,7 +254,9 @@ async function handleMoodleCourses(request, env) {
         instituteId = u.searchParams.get('institute_id');
     }
 
-    const tenantConfig = await getTenantMoodleConfig(instituteId, env);
+    const auth = await authorizeInstitute(request, instituteId);
+    if (auth.error) return auth.error;
+    const tenantConfig = await getTenantMoodleConfig(instituteId, env, auth.token);
     const moodleUrl = tenantConfig.moodle_url;
     const moodleToken = tenantConfig.moodle_token;
 
@@ -252,6 +294,8 @@ async function handleMoodleCourses(request, env) {
 }
 // ── MCQ image presign (IDrive S3, SigV4 via Web Crypto) ─────────────────────
 async function handleMcqPresign(request, env) {
+    const who = await authenticateUser(request);
+    if (who.error) return who.error;
     let files;
     try {
         ({ files } = await request.json());
@@ -259,6 +303,7 @@ async function handleMcqPresign(request, env) {
         return json({ error: 'Invalid request body.' }, 400);
     }
     if (!Array.isArray(files) || !files.length) return json({ error: 'No files provided.' }, 400);
+    if (files.length > 20) return json({ error: 'Too many files.' }, 400);
     if (!env.S3_ACCESS_KEY_ID || !env.S3_SECRET_ACCESS_KEY) {
         return json({ error: 'Storage not configured.' }, 500);
     }
@@ -266,6 +311,9 @@ async function handleMcqPresign(request, env) {
     const signed = [];
     for (const f of files) {
         if (!f || !f.key) return json({ error: 'Each file needs a key.' }, 400);
+        if (typeof f.key !== 'string' || f.key.length > 300 || f.key.startsWith('/') || f.key.split('/').indexOf('..') !== -1) {
+            return json({ error: 'Invalid file key.' }, 400);
+        }
         const putUrl = await presignPutUrl(env, f.key, 600);
         const getUrl = `${S3_ENDPOINT}/${S3_BUCKET}/${encodeS3Key(f.key)}`;
         signed.push({ key: f.key, putUrl, getUrl });
@@ -322,6 +370,9 @@ async function handleMcqSave(request, env) {
     const teacherId   = body.teacher_id || null;
     if (!Array.isArray(questions) || !questions.length) return json({ error: 'No questions to save.' }, 400);
     if (!instituteId) return json({ error: 'Missing institute_id.' }, 400);
+    if (questions.length > 200) return json({ error: 'Too many questions in one request.' }, 400);
+    const auth = await authorizeInstitute(request, instituteId);
+    if (auth.error) return auth.error;
     if (!env.SUPA_DB_SERVICE_KEY) return json({ error: 'Database not configured.' }, 500);
 
     const base = SAVE_DB_URL;
@@ -365,7 +416,9 @@ async function handleMcqSave(request, env) {
             const txt = await qRes.text();
             return json({ error: 'Question insert failed: ' + txt, saved }, 500);
         }
-        const qid = (await qRes.json())[0].id;
+        const inserted = await qRes.json();
+        if (!inserted || !inserted[0] || !inserted[0].id) return json({ error: 'Question insert returned no row.', saved }, 502);
+        const qid = inserted[0].id;
 
         // 2) Insert normalized option rows
         const optRows = ['a', 'b', 'c', 'd']
@@ -432,7 +485,12 @@ async function handleMoodleSchedule(request, env) {
     }
 
     const { institute_id, email, courseid, name, timeopen, timeclose, timelimit, attempts, shuffleanswers, questions } = body;
-    const tenantConfig = await getTenantMoodleConfig(institute_id, env);
+    const auth = await authorizeInstitute(request, institute_id);
+    if (auth.error) return auth.error;
+    if (questions !== undefined && (!Array.isArray(questions) || questions.length > 500)) {
+        return json({ error: 'Invalid questions list.' }, 400);
+    }
+    const tenantConfig = await getTenantMoodleConfig(institute_id, env, auth.token);
     const n8nWebhookUrl = (env && env.N8N_MOODLE_WEBHOOK) || 'https://awsn8n.pitthugram.com/webhook/moodle-tenant-sync';
 
     // 1. Dispatch through AWS n8n Multi-Tenant Orchestrator
@@ -442,8 +500,8 @@ async function handleMoodleSchedule(request, env) {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 action: 'schedule_quiz',
-                institute_id: institute_id || '65e4628a-a283-45a3-ab2d-84073977d4c4',
-                email: email || 'teacher@classes.institute',
+                institute_id: institute_id,
+                email: email || (auth.user && auth.user.email) || '',
                 courseid: courseid || 2,
                 name: name || 'Scheduled Assessment',
                 timeopen: timeopen || Math.floor(Date.now() / 1000),
@@ -487,7 +545,8 @@ async function handleMoodleSchedule(request, env) {
                 'Prefer': 'return=minimal'
             },
             body: JSON.stringify({
-                teacher_wordpress_id: email || '1edca830-a871-4ed6-830b-1fa60273ec91',
+                institute_id: institute_id,
+                teacher_wordpress_id: email || (auth.user && auth.user.email) || '',
                 quiz_title: name || 'Scheduled Quiz',
                 scheduled_date: new Date().toISOString().slice(0, 10),
                 scheduled_time: '10:00:00',
@@ -677,7 +736,7 @@ async function handleTrial(request, env) {
                     });
                     const compData = await compResp.json();
                     if (compData.id) {
-                        await fetch(https://api.hubapi.com/crm/v4/objects/contacts/ + contactId + /associations/default/companies/ + compData.id, {
+                        await fetch('https://api.hubapi.com/crm/v4/objects/contacts/' + contactId + '/associations/default/companies/' + compData.id, {
                             method: 'PUT',
                             headers: hsHeaders
                         });
@@ -765,64 +824,180 @@ async function handleTrial(request, env) {
     });
 }
 
-const QB_SUPABASE_URL = 'https://qnqcysdeolnooxxcafwz.supabase.co';
-const QB_SERVICE_KEY = '';
-
 async function handleScheduledQuizzes(request, env) {
-    const authHeader = request.headers.get('Authorization') || '';
-    const authToken = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : '';
-    if (!authToken && request.method !== 'OPTIONS') {
-        return json({ error: 'Unauthorized: Authentication required.' }, 401);
-    }
-    const serviceKey = (env && env.SUPABASE_SERVICE_ROLE_KEY) || QB_SERVICE_KEY;
+    const cors = {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type, Authorization'
+    };
     const method = request.method;
+    if (method === 'OPTIONS') return new Response(null, { status: 204, headers: cors });
 
-    if (method === 'OPTIONS') {
-        return new Response(null, {
-            status: 204,
-            headers: {
-                'Access-Control-Allow-Origin': '*',
-                'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-                'Access-Control-Allow-Headers': 'Content-Type, Authorization'
-            }
-        });
-    }
+    const serviceKey = (env && env.SUPABASE_SERVICE_ROLE_KEY) || QB_SERVICE_KEY;
+    if (!serviceKey) return json({ error: 'Database not configured.' }, 500);
+    const svc = { 'apikey': serviceKey, 'Authorization': 'Bearer ' + serviceKey };
 
     if (method === 'GET') {
         const url = new URL(request.url);
-        const search = url.search || '?order=created_at.desc';
-        const res = await fetch(QB_SUPABASE_URL + '/rest/v1/scheduled_quizzes' + search, {
-            headers: {
-                'apikey': serviceKey,
-                'Authorization': 'Bearer ' + serviceKey
-            }
-        });
-        const data = await res.json();
-        return json(data, res.status);
+        const instituteId = url.searchParams.get('institute_id');
+        const auth = await authorizeInstitute(request, instituteId);
+        if (auth.error) return auth.error;
+        // Only whitelisted query parameters are forwarded; the institute filter is always enforced.
+        const order = url.searchParams.get('order') === 'created_at.asc' ? 'created_at.asc' : 'created_at.desc';
+        const limit = Math.min(Math.max(parseInt(url.searchParams.get('limit') || '100', 10) || 100, 1), 200);
+        const res = await fetch(`${QB_SUPABASE_URL}/rest/v1/scheduled_quizzes?institute_id=eq.${instituteId}&order=${order}&limit=${limit}`, { headers: svc });
+        return json(await res.json(), res.status);
     }
 
     if (method === 'POST') {
         let payload;
-        try {
-            payload = await request.json();
-        } catch {
-            return json({ error: 'Invalid payload' }, 400);
-        }
-
-        const res = await fetch(QB_SUPABASE_URL + '/rest/v1/scheduled_quizzes', {
+        try { payload = await request.json(); } catch { return json({ error: 'Invalid payload' }, 400); }
+        const auth = await authorizeInstitute(request, payload && payload.institute_id);
+        if (auth.error) return auth.error;
+        const allowed = ['institute_id', 'centre_id', 'teacher_wordpress_id', 'quiz_title', 'scheduled_date', 'scheduled_time', 'question_ids', 'status', 'moodle_quiz_id', 'error_message', 'class'];
+        const row = {};
+        allowed.forEach(function (k) { if (payload[k] !== undefined) row[k] = payload[k]; });
+        const res = await fetch(`${QB_SUPABASE_URL}/rest/v1/scheduled_quizzes`, {
             method: 'POST',
-            headers: {
-                'apikey': serviceKey,
-                'Authorization': 'Bearer ' + serviceKey,
-                'Content-Type': 'application/json',
-                'Prefer': 'return=representation'
-            },
-            body: JSON.stringify(payload)
+            headers: Object.assign({ 'Content-Type': 'application/json', 'Prefer': 'return=representation' }, svc),
+            body: JSON.stringify(row)
         });
-
-        const data = await res.json();
-        return json(data, res.status);
+        return json(await res.json(), res.status);
     }
 
     return new Response('Method Not Allowed', { status: 405 });
+}
+
+// ── Question-level analysis (feeds analysis.js in reports.html) ───────────────
+// GET /api/question-analysis?institute_id=<uuid>&test_id=<id>[&correct_marks=4&negative_marks=1]
+// Auth: caller's Supabase session token, and the caller must be owner/teacher of institute_id.
+// Reads student_attempts + students (Onboarding project, service key) and question tags (question bank).
+export function buildAnalysisPayload(attempts, students, tags, opts) {
+    opts = opts || {};
+    const correctMarks = Number(opts.correctMarks != null ? opts.correctMarks : 1);
+    const negMarks = Number(opts.negativeMarks != null ? opts.negativeMarks : 0);
+    const nameOf = {};
+    (students || []).forEach(function (st) { nameOf[st.id] = st.full_name || st.name || st.email || String(st.id); });
+    const tagOf = {};
+    (tags || []).forEach(function (q) { tagOf[q.id] = q; });
+    const seen = {};
+    const results = (attempts || []).map(function (a) {
+        seen[a.question_id] = true;
+        const skipped = a.selected_answer == null || a.selected_answer === '';
+        const status = skipped ? 'skipped' : (a.is_correct ? 'correct' : 'wrong');
+        return {
+            student_id: a.student_id,
+            student_name: nameOf[a.student_id] || String(a.student_id),
+            question_id: a.question_id,
+            status: status,
+            marks: status === 'correct' ? correctMarks : (status === 'wrong' ? -negMarks : 0),
+            time_seconds: a.time_taken_sec != null ? Number(a.time_taken_sec) : null
+        };
+    });
+    const questions = Object.keys(seen).map(function (id) {
+        const q = tagOf[id] || {};
+        return {
+            id: id,
+            subject: q.subject || 'Untagged',
+            chapter: q.chapter || 'Untagged',
+            topic: q.topic || '',
+            difficulty: q.difficulty_level || q.difficulty || 'Unspecified',
+            max_marks: correctMarks,
+            neg_marks: negMarks
+        };
+    });
+    return { questions: questions, question_results: results };
+}
+
+async function handleQuestionAnalysis(request, env) {
+    const u = new URL(request.url);
+    const instituteId = u.searchParams.get('institute_id') || '';
+    const testId = u.searchParams.get('test_id') || '';
+    const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (!uuid.test(instituteId)) return json({ error: 'Invalid institute_id.' }, 400);
+    if (!/^[A-Za-z0-9_-]{1,64}$/.test(testId)) return json({ error: 'Invalid test_id.' }, 400);
+
+    const authHeader = request.headers.get('Authorization') || '';
+    const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : '';
+    if (!token) return json({ error: 'Unauthorized.' }, 401);
+    if (!env.SUPA_DB_SERVICE_KEY) return json({ error: 'Database not configured.' }, 500);
+
+    // 1) Who is calling? (token is validated by Supabase Auth, not just checked for presence)
+    const userRes = await fetch(`${SUPABASE_URL}/auth/v1/user`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${token}` } });
+    if (!userRes.ok) return json({ error: 'Unauthorized.' }, 401);
+    const user = await userRes.json();
+    if (!user || !uuid.test(user.id || '')) return json({ error: 'Unauthorized.' }, 401);
+
+    // 2) Must be owner/teacher of this institute (RLS applies, the query uses the caller's token)
+    const memRes = await fetch(
+        `${SUPABASE_URL}/rest/v1/institute_members?profile_id=eq.${user.id}&institute_id=eq.${instituteId}&select=role`,
+        { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${token}` } }
+    );
+    const members = memRes.ok ? await memRes.json() : [];
+    const role = members[0] && members[0].role;
+    if (role !== 'owner' && role !== 'teacher') return json({ error: 'Forbidden.' }, 403);
+
+    // 3) Attempts and students for this institute + test (service key, always filtered by institute_id)
+    const svc = { 'apikey': env.SUPA_DB_SERVICE_KEY, 'Authorization': `Bearer ${env.SUPA_DB_SERVICE_KEY}` };
+    const aRes = await fetch(
+        `${SAVE_DB_URL}/rest/v1/student_attempts?institute_id=eq.${instituteId}&test_id=eq.${encodeURIComponent(testId)}&select=student_id,question_id,selected_answer,is_correct,time_taken_sec&limit=20000`,
+        { headers: svc }
+    );
+    if (!aRes.ok) return json({ error: 'Could not load attempts.' }, 502);
+    const attempts = await aRes.json();
+    if (!attempts.length) return json({ questions: [], question_results: [] });
+
+    const studentIds = Array.from(new Set(attempts.map(function (a) { return a.student_id; }))).filter(function (id) { return uuid.test(String(id)); });
+    const sRes = studentIds.length ? await fetch(
+        `${SAVE_DB_URL}/rest/v1/students?institute_id=eq.${instituteId}&id=in.(${studentIds.join(',')})&select=*`,
+        { headers: svc }
+    ) : null;
+    const students = sRes && sRes.ok ? await sRes.json() : [];
+
+    // 4) Subject/chapter/difficulty tags from the question bank
+    const qIds = Array.from(new Set(attempts.map(function (a) { return a.question_id; }))).filter(function (id) { return uuid.test(String(id)); });
+    const qbKey = (env && env.SUPABASE_SERVICE_ROLE_KEY) || QB_SERVICE_KEY;
+    let tags = [];
+    for (let i = 0; i < qIds.length; i += 100) {
+        const chunk = qIds.slice(i, i + 100);
+        const tRes = await fetch(
+            `${QB_SUPABASE_URL}/rest/v1/questions?id=in.(${chunk.join(',')})&select=id,subject,chapter,difficulty_level`,
+            { headers: { 'apikey': qbKey, 'Authorization': `Bearer ${qbKey}` } }
+        );
+        if (tRes.ok) tags = tags.concat(await tRes.json());
+    }
+
+    return json(buildAnalysisPayload(attempts, students, tags, {
+        correctMarks: u.searchParams.get('correct_marks'),
+        negativeMarks: u.searchParams.get('negative_marks')
+    }));
+}
+
+
+// ── Question bank read for teachers (keeps correct_answer off the public key) ──
+// GET /api/question-bank?institute_id=<uuid>[&class=&board=&subject=&chapter=&difficulty=&limit=]
+// Owner/teacher of institute_id only. Only whitelisted filters and columns are used.
+const QB_COLUMNS = 'id,question_text,option_a,option_b,option_c,option_d,correct_answer,explanation,difficulty_level,chapter,class,subject,board,question_type,question_image,option_a_image,option_b_image,option_c_image,option_d_image';
+async function handleQuestionBank(request, env) {
+    const u = new URL(request.url);
+    const auth = await authorizeInstitute(request, u.searchParams.get('institute_id'));
+    if (auth.error) return auth.error;
+    const serviceKey = (env && env.SUPABASE_SERVICE_ROLE_KEY) || QB_SERVICE_KEY;
+    if (!serviceKey) return json({ error: 'Database not configured.' }, 500);
+
+    const clean = function (v) { return String(v || '').replace(/[*,()]/g, '').slice(0, 120); };
+    let q = `${QB_SUPABASE_URL}/rest/v1/questions?is_active=eq.true&select=${QB_COLUMNS}&order=class,subject,chapter,difficulty_level`;
+    ['class', 'board', 'subject'].forEach(function (k) {
+        const v = clean(u.searchParams.get(k));
+        if (v) q += `&${k}=eq.${encodeURIComponent(v)}`;
+    });
+    const diff = clean(u.searchParams.get('difficulty'));
+    if (diff) q += `&difficulty_level=eq.${encodeURIComponent(diff)}`;
+    const chapter = clean(u.searchParams.get('chapter'));
+    if (chapter) q += `&chapter=ilike.*${encodeURIComponent(chapter)}`;
+    const limit = Math.min(Math.max(parseInt(u.searchParams.get('limit') || '500', 10) || 500, 1), 1000);
+    q += `&limit=${limit}`;
+
+    const res = await fetch(q, { headers: { 'apikey': serviceKey, 'Authorization': `Bearer ${serviceKey}` } });
+    return json(await res.json(), res.status);
 }

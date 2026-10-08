@@ -787,28 +787,18 @@ async function fetchQuestions() {
     const CLASS_DB_MAP = {};
     const dbCls = CLASS_DB_MAP[cls] || cls;
 
-    let urlA = SUPABASE_URL + '/rest/v1/questions?is_active=eq.true&select=*&order=class,subject,chapter,difficulty_level';
-    if (dbCls)       urlA += '&class=eq.'            + encodeURIComponent(dbCls);
-    if (activeBoard) urlA += '&board=eq.'            + encodeURIComponent(activeBoard);
-    if (subject)     urlA += '&subject=eq.'          + encodeURIComponent(subject);
-    if (chapter)     urlA += '&chapter=ilike.*'      + encodeURIComponent(chapterCore(chapter));
-    if (difficulty)  urlA += '&difficulty_level=eq.' + encodeURIComponent(difficulty);
+    // Answers are never read with the public key: questions come through the login-protected worker route.
+    let urlA = API_BASE + '/api/question-bank?institute_id=' + encodeURIComponent(pgInstituteId() || '');
+    if (dbCls)       urlA += '&class='      + encodeURIComponent(dbCls);
+    if (activeBoard) urlA += '&board='      + encodeURIComponent(activeBoard);
+    if (subject)     urlA += '&subject='    + encodeURIComponent(subject);
+    if (chapter)     urlA += '&chapter='    + encodeURIComponent(chapterCore(chapter));
+    if (difficulty)  urlA += '&difficulty=' + encodeURIComponent(difficulty);
 
-    let urlB = SUPA_B_URL + '/rest/v1/questions?is_active=eq.true&select=*,question_images(idrive_url,caption)&order=class,subject,chapter,difficulty_level';
-    if (dbCls)       urlB += '&class=eq.'            + encodeURIComponent(dbCls);
-    if (activeBoard) urlB += '&board=eq.'            + encodeURIComponent(activeBoard);
-    if (subject)     urlB += '&subject=eq.'          + encodeURIComponent(subject);
-    if (chapter)     urlB += '&chapter=ilike.*'      + encodeURIComponent(chapterCore(chapter));
-    if (difficulty)  urlB += '&difficulty_level=eq.' + encodeURIComponent(difficulty);
-
-    // Central read uses the anon key only. The portal login token is issued by a
-    // different Supabase project, so sending it as Bearer here makes central reject
-    // it (401). The anon RLS policy already permits reading active questions.
-    const headersA = { 'apikey': SUPABASE_KEY };
-
+    // SUPA_B is the same database as the central one (see SUPA_B_URL above), so only one read is needed.
     const [resA, resB] = await Promise.allSettled([
-        fetch(urlA, { headers: headersA }),
-        fetch(urlB, { headers: { 'apikey': SUPA_B_PUB } })
+        fetch(urlA, { headers: pgAuthHeaders() }),
+        Promise.resolve(new Response('[]', { status: 200 }))
     ]);
 
     let questionsA = [], questionsB = [];
@@ -1818,8 +1808,8 @@ async function loadQuestionBank() {
 
     try {
         const res = await fetch(
-            SUPABASE_URL + '/rest/v1/questions?is_active=eq.true&select=*&order=class,subject,chapter',
-            { headers: { 'apikey': SUPABASE_KEY } }
+            API_BASE + '/api/question-bank?institute_id=' + encodeURIComponent(pgInstituteId() || '') + '&limit=1000',
+            { headers: pgAuthHeaders() }
         );
         if (!res.ok) throw new Error('Failed to load questions');
 
@@ -2220,8 +2210,8 @@ async function toggleBoardSubject(board, cls, subject) {
     if (subjectLi) subjectLi.classList.add('active-subject');
     try {
         const res = await fetch(
-            SUPABASE_URL + '/rest/v1/questions?select=id,question_text,option_a,option_b,option_c,option_d,correct_answer,explanation,difficulty_level,chapter,class,subject,board&class=eq.' + encodeURIComponent(cls) + '&subject=eq.' + encodeURIComponent(subject) + '&board=eq.' + encodeURIComponent(board) + '&limit=100',
-            { headers: { 'apikey': SUPABASE_KEY } }
+            API_BASE + '/api/question-bank?institute_id=' + encodeURIComponent(pgInstituteId() || '') + '&class=' + encodeURIComponent(cls) + '&subject=' + encodeURIComponent(subject) + '&board=' + encodeURIComponent(board) + '&limit=100',
+            { headers: pgAuthHeaders() }
         );
         if (!res.ok) throw new Error('Failed to load questions');
         const questions = await res.json();
