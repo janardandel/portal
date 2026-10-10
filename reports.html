@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
 <script src="./session.js"></script>
@@ -314,10 +314,13 @@
             <span>Tests Directory</span>
             <button onclick="loadTestsDirectory()" style="background:none;border:none;color:var(--text-secondary);cursor:pointer;padding:0.15rem;" title="Refresh"><i class="ph ph-arrows-clockwise"></i></button>
           </div>
-          <div style="margin-bottom:0.65rem;">
-            <input type="text" id="testSearchInput" placeholder="Filter tests..." oninput="filterTestList()" style="width:100%;padding:0.5rem 0.75rem;background:var(--bg-input);border:1.5px solid var(--border-light);border-radius:var(--radius);color:var(--text-primary);font-size:0.83rem;outline:none;">
+          <div style="margin-bottom:0.65rem;display:flex;flex-direction:column;gap:0.45rem;">
+            <select id="testBatchFilter" onchange="filterTestList()" style="width:100%;padding:0.48rem 0.65rem;background:var(--bg-input);border:1.5px solid var(--border-light);border-radius:var(--radius);color:var(--text-primary);font-size:0.82rem;font-weight:600;outline:none;cursor:pointer;">
+              <option value="all">All Batches &amp; Cohorts</option>
+            </select>
+            <input type="text" id="testSearchInput" placeholder="Search tests or topics..." oninput="filterTestList()" style="width:100%;padding:0.5rem 0.75rem;background:var(--bg-input);border:1.5px solid var(--border-light);border-radius:var(--radius);color:var(--text-primary);font-size:0.83rem;outline:none;">
           </div>
-          <div class="test-card-list" id="testsListContainer" style="max-height:calc(100vh - 420px);overflow-y:auto;display:flex;flex-direction:column;gap:0.45rem;padding-right:0.25rem;">
+          <div class="test-card-list" id="testsListContainer" style="max-height:calc(100vh - 460px);overflow-y:auto;display:flex;flex-direction:column;gap:0.45rem;padding-right:0.25rem;">
             <p style="color:var(--text-secondary);font-size:0.8rem;text-align:center;padding:1rem 0;">
               <i class="ph ph-spinner-gap spinner"></i> Loading tests...
             </p>
@@ -622,6 +625,7 @@ const SAMPLE_DEMO_TESTS = [
 
 function loadSampleDemoTest() {
   allTests = SAMPLE_DEMO_TESTS;
+  populateBatchFilterDropdown();
   renderTestsList(allTests);
   selectTest('101', allTests[0].quiz_title);
 }
@@ -646,6 +650,7 @@ async function loadTestsDirectory() {
       // Graceful fallback: If no live scheduled assessments in institute database yet,
       // load the sample demo tests with an explanatory banner so the user never sees an empty screen.
       allTests = SAMPLE_DEMO_TESTS;
+      populateBatchFilterDropdown();
       renderTestsList(allTests);
       const note = document.createElement('div');
       note.style.cssText = 'padding:0.45rem 0.65rem;margin-bottom:0.6rem;background:rgba(244,0,9,0.08);border:1px dashed rgba(244,0,9,0.3);border-radius:var(--radius);font-size:0.75rem;color:var(--text-secondary);';
@@ -656,6 +661,7 @@ async function loadTestsDirectory() {
     }
 
     allTests = list;
+    populateBatchFilterDropdown();
     renderTestsList(allTests);
 
     const firstTest = allTests[0];
@@ -671,9 +677,40 @@ async function loadTestsDirectory() {
   } catch(e) {
     // On fetch error (e.g. offline/network), show sample tests so interface remains fully functional
     allTests = SAMPLE_DEMO_TESTS;
+    populateBatchFilterDropdown();
     renderTestsList(allTests);
     selectTest('101', allTests[0].quiz_title);
   }
+}
+
+function getTestBatchName(q) {
+  if (q.batch_name) return q.batch_name;
+  if (q.cohort_name) return q.cohort_name;
+  if (q.course_name) return q.course_name;
+  const title = (q.quiz_title || '').toLowerCase();
+  if (title.includes('jee evening') || title.includes('evening batch')) return 'JEE Evening';
+  if (title.includes('jee morning') || title.includes('morning batch')) return 'JEE Morning';
+  if (title.includes('neet droppers') || title.includes('neet dropper')) return 'NEET Droppers';
+  if (title.includes('neet')) return 'NEET Medical';
+  if (title.includes('jee')) return 'JEE Advanced';
+  if (q.class) return 'Class ' + q.class;
+  return 'General Cohort';
+}
+
+function populateBatchFilterDropdown() {
+  const sel = document.getElementById('testBatchFilter');
+  if (!sel) return;
+  const currentVal = sel.value || 'all';
+  const batches = new Set();
+  allTests.forEach(t => {
+    const b = getTestBatchName(t);
+    if (b) batches.add(b);
+  });
+  const sorted = Array.from(batches).sort();
+  sel.innerHTML = '<option value="all">All Batches &amp; Cohorts (' + allTests.length + ')</option>' +
+    sorted.map(b => `<option value="${escHtml(b)}">${escHtml(b)}</option>`).join('');
+  if (batches.has(currentVal)) sel.value = currentVal;
+  else sel.value = 'all';
 }
 
 function renderTestsList(items) {
@@ -694,14 +731,27 @@ function renderTestsList(items) {
     const isActive = activeQuizId === targetQuizId;
     const qCount = (q.question_ids && Array.isArray(q.question_ids)) ? q.question_ids.length : 1;
     const dateStr = q.scheduled_date || 'Recent';
+    const batchName = getTestBatchName(q);
+
+    let badgeColor = 'rgba(59,130,246,0.15);color:#60a5fa;border:1px solid rgba(59,130,246,0.3)';
+    if (batchName.toLowerCase().includes('neet')) {
+      badgeColor = 'rgba(34,197,94,0.15);color:#4ade80;border:1px solid rgba(34,197,94,0.3)';
+    } else if (batchName.toLowerCase().includes('evening')) {
+      badgeColor = 'rgba(234,179,8,0.15);color:#facc15;border:1px solid rgba(234,179,8,0.3)';
+    } else if (batchName.toLowerCase().includes('jee')) {
+      badgeColor = 'rgba(168,85,247,0.15);color:#c084fc;border:1px solid rgba(168,85,247,0.3)';
+    }
 
     return `
       <div class="test-card ${isActive ? 'active' : ''}" onclick="selectTest('${targetQuizId}', '${escHtml(q.quiz_title || 'Quiz').replace(/'/g, "\\'")}')">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:0.4rem;margin-bottom:0.25rem;">
+          <span style="font-size:0.68rem;font-weight:700;padding:0.15rem 0.45rem;border-radius:99px;background:${badgeColor};text-transform:uppercase;letter-spacing:0.04em;">${escHtml(batchName)}</span>
+          <span style="font-size:0.7rem;color:var(--text-muted);"><i class="ph ph-calendar"></i> ${dateStr}</span>
+        </div>
         <div class="test-card-title">${escHtml(q.quiz_title || 'Scheduled Quiz')}</div>
         <div class="test-card-meta">
           <span><i class="ph ph-graduation-cap"></i> Class ${escHtml(q.class || '11')}</span>
           <span><i class="ph ph-list-checks"></i> ${qCount} Qs</span>
-          <span><i class="ph ph-calendar"></i> ${dateStr}</span>
         </div>
       </div>
     `;
@@ -709,8 +759,15 @@ function renderTestsList(items) {
 }
 
 function filterTestList() {
-  const q = (document.getElementById('testSearchInput').value || '').toLowerCase();
-  const filtered = allTests.filter(t => (t.quiz_title || '').toLowerCase().includes(q) || (t.class || '').toLowerCase().includes(q));
+  const q = (document.getElementById('testSearchInput').value || '').toLowerCase().trim();
+  const selectedBatch = (document.getElementById('testBatchFilter')?.value || 'all');
+
+  const filtered = allTests.filter(t => {
+    const batchName = getTestBatchName(t);
+    const matchesBatch = selectedBatch === 'all' || batchName === selectedBatch;
+    const matchesSearch = !q || (t.quiz_title || '').toLowerCase().includes(q) || (t.class || '').toLowerCase().includes(q) || batchName.toLowerCase().includes(q);
+    return matchesBatch && matchesSearch;
+  });
   renderTestsList(filtered);
 }
 

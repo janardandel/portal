@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -710,13 +710,42 @@
                 <div class="od-panel">
                     <div class="od-panel-head">
                         <div class="od-panel-icon"><i class="ph-fill ph-users-three"></i></div>
-                        <div><h2>Add or remove people</h2><p>Type usernames or emails, one per line</p></div>
+                        <div><h2>Add, Remove or Move Students</h2><p>Assign students to batches or transfer between them</p></div>
                     </div>
-                    <select id="cohortPick" aria-label="Cohort" class="od-textarea" style="min-height:0;font-family:inherit;font-size:0.9rem;margin-bottom:0.75rem;"><option value="">Choose a cohort...</option></select>
-                    <textarea class="od-textarea" id="cohortUsers" placeholder="riya.s&#10;amit@example.com" aria-label="Usernames or emails" spellcheck="false"></textarea>
+                    <div class="od-field" style="margin-bottom:0.75rem;">
+                        <label>Target Cohort / Batch</label>
+                        <select id="cohortPick" aria-label="Cohort" class="od-textarea" style="min-height:0;font-family:inherit;font-size:0.9rem;"><option value="">Choose a cohort...</option></select>
+                    </div>
+                    <div class="od-field" style="margin-bottom:0.75rem;">
+                        <label>Student Usernames or Emails (one per line)</label>
+                        <textarea class="od-textarea" id="cohortUsers" placeholder="riya.s&#10;amit@example.com" aria-label="Usernames or emails" spellcheck="false"></textarea>
+                    </div>
                     <div class="od-actions-row" style="margin-top:0.75rem;">
-                        <button type="button" class="od-btn od-btn-inline" id="cohortAdd"><i class="ph ph-user-plus"></i> Add to cohort</button>
-                        <button type="button" class="od-btn od-btn-inline od-btn-outline" id="cohortRemove"><i class="ph ph-user-minus"></i> Remove from cohort</button>
+                        <button type="button" class="od-btn od-btn-inline" id="cohortAdd"><i class="ph ph-user-plus"></i> Add to Batch</button>
+                        <button type="button" class="od-btn od-btn-inline od-btn-outline" id="cohortRemove"><i class="ph ph-user-minus"></i> Remove from Batch</button>
+                    </div>
+
+                    <!-- Move between batches quick panel -->
+                    <div style="margin-top:1.5rem;padding-top:1.25rem;border-top:1px solid var(--border-light);">
+                        <div style="font-size:0.85rem;font-weight:700;color:var(--text-primary);margin-bottom:0.35rem;display:flex;align-items:center;gap:0.4rem;">
+                            <i class="ph-bold ph-arrows-left-right" style="color:var(--primary);"></i> Move Students Between Batches
+                        </div>
+                        <p style="font-size:0.78rem;color:var(--text-secondary);margin-bottom:0.75rem;">
+                            Instantly transfer students (e.g. from <em>JEE Morning</em> to <em>JEE Evening</em>).
+                        </p>
+                        <div class="od-field-row" style="margin-bottom:0.75rem;">
+                            <div class="od-field">
+                                <label style="font-size:0.72rem;">From Batch (Source)</label>
+                                <select id="moveFromCohort" class="od-textarea" style="min-height:0;font-family:inherit;font-size:0.85rem;"><option value="">Select source batch...</option></select>
+                            </div>
+                            <div class="od-field">
+                                <label style="font-size:0.72rem;">To Batch (Destination)</label>
+                                <select id="moveToCohort" class="od-textarea" style="min-height:0;font-family:inherit;font-size:0.85rem;"><option value="">Select destination batch...</option></select>
+                            </div>
+                        </div>
+                        <button type="button" class="od-btn od-btn-inline" id="btnMoveStudents" style="background:#2563eb;width:100%;font-size:0.88rem;">
+                            <i class="ph ph-arrows-left-right"></i> Move Listed Students
+                        </button>
                     </div>
                 </div>
             </div>
@@ -1565,6 +1594,8 @@ function initPhase2() {
     $id('cohortCreateForm').addEventListener('submit', createCohort);
     $id('cohortAdd').addEventListener('click', () => changeCohort('add-to-cohort'));
     $id('cohortRemove').addEventListener('click', () => changeCohort('remove-from-cohort'));
+    const btnMove = $id('btnMoveStudents');
+    if (btnMove) btnMove.addEventListener('click', moveStudentsBetweenCohorts);
     $id('importPreviewBtn').addEventListener('click', previewImport);
     $id('importFile').addEventListener('change', e => loadImportFile(e.target.files[0]));
     $id('importTemplate').addEventListener('click', () => downloadCsv('people-template.csv', [
@@ -1594,8 +1625,14 @@ async function loadCohorts() {
             ? '<div class="od-cohorts">' + state.cohorts.map(c => '<div class="od-cohort"><strong>' + esc(c.name) + '</strong><span>' + (c.members == null ? '' : c.members + (c.members === 1 ? ' person' : ' people')) + '</span><button type="button" class="od-mini danger" data-delete-cohort="' + esc(String(c.id)) + '" title="Delete this cohort"><i class="ph ph-trash"></i></button></div>').join('') + '</div>'
             : '<div class="od-empty"><i class="ph ph-graduation-cap"></i><p>No cohorts yet. Create your first below.</p></div>';
         const pick = $id('cohortPick'), keep = pick.value;
-        pick.innerHTML = '<option value="">Choose a cohort...</option>' + state.cohorts.map(c => '<option value="' + esc(String(c.id)) + '">' + esc(c.name) + '</option>').join('');
+        const opts = '<option value="">Choose a cohort...</option>' + state.cohorts.map(c => '<option value="' + esc(String(c.id)) + '">' + esc(c.name) + '</option>').join('');
+        pick.innerHTML = opts;
         pick.value = keep;
+
+        const moveFrom = $id('moveFromCohort');
+        const moveTo = $id('moveToCohort');
+        if (moveFrom) moveFrom.innerHTML = '<option value="">Select source batch...</option>' + state.cohorts.map(c => '<option value="' + esc(String(c.id)) + '">' + esc(c.name) + '</option>').join('');
+        if (moveTo) moveTo.innerHTML = '<option value="">Select destination batch...</option>' + state.cohorts.map(c => '<option value="' + esc(String(c.id)) + '">' + esc(c.name) + '</option>').join('');
     } catch (err) {
         list.innerHTML = '<div class="od-feedback error" style="display:flex;margin:0;"><i class="ph-fill ph-warning-circle"></i>' + esc(friendlyError(err.message)) + '</div>';
     }
@@ -1648,6 +1685,37 @@ async function changeCohort(action) {
         toast(r.changed + (r.changed === 1 ? ' person ' : ' people ') + verb + ' the cohort.' + (r.failed && r.failed.length ? ' Not found: ' + r.failed.map(f => f.user).join(', ') + '.' : ''), r.failed && r.failed.length ? 'error' : 'success');
         if (r.changed) { $id('cohortUsers').value = (r.failed || []).map(f => f.user).join('\n'); loadCohorts(); }
     } catch (err) { toast(friendlyError(err.message), 'error'); }
+}
+
+async function moveStudentsBetweenCohorts() {
+    const fromId = $id('moveFromCohort')?.value;
+    const toId = $id('moveToCohort')?.value;
+    const users = $id('cohortUsers')?.value.split(/[\n,;]+/).map(s => s.trim()).filter(Boolean);
+
+    if (!fromId) return toast('Select the source batch (From).', 'error');
+    if (!toId) return toast('Select the destination batch (To).', 'error');
+    if (fromId === toId) return toast('Source and destination batches must be different.', 'error');
+    if (!users.length) return toast('Enter student usernames or emails in the text area above to move.', 'error');
+
+    const btn = $id('btnMoveStudents');
+    if (btn) { btn.disabled = true; btn.innerHTML = '<i class="ph ph-spinner spinner"></i> Moving students...'; }
+
+    try {
+        // Step 1: Remove from source batch
+        await api('remove-from-cohort', { cohort_id: Number(fromId), users });
+        // Step 2: Add to destination batch
+        const addRes = await api('add-to-cohort', { cohort_id: Number(toId), users });
+
+        const fromName = state.cohorts.find(c => String(c.id) === String(fromId))?.name || 'source';
+        const toName = state.cohorts.find(c => String(c.id) === String(toId))?.name || 'destination';
+
+        toast(`Successfully moved ${addRes.changed || users.length} student(s) from "${fromName}" to "${toName}".`, 'success');
+        loadCohorts();
+    } catch (err) {
+        toast('Transfer failed: ' + friendlyError(err.message), 'error');
+    } finally {
+        if (btn) { btn.disabled = false; btn.innerHTML = '<i class="ph ph-arrows-left-right"></i> Move Listed Students'; }
+    }
 }
 </script>
 </body>
