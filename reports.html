@@ -268,9 +268,14 @@
       <a href="./review-mcq.html?tab=ocr" class="btn btn-outline btn-sm nav-extra-btn" style="padding:0.45rem 0.85rem;display:inline-flex;align-items:center;gap:0.35rem;">
         <i class="ph ph-file-text"></i> OCR Review
       </a>
-      <button onclick="logout()" class="btn btn-outline btn-sm" style="padding:0.45rem 0.85rem;border-color:rgba(239,68,68,0.4);color:#FCA5A5;">
-        <i class="ph ph-sign-out"></i> Logout
-      </button>
+      <div id="authNavButtons" style="display:flex;align-items:center;gap:0.5rem;">
+        <button id="btnLogout" onclick="logout()" class="btn btn-outline btn-sm" style="padding:0.45rem 0.85rem;border-color:rgba(239,68,68,0.4);color:#FCA5A5;">
+          <i class="ph ph-sign-out"></i> Logout
+        </button>
+        <a id="btnLogin" href="./index.html" class="btn btn-primary btn-sm" style="display:none;padding:0.45rem 0.85rem;">
+          <i class="ph ph-sign-in"></i> Sign In
+        </a>
+      </div>
     </div>
   </div>
 </header>
@@ -323,6 +328,17 @@
 
       <!-- Main Workspace -->
       <main class="qb-main" style="padding:1.75rem 2rem 4rem;min-height:calc(100vh - 72px);display:flex;flex-direction:column;gap:1.5rem;">
+        <!-- Guest / Preview Banner -->
+        <div id="guestBanner" style="display:none;background:rgba(59,130,246,0.08);border:1px solid rgba(59,130,246,0.25);border-radius:var(--radius);padding:0.65rem 1rem;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:0.75rem;margin-bottom:1rem;">
+          <div style="display:flex;align-items:center;gap:0.5rem;font-size:0.85rem;color:var(--text-primary);">
+            <i class="ph-fill ph-info" style="color:#3b82f6;font-size:1.15rem;"></i>
+            <span><strong>Preview Mode:</strong> Viewing sample test cohort analytics. Sign in to view your institute's live assessments.</span>
+          </div>
+          <a href="./index.html" class="btn btn-primary btn-sm" style="font-size:0.8rem;padding:0.35rem 0.75rem;display:inline-flex;align-items:center;gap:0.3rem;">
+            <i class="ph ph-sign-in"></i> Sign In
+          </a>
+        </div>
+
         <!-- Top Bar -->
         <div class="qb-top" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem;margin-bottom:0.5rem;">
           <div style="display:flex;align-items:center;gap:0.75rem;">
@@ -379,7 +395,12 @@
             <h3 style="font-size:1.05rem;font-weight:700;color:var(--text-primary);display:flex;align-items:center;gap:0.4rem;margin:0;">
               <i class="ph-fill ph-trophy" style="color:#eab308;"></i> Student Leaderboard & Performance Scorecards
             </h3>
-            <span id="leaderboardSummary" style="font-size:0.8rem;color:var(--text-secondary);font-weight:600;"></span>
+            <div style="display:flex;align-items:center;gap:0.75rem;flex-wrap:wrap;">
+              <button type="button" onclick="sendGroupWhatsAppSummary()" class="btn btn-sm" style="background:#25D366;color:#fff;border-radius:var(--radius-sm);display:inline-flex;align-items:center;gap:0.35rem;font-size:0.8rem;font-weight:700;padding:0.4rem 0.85rem;box-shadow:0 2px 6px rgba(37,211,102,0.3);border:none;cursor:pointer;">
+                <i class="ph-fill ph-whatsapp-logo" style="font-size:1.05rem;"></i> Share with Class WhatsApp Group
+              </button>
+              <span id="leaderboardSummary" style="font-size:0.8rem;color:var(--text-secondary);font-weight:600;"></span>
+            </div>
           </div>
 
           <div class="table-wrap">
@@ -432,10 +453,19 @@ let activeQuizTitle = '';
 function checkAuth() {
   const token = localStorage.getItem('pg_access_token');
   const user  = localStorage.getItem('pg_user');
+  const btnLogout = document.getElementById('btnLogout');
+  const btnLogin  = document.getElementById('btnLogin');
+  const guestBanner = document.getElementById('guestBanner');
+
   if (!token || !user) {
-    location.replace('index.html');
+    if (btnLogout) btnLogout.style.display = 'none';
+    if (btnLogin) btnLogin.style.display = 'inline-flex';
+    if (guestBanner) guestBanner.style.display = 'flex';
     return false;
   }
+  if (btnLogout) btnLogout.style.display = 'inline-flex';
+  if (btnLogin) btnLogin.style.display = 'none';
+  if (guestBanner) guestBanner.style.display = 'none';
   return true;
 }
 
@@ -454,13 +484,6 @@ function openSidebar() {
 
 
 function buildWhatsAppReportUrl(student, quizName, tenantName) {
-  if (student && student.whatsapp_url && typeof student.whatsapp_url === 'string') {
-    const raw = student.whatsapp_url.trim();
-    if (raw.startsWith('https://wa.me/') || raw.startsWith('https://api.whatsapp.com/')) {
-      return raw;
-    }
-  }
-
   const sName = (student && (student.student_name || student.name)) || 'Student';
   const roll = (student && student.roll_number) ? ` (Roll: ${student.roll_number})` : '';
   const score = (student && student.score != null) ? student.score : 0;
@@ -472,6 +495,11 @@ function buildWhatsAppReportUrl(student, quizName, tenantName) {
   const testTitle = quizName || 'Assessment Test';
   const dateStr = new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
 
+  let teacherFeedback = 'Good effort! Keep practicing to improve performance.';
+  if (pct >= 85) teacherFeedback = 'Outstanding performance! Keep up the excellent work.';
+  else if (pct >= 60) teacherFeedback = 'Solid effort! Focus on weak chapters to boost accuracy.';
+  else teacherFeedback = 'Needs revision in key chapters. Recommend scheduled doubt solving.';
+
   const msg = 
 `📊 *${institute}*
 📝 *Student Report Card — ${testTitle}*
@@ -482,7 +510,7 @@ function buildWhatsAppReportUrl(student, quizName, tenantName) {
 🎯 *Score:* ${score} / ${maxScore}
 📈 *Accuracy:* ${pct}%
 ${timeTaken}
-💡 *Teacher Feedback:* Good attempt! Keep practicing your weak topics to improve accuracy.
+💡 *Teacher Feedback:* ${teacherFeedback}
 
 _Sent via ${institute} Portal_`;
 
@@ -493,9 +521,52 @@ _Sent via ${institute} Portal_`;
   }
 
   if (phoneDigits && phoneDigits.length >= 10) {
-    return `https://wa.me/${phoneDigits}?text=${encodeURIComponent(msg)}`;
+    return `https://api.whatsapp.com/send?phone=${phoneDigits}&text=${encodeURIComponent(msg)}`;
   }
-  return `https://wa.me/?text=${encodeURIComponent(msg)}`;
+  return `https://api.whatsapp.com/send?text=${encodeURIComponent(msg)}`;
+}
+
+function sendGroupWhatsAppSummary() {
+  const tenantName = sessionStorage.getItem('pg_institute_name') || localStorage.getItem('pg_institute_name') || 'Classes Institute';
+  const testTitle = activeQuizTitle || 'Assessment Test';
+  const dateStr = new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
+  const attempts = document.getElementById('kpiAttempts')?.textContent || '-';
+  const avgScore = document.getElementById('kpiAvgScore')?.textContent || '-';
+  const avgPct = (document.getElementById('kpiAvgPct')?.textContent || '').replace('Cohort Accuracy: ', '');
+
+  const rows = document.querySelectorAll('#studentTableBody tr');
+  let topList = '';
+  const medals = ['🥇', '🥈', '🥉'];
+  let count = 0;
+  rows.forEach((row) => {
+    if (count >= 3) return;
+    const nameDiv = row.querySelector('td:nth-child(2) div:first-child');
+    const scoreTd = row.querySelector('td:nth-child(3)');
+    const pctBadge = row.querySelector('td:nth-child(4) .status-badge');
+    if (nameDiv && scoreTd) {
+      const name = nameDiv.textContent.trim();
+      const score = scoreTd.textContent.trim().replace(/\s+/g, ' ');
+      const pct = pctBadge ? ` (${pctBadge.textContent.trim()})` : '';
+      topList += `\n${medals[count] || `${count+1}.`} ${name} — ${score}${pct}`;
+      count++;
+    }
+  });
+
+  const groupMsg = 
+`📊 *${tenantName}* — Cohort Test Summary
+📝 *Test:* ${testTitle}
+📅 *Date:* ${dateStr}
+
+👥 *Total Submissions:* ${attempts}
+🎯 *Class Average:* ${avgScore}${avgPct ? ` (${avgPct})` : ''}
+
+🏆 *Top Performers:*${topList || '\nResults processed successfully.'}
+
+Great effort by all students! Individual student scorecards have been prepared.
+
+_Sent via ${tenantName} Portal_`;
+
+  window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(groupMsg)}`, '_blank', 'noopener,noreferrer');
 }
 
 function closeSidebar() {
@@ -792,7 +863,7 @@ async function selectTest(quizId, quizTitle) {
           <td>${rankBadge}</td>
           <td>
             <div style="font-weight:700;color:var(--text-primary);">${escHtml(st.student_name || st.name || 'Anonymous Student')}</div>
-            <div style="font-size:0.77rem;color:var(--text-secondary);">${escHtml(st.email || '&mdash;')}${st.phone ? ' &bull; ' + escHtml(st.phone) : ''}</div>
+            <div style="font-size:0.77rem;color:var(--text-secondary);">${escHtml((st.email || '').replace(/@(moodlehub|pitthugram)\.com/gi, '@classes.institute') || '&mdash;')}${st.phone ? ' &bull; ' + escHtml(st.phone) : ''}</div>
           </td>
           <td style="font-weight:700;color:var(--text-primary);">
             ${st.score} <span style="font-size:0.76rem;font-weight:400;color:var(--text-secondary);">/ ${st.max_score || data.max_score || 120}</span>
@@ -828,14 +899,17 @@ function refreshActiveReport() {
 
 if (checkAuth()) {
   loadTestsDirectory();
-  // ?demo=1 : show the analysis panel on clearly-marked DEMO data, even when no test can be loaded.
-  if (new URLSearchParams(location.search).get('demo') === '1' && window.PG_DEMO_ANALYSIS) {
-    var emptyEl = document.getElementById('emptyReportState');
-    if (emptyEl) emptyEl.style.display = 'none';
-    document.getElementById('resultsContent').style.display = 'block';
-    document.getElementById('repQuizTitle').innerHTML = 'DEMO — sample analysis (not real students)';
-    window.PGAnalysis.render(document.getElementById('analysisPanel'), window.PGAnalysis.build(window.PG_DEMO_ANALYSIS), { demo: true });
-  }
+} else {
+  // If not logged in, load sample demo assessment so the page is NEVER blank or empty
+  loadSampleDemoTest();
+}
+
+if (new URLSearchParams(location.search).get('demo') === '1' && window.PG_DEMO_ANALYSIS) {
+  var emptyEl = document.getElementById('emptyReportState');
+  if (emptyEl) emptyEl.style.display = 'none';
+  document.getElementById('resultsContent').style.display = 'block';
+  document.getElementById('repQuizTitle').innerHTML = 'DEMO — sample analysis (not real students)';
+  window.PGAnalysis.render(document.getElementById('analysisPanel'), window.PGAnalysis.build(window.PG_DEMO_ANALYSIS), { demo: true });
 }
 </script>
 </body>

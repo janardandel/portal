@@ -525,7 +525,7 @@ async function handleMoodleSchedule(request, env) {
                 quiz_url: n8nData.quiz_url,
                 courseid: n8nData.courseid || courseid,
                 questioncount: n8nData.questioncount || (questions && questions.length) || 0,
-                message: n8nData.message || `Quiz scheduled successfully in Moodle`
+                message: n8nData.message || `Quiz scheduled successfully`
             });
         }
     } catch (e) {
@@ -564,7 +564,7 @@ async function handleMoodleSchedule(request, env) {
         moodle_url: tenantConfig.moodle_url,
         courseid: courseid,
         questioncount: (questions && questions.length) || 0,
-        message: `Quiz scheduled successfully in Moodle (${tenantConfig.moodle_url})`
+        message: `Quiz scheduled successfully (${tenantConfig.moodle_url})`
     });
 }
 function json(data, status = 200) {
@@ -954,7 +954,7 @@ async function handleQuestionAnalysis(request, env) {
         // No stored attempts yet: read per-question results straight from Moodle for this institute.
         try {
             const cfg = await getTenantMoodleConfig(instituteId, env, token);
-            if (!cfg || !cfg.moodle_url || !cfg.moodle_token) return json({ questions: [], question_results: [], note: 'Moodle is not configured for this institute.' });
+            if (!cfg || !cfg.moodle_url || !cfg.moodle_token) return json({ questions: [], question_results: [], note: 'Assessment engine is not configured for this institute.' });
             const loaded = await loadMoodleRows(cfg, testId);
             if (!loaded.rows.length) return json({ questions: [], question_results: [], note: loaded.note || 'No finished attempts yet.' });
             const qbKey2 = (env && env.SUPABASE_SERVICE_ROLE_KEY) || QB_SERVICE_KEY;
@@ -965,7 +965,7 @@ async function handleQuestionAnalysis(request, env) {
             });
             return json(buildMoodlePayload(loaded.rows, tagMap));
         } catch (e) {
-            return json({ questions: [], question_results: [], note: 'Could not read Moodle: ' + (e && e.message || 'error') });
+            return json({ questions: [], question_results: [], note: 'Could not read test results: ' + (e && e.message || 'error') });
         }
     }
 
@@ -1062,7 +1062,7 @@ export async function loadMoodleRows(cfg, quizRef) {
     if (!ids.length) return { rows: [], note: 'no courses' };
     const qz = await moodleCall(cfg, 'mod_quiz_get_quizzes_by_courses', { courseids: ids });
     const quiz = ((qz && qz.quizzes) || []).find(function (q) { return String(q.id) === String(quizRef) || String(q.coursemodule) === String(quizRef); });
-    if (!quiz) return { rows: [], note: 'quiz not found in Moodle' };
+    if (!quiz) return { rows: [], note: 'quiz not found' };
     const users = (await moodleCall(cfg, 'core_enrol_get_enrolled_users', { courseid: quiz.course })) || [];
     const rows = [];
     const todo = users.slice(0, 200);
