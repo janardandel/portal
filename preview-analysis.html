@@ -3,132 +3,109 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Class Performance &amp; Student Analysis Preview &mdash; Pitthugram</title>
-  <link rel="icon" type="image/png" href="favicon.png">
-  <link rel="stylesheet" href="pitthugram.css">
-  <script src="https://unpkg.com/@phosphor-icons/web"></script>
+  <title>Portal &mdash; Student Analysis</title>
+  <link rel="icon" type="image/png" href="./favicon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./style.css">
+  <script src="https://unpkg.com/@phosphor-icons/web" defer></script>
   <style>
     :root {
-      --bg: #f8fafc;
-      --card: #ffffff;
-      --text: #0f172a;
-      --muted: #64748b;
-      --line: #e2e8f0;
-      --text-primary: #0f172a;
-      --text-secondary: #64748b;
-      --border-color: #e2e8f0;
-      --bg-card: #ffffff;
+      --bg: #0d0d0d;
+      --card: #161616;
+      --text: #ffffff;
+      --muted: #a1a1aa;
+      --line: #27272a;
+      --text-primary: #ffffff;
+      --text-secondary: #a1a1aa;
+      --border-color: #27272a;
+      --bg-card: #161616;
       --primary: #EF4444;
       --primary-hover: #DC2626;
-    }
-    @media (prefers-color-scheme: dark) {
-      :root {
-        --bg: #0f172a;
-        --card: #1e293b;
-        --text: #f1f5f9;
-        --muted: #94a3b8;
-        --line: #334155;
-        --text-primary: #f1f5f9;
-        --text-secondary: #94a3b8;
-        --border-color: #334155;
-        --bg-card: #1e293b;
-      }
     }
     body {
       margin: 0;
       background: var(--bg);
       color: var(--text);
-      font: 14.5px/1.55 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      font-size: 14.5px;
+      line-height: 1.55;
     }
     
-    /* Top Header Bar */
-    .preview-header {
+    /* Canonical Portal Navbar */
+    .navbar {
       position: sticky;
       top: 0;
       z-index: 100;
-      background: rgba(255, 255, 255, 0.94);
-      backdrop-filter: blur(14px);
-      -webkit-backdrop-filter: blur(14px);
+      background: rgba(13, 13, 13, 0.94);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
       border-bottom: 1px solid var(--border-color);
-      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+      padding: 0.75rem 0;
     }
-    @media (prefers-color-scheme: dark) {
-      .preview-header {
-        background: rgba(15, 23, 42, 0.94);
-      }
-    }
-    .header-inner {
-      max-width: 1100px;
+    .nav-inner {
+      max-width: 1200px;
       margin: 0 auto;
-      padding: 10px 16px;
+      padding: 0 1.5rem;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 16px;
+      gap: 1rem;
     }
-    .brand-link {
+    .logo {
       display: flex;
       align-items: center;
-      gap: 10px;
-      text-decoration: none;
-      color: var(--text-primary);
-      font-weight: 800;
-      font-size: 1.25rem;
-      letter-spacing: -0.02em;
-    }
-    .brand-link img {
-      height: 38px;
-      width: auto;
-      object-fit: contain;
-    }
-    .brand-badge {
-      font-size: 0.72rem;
-      background: rgba(239, 68, 68, 0.12);
-      color: var(--primary);
-      padding: 2px 7px;
-      border-radius: 4px;
+      gap: 0.5rem;
       font-weight: 700;
-      letter-spacing: normal;
+      font-size: 1.15rem;
+      color: var(--text-primary);
+      text-decoration: none;
     }
-    .header-nav {
+    .nav-actions {
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 0.5rem;
       flex-wrap: wrap;
     }
-    .nav-btn {
+    .btn {
       display: inline-flex;
       align-items: center;
-      gap: 6px;
-      padding: 6px 12px;
-      border-radius: 6px;
-      font-size: 0.84rem;
+      gap: 0.35rem;
+      padding: 0.45rem 0.85rem;
+      font-size: 0.85rem;
       font-weight: 600;
+      border-radius: 6px;
       text-decoration: none;
-      color: var(--text-secondary);
-      border: 1px solid transparent;
+      cursor: pointer;
       transition: all 0.15s ease;
     }
-    .nav-btn:hover {
+    .btn-sm {
+      padding: 0.45rem 0.85rem;
+      font-size: 0.84rem;
+    }
+    .btn-primary {
+      background: var(--primary);
+      color: #fff;
+      border: 1px solid var(--primary);
+      font-weight: 700;
+    }
+    .btn-primary:hover {
+      background: var(--primary-hover);
+      border-color: var(--primary-hover);
+    }
+    .btn-outline {
+      background: transparent;
       color: var(--text-primary);
-      background: rgba(128, 128, 128, 0.08);
-      border-color: var(--border-color);
+      border: 1px solid var(--border-color);
     }
-    .nav-btn.active {
-      color: var(--primary);
-      background: rgba(239, 68, 68, 0.08);
-      border-color: rgba(239, 68, 68, 0.25);
-    }
-    .nav-btn-primary {
-      color: white !important;
-      background: #2563eb;
-    }
-    .nav-btn-primary:hover {
-      background: #1d4ed8;
+    .btn-outline:hover {
+      background: rgba(255, 255, 255, 0.05);
+      border-color: rgba(255, 255, 255, 0.2);
     }
 
     main {
-      max-width: 1040px;
+      max-width: 1100px;
       margin: 0 auto;
       padding: 24px 16px 64px;
     }
@@ -186,60 +163,55 @@
 </head>
 <body>
 
-<!-- Unified Pitthugram Top Header Bar -->
-<header class="preview-header">
-  <div class="header-inner">
-    <a href="./owner-dashboard.html" class="brand-link" title="Pitthugram Portal">
-      <img src="./logo.png" alt="Pitthugram" onerror="this.src='./favicon.png'">
-      <span>Pitthugram</span>
-      <span class="brand-badge">Portal</span>
+<!-- Canonical Portal Navbar (Matching all portal.classes.institute pages) -->
+<header class="navbar">
+  <div class="nav-inner">
+    <a href="./quiz-builder.html" class="logo">
+      <i class="ph-fill ph-graduation-cap" style="font-size:1.6rem;color:var(--primary);"></i>
+      <span>Portal</span>
     </a>
-
-    <nav class="header-nav">
-      <a href="./reports.html?demo=1" class="nav-btn active">
+    <div class="nav-actions">
+      <a href="./reports.html?demo=1" class="btn btn-sm btn-primary">
         <i class="ph-bold ph-chart-line-up"></i> Reports &amp; Analytics
       </a>
-      <a href="./quiz-builder.html" class="nav-btn">
+      <a href="./quiz-builder.html" class="btn btn-sm btn-outline">
         <i class="ph ph-plus-circle"></i> Quiz Builder
       </a>
-      <a href="./owner-dashboard.html" class="nav-btn">
-        <i class="ph ph-squares-four"></i> Dashboard
-      </a>
-      <a href="./review-mcq.html" class="nav-btn">
+      <a href="./review-mcq.html" class="btn btn-sm btn-outline">
         <i class="ph ph-calendar-check"></i> Scheduled Tests
       </a>
-      <a href="./paper-studio.html" class="nav-btn">
-        <i class="ph ph-file-text"></i> Paper Studio
+      <a href="./review-mcq.html?tab=ocr" class="btn btn-sm btn-outline">
+        <i class="ph ph-file-text"></i> OCR Review
       </a>
-      <a href="https://lms.pitthugram.com" target="_blank" class="nav-btn nav-btn-primary" style="margin-left:6px;">
-        <i class="ph ph-arrow-square-out"></i> Open Moodle LMS &#8599;
+      <a href="https://lms.pitthugram.com" target="_blank" class="btn btn-sm btn-outline">
+        <i class="ph ph-arrow-square-out"></i> LMS
       </a>
-    </nav>
+    </div>
   </div>
 </header>
 
 <main>
   <div class="page-title-row">
-    <h1>Class Performance &amp; Student Analysis &mdash; Live Preview</h1>
-    <p class="sub">Demonstrating whole class diagnostics, topic error heatmaps, and individual student drill-down via Roll Number &amp; Name selector.</p>
+    <h1>Student &amp; Class Performance Analysis</h1>
+    <p class="sub">Comprehensive diagnostics across subjects, chapters, and topics with student roll number drill-down.</p>
   </div>
 
   <!-- Connected Moodle LMS Instance Banner -->
-  <div style="background:var(--card);border:1px solid var(--border-color);border-radius:8px;padding:12px 16px;margin-bottom:20px;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px;box-shadow:0 1px 2px rgba(0,0,0,0.04);">
+  <div style="background:var(--card);border:1px solid var(--border-color);border-radius:8px;padding:12px 16px;margin-bottom:20px;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px;">
     <div style="display:flex;align-items:center;gap:12px;">
-      <img src="./logo.png" alt="Pitthugram" style="height:32px;width:auto;object-fit:contain;" onerror="this.style.display='none'">
+      <i class="ph-fill ph-graduation-cap" style="font-size:1.6rem;color:var(--primary);"></i>
       <div>
         <div style="font-size:0.75rem;text-transform:uppercase;color:var(--text-secondary);font-weight:700;">Connected LMS Instance</div>
         <div style="font-size:0.95rem;font-weight:700;">
-          <a href="https://lms.pitthugram.com" target="_blank" style="color:#2563eb;text-decoration:none;">https://lms.pitthugram.com &#8599;</a>
-          <span style="background:#dcfce7;color:#166534;font-size:0.75rem;padding:2px 8px;border-radius:12px;font-weight:700;margin-left:6px;"><span class="status-dot"></span>Online (Active)</span>
+          <a href="https://lms.pitthugram.com" target="_blank" style="color:#60a5fa;text-decoration:none;">https://lms.pitthugram.com &#8599;</a>
+          <span style="background:rgba(22,163,74,0.18);color:#4ade80;font-size:0.75rem;padding:2px 8px;border-radius:12px;font-weight:700;margin-left:6px;"><span class="status-dot"></span>Online (Active)</span>
         </div>
       </div>
     </div>
     <div style="display:flex;align-items:center;gap:12px;">
       <span style="font-size:0.84rem;color:var(--text-secondary);">Course: <strong>JEE Masterclass 2026</strong></span>
-      <a href="https://lms.pitthugram.com" target="_blank" style="background:#2563eb;color:white;text-decoration:none;padding:6px 14px;border-radius:6px;font-size:0.84rem;font-weight:600;display:inline-flex;align-items:center;gap:6px;">
-        Open Moodle LMS &#8599;
+      <a href="https://lms.pitthugram.com" target="_blank" class="btn btn-sm btn-outline" style="border-color:var(--primary);color:var(--primary);">
+        <i class="ph ph-arrow-square-out"></i> Open LMS &#8599;
       </a>
     </div>
   </div>
