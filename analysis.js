@@ -1,4 +1,4 @@
-/* Subject, Chapter & Topic Performance Analysis Engine for Pitthugram / Moodle */
+/* Subject, Chapter & Topic Performance Analysis Engine */
 (function (root) {
   var WEAK_BELOW = 50; // accuracy percent below which an area is flagged as weak
   var MIN_QS = 2;      // minimum questions in a topic/chapter before flagging as weak
@@ -218,7 +218,7 @@
     if (opts.demo) {
       h += '<div style="background:#fef3c7;color:#92400e;border:1px solid #f59e0b;border-radius:8px;padding:.6rem .9rem;font-weight:600;margin-bottom:1rem;display:flex;align-items:center;justify-content:space-between;">' +
         '<span><strong>DEMO MODE:</strong> Displaying simulated cohort performance across 8 students.</span>' +
-        '<span style="font-size:0.8rem;background:#fde68a;padding:2px 8px;border-radius:4px">Moodle Sync Preview</span></div>';
+        '<span style="font-size:0.8rem;background:#fde68a;padding:2px 8px;border-radius:4px">Assessment Preview</span></div>';
     }
 
     // Top Controls Bar (Selector & View Pills)

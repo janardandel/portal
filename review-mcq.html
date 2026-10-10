@@ -177,9 +177,6 @@
       <a href="./quiz-builder.html" class="btn btn-outline btn-sm" style="padding:0.45rem 0.85rem;display:inline-flex;align-items:center;gap:0.35rem;">
         <i class="ph ph-plus-circle"></i> Quiz Builder
       </a>
-      <a href="https://lms.pitthugram.com" target="_blank" class="btn btn-outline btn-sm" style="padding:0.45rem 0.85rem;display:inline-flex;align-items:center;gap:0.35rem;border-color:var(--primary);color:var(--primary);">
-        <i class="ph ph-arrow-square-out"></i> LMS
-      </a>
       <button onclick="logout()" class="btn btn-outline btn-sm" style="padding:0.45rem 0.85rem;border-color:rgba(239,68,68,0.4);color:#FCA5A5;">
         <i class="ph ph-sign-out"></i> Logout
       </button>
@@ -853,8 +850,7 @@ async function loadScheduledQuizzes() {
           <button onclick="openQuizResults('${targetQuizId}', '${safeTitle}')" class="btn btn-primary btn-sm" style="font-size:0.82rem;display:inline-flex;align-items:center;gap:0.35rem;font-weight:700;">
             <i class="ph-bold ph-chart-bar"></i> View Results
           </button>
-          <a :href="tenantMoodleUrl" href="https://lms.pitthugram.com" onclick="this.href=getTenantMoodleUrl()" target="_blank" class="btn btn-outline btn-sm" style="font-size:0.8rem;"><i class="ph ph-arrow-square-out"></i> LMS</a>
-        </div>
+          </div>
       </div>`;
     }).join('');
   } catch(e) {
@@ -872,7 +868,7 @@ async function openQuizResults(quizId, quizTitle) {
   const bodyEl = document.getElementById('leaderboardBody');
   
   if (nameEl) nameEl.textContent = quizTitle || 'Quiz Results';
-  if (courseEl) courseEl.textContent = 'Loading live analytics from Moodle...';
+  if (courseEl) courseEl.textContent = 'Loading live analytics...';
   if (modal) modal.style.display = 'flex';
   
   // Reset stats
@@ -923,7 +919,7 @@ async function openQuizResults(quizId, quizTitle) {
     document.getElementById('leaderboardCount').textContent = `${list.length} student submission(s)`;
     
     if (list.length === 0) {
-      bodyEl.innerHTML = `<tr><td colspan="6" style="padding:3rem 1.5rem;text-align:center;color:var(--text-secondary);"><i class="ph ph-users" style="font-size:2rem;margin-bottom:0.5rem;display:block;opacity:0.5;"></i> No student attempts recorded yet for this test.<br><span style="font-size:0.8rem;opacity:0.8;">Once students submit their quiz on Moodle, scores and WhatsApp report cards will appear here.</span></td></tr>`;
+      bodyEl.innerHTML = `<tr><td colspan="6" style="padding:3rem 1.5rem;text-align:center;color:var(--text-secondary);"><i class="ph ph-users" style="font-size:2rem;margin-bottom:0.5rem;display:block;opacity:0.5;"></i> No student attempts recorded yet for this test.<br><span style="font-size:0.8rem;opacity:0.8;">Once students submit their quiz, scores and WhatsApp report cards will appear here.</span></td></tr>`;
       return;
     }
     
@@ -996,9 +992,8 @@ function buildWhatsAppReportUrl(student, quizName, tenantName) {
 🎯 *Score:* ${score} / ${maxScore}
 📈 *Accuracy:* ${pct}%
 ${timeTaken}
-💡 *Teacher Feedback:* Good attempt! Review question analysis to master weaker topics.
+💡 *Teacher Feedback:* Good attempt! Keep practicing your weak topics to improve accuracy.
 
-🔗 LMS Portal: https://lms.pitthugram.com
 _Sent via ${institute} Portal_`;
 
   let phoneDigits = '';

@@ -537,9 +537,6 @@
             <a href="./quiz-builder.html" class="btn btn-outline btn-sm" style="padding:0.45rem 0.85rem;display:inline-flex;align-items:center;gap:0.35rem;">
                 <i class="ph ph-plus-circle"></i> Quiz Builder
             </a>
-            <a href="https://lms.pitthugram.com" target="_blank" class="btn btn-outline btn-sm" style="padding:0.45rem 0.85rem;display:inline-flex;align-items:center;gap:0.35rem;border-color:var(--primary);color:var(--primary);">
-                <i class="ph ph-arrow-square-out"></i> LMS
-            </a>
             <button onclick="logout()" class="btn btn-outline btn-sm" style="padding:0.45rem 0.85rem;border-color:rgba(239,68,68,0.4);color:#FCA5A5;">
                 <i class="ph ph-sign-out"></i> Logout
             </button>
@@ -955,7 +952,7 @@ function ownerInstituteId() {
     } catch (_) { return null; }
 }
 
-// All LMS work happens on the server (owner-only); the browser never sees the connection token.
+// All connection work happens on the server (owner-only); the browser never sees the connection token.
 async function api(action, body) {
     const res = await fetch(`${API_BASE}/api/moodle-users/${action}`, {
         method: 'POST',

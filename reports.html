@@ -6,10 +6,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>Reports & Analytics &mdash; Portal</title>
   <link rel="icon" type="image/png" href="./favicon.png">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <script src="https://unpkg.com/@phosphor-icons/web" defer></script>
+  <link rel="preconnect" href="
+  <link rel="preconnect" href=" crossorigin>
+  <link href=" rel="stylesheet">
+  <script src=" defer></script>
   <link rel="stylesheet" href="./style.css">
   <link rel="stylesheet" href="./pitthugram.css">
   <style>
@@ -268,9 +268,6 @@
       <a href="./review-mcq.html?tab=ocr" class="btn btn-outline btn-sm nav-extra-btn" style="padding:0.45rem 0.85rem;display:inline-flex;align-items:center;gap:0.35rem;">
         <i class="ph ph-file-text"></i> OCR Review
       </a>
-      <a href="https://lms.pitthugram.com" target="_blank" class="btn btn-outline btn-sm" style="padding:0.45rem 0.85rem;display:inline-flex;align-items:center;gap:0.35rem;border-color:var(--primary);color:var(--primary);">
-        <i class="ph ph-arrow-square-out"></i> LMS
-      </a>
       <button onclick="logout()" class="btn btn-outline btn-sm" style="padding:0.45rem 0.85rem;border-color:rgba(239,68,68,0.4);color:#FCA5A5;">
         <i class="ph ph-sign-out"></i> Logout
       </button>
@@ -459,7 +456,7 @@ function openSidebar() {
 function buildWhatsAppReportUrl(student, quizName, tenantName) {
   if (student && student.whatsapp_url && typeof student.whatsapp_url === 'string') {
     const raw = student.whatsapp_url.trim();
-    if (raw.startsWith('https://wa.me/') || raw.startsWith('https://api.whatsapp.com/')) {
+    if (raw.startsWith(' || raw.startsWith(' {
       return raw;
     }
   }
@@ -485,9 +482,8 @@ function buildWhatsAppReportUrl(student, quizName, tenantName) {
 🎯 *Score:* ${score} / ${maxScore}
 📈 *Accuracy:* ${pct}%
 ${timeTaken}
-💡 *Teacher Feedback:* Good attempt! Review question analysis to master weaker topics.
+💡 *Teacher Feedback:* Good attempt! Keep practicing your weak topics to improve accuracy.
 
-🔗 LMS Portal: https://lms.pitthugram.com
 _Sent via ${institute} Portal_`;
 
   let phoneDigits = '';
@@ -497,9 +493,9 @@ _Sent via ${institute} Portal_`;
   }
 
   if (phoneDigits && phoneDigits.length >= 10) {
-    return `https://wa.me/${phoneDigits}?text=${encodeURIComponent(msg)}`;
+    return `
   }
-  return `https://wa.me/?text=${encodeURIComponent(msg)}`;
+  return `
 }
 
 function closeSidebar() {
@@ -511,7 +507,7 @@ function closeSidebar() {
 }
 
 function getTenantMoodleUrl() {
-  return sessionStorage.getItem('pg_moodle_url') || localStorage.getItem('pg_moodle_url') || 'https://lms.pitthugram.com';
+  return sessionStorage.getItem('pg_moodle_url') || localStorage.getItem('pg_moodle_url') || '
 }
 
 function escHtml(s) {
@@ -564,7 +560,7 @@ async function loadTestsDirectory() {
   listEl.innerHTML = '<p style="color:var(--text-secondary);font-size:0.8rem;text-align:center;padding:1rem 0;"><i class="ph ph-spinner-gap spinner"></i> Loading tests...</p>';
 
   try {
-    const res = await fetch('https://api.classes.institute/api/scheduled-quizzes?order=created_at.desc&institute_id=' + encodeURIComponent((function(){ try { var m = JSON.parse(localStorage.getItem('pg_memberships') || '[]').find(function(x){ return x.role === 'owner' || x.role === 'teacher'; }); return m ? m.institute_id : ''; } catch (e) { return ''; } })()), { headers: { Authorization: 'Bearer ' + (localStorage.getItem('pg_access_token') || '') } });
+    const res = await fetch(' + encodeURIComponent((function(){ try { var m = JSON.parse(localStorage.getItem('pg_memberships') || '[]').find(function(x){ return x.role === 'owner' || x.role === 'teacher'; }); return m ? m.institute_id : ''; } catch (e) { return ''; } })()), { headers: { Authorization: 'Bearer ' + (localStorage.getItem('pg_access_token') || '') } });
     const list = await res.json();
 
     if (!list || !list.length) {
@@ -652,7 +648,7 @@ async function selectTest(quizId, quizTitle) {
   document.getElementById('btnPrintReport').style.display = 'inline-flex';
 
   document.getElementById('repQuizTitle').innerHTML = `<i class="ph-fill ph-chart-line-up" style="color:var(--primary);"></i> ${escHtml(quizTitle)}`;
-  document.getElementById('repQuizSubtitle').innerHTML = '<span><i class="ph ph-spinner-gap spinner"></i> Querying Moodle REST API for student attempts & analytics...</span>';
+  document.getElementById('repQuizSubtitle').innerHTML = '<span><i class="ph ph-spinner-gap spinner"></i> Querying student test attempts & analytics...</span>';
 
   document.getElementById('kpiAttempts').textContent = '...';
   document.getElementById('kpiParticipation').textContent = 'Enrolled: ...';
@@ -672,7 +668,7 @@ async function selectTest(quizId, quizTitle) {
     const tenantName = sessionStorage.getItem('pg_institute_name') || localStorage.getItem('pg_institute_name') || 'Classes Institute';
     const moodleUrl = getTenantMoodleUrl();
 
-    const reportUrl = `https://awsn8n.pitthugram.com/webhook/moodle-quiz-report?quiz_id=${encodeURIComponent(quizId)}&institute_id=${encodeURIComponent(instituteId)}&institute_name=${encodeURIComponent(tenantName)}&moodle_url=${encodeURIComponent(moodleUrl)}`;
+    const reportUrl = `
     
     let data;
     const isSampleTest = (allTests.find(t => (t.moodle_quiz_id === quizId || t.id === quizId)) || {}).is_sample;
@@ -776,7 +772,7 @@ async function selectTest(quizId, quizTitle) {
         <tr><td colspan="7" style="padding:3.5rem 1.5rem;text-align:center;color:var(--text-secondary);">
           <i class="ph ph-users" style="font-size:2.2rem;margin-bottom:0.6rem;display:block;opacity:0.5;"></i>
           <strong>No student attempts recorded yet for this test.</strong><br>
-          <span style="font-size:0.8rem;opacity:0.8;">Once students take this quiz on their LMS, performance scorecards will automatically appear here.</span>
+          <span style="font-size:0.8rem;opacity:0.8;">Once students take this quiz, performance scorecards will automatically appear here.</span>
         </td></tr>`;
       return;
     }
