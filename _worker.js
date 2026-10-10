@@ -877,7 +877,11 @@ export function buildAnalysisPayload(attempts, students, tags, opts) {
     const correctMarks = Number(opts.correctMarks != null ? opts.correctMarks : 1);
     const negMarks = Number(opts.negativeMarks != null ? opts.negativeMarks : 0);
     const nameOf = {};
-    (students || []).forEach(function (st) { nameOf[st.id] = st.full_name || st.name || st.email || String(st.id); });
+    const rollOf = {};
+    (students || []).forEach(function (st) {
+        nameOf[st.id] = st.full_name || st.name || st.email || String(st.id);
+        rollOf[st.id] = st.roll_number || st.idnumber || st.username || ('ID-' + st.id);
+    });
     const tagOf = {};
     (tags || []).forEach(function (q) { tagOf[q.id] = q; });
     const seen = {};
@@ -887,6 +891,7 @@ export function buildAnalysisPayload(attempts, students, tags, opts) {
         const status = skipped ? 'skipped' : (a.is_correct ? 'correct' : 'wrong');
         return {
             student_id: a.student_id,
+            roll_number: rollOf[a.student_id] || ('ID-' + a.student_id),
             student_name: nameOf[a.student_id] || String(a.student_id),
             question_id: a.question_id,
             status: status,
@@ -945,7 +950,24 @@ async function handleQuestionAnalysis(request, env) {
     );
     if (!aRes.ok) return json({ error: 'Could not load attempts.' }, 502);
     const attempts = await aRes.json();
-    if (!attempts.length) return json({ questions: [], question_results: [] });
+    if (!attempts.length) {
+        // No stored attempts yet: read per-question results straight from Moodle for this institute.
+        try {
+            const cfg = await getTenantMoodleConfig(instituteId, env, token);
+            if (!cfg || !cfg.moodle_url || !cfg.moodle_token) return json({ questions: [], question_results: [], note: 'Moodle is not configured for this institute.' });
+            const loaded = await loadMoodleRows(cfg, testId);
+            if (!loaded.rows.length) return json({ questions: [], question_results: [], note: loaded.note || 'No finished attempts yet.' });
+            const qbKey2 = (env && env.SUPABASE_SERVICE_ROLE_KEY) || QB_SERVICE_KEY;
+            const tagMap = await lookupTags(loaded.rows.map(function (r) { return r.key; }), async function (pattern) {
+                const r = await fetch(`${QB_SUPABASE_URL}/rest/v1/questions?question_text=ilike.${encodeURIComponent(pattern)}&select=id,question_text,subject,chapter,difficulty_level&limit=5`,
+                    { headers: { 'apikey': qbKey2, 'Authorization': `Bearer ${qbKey2}` } });
+                return r.ok ? r.json() : [];
+            });
+            return json(buildMoodlePayload(loaded.rows, tagMap));
+        } catch (e) {
+            return json({ questions: [], question_results: [], note: 'Could not read Moodle: ' + (e && e.message || 'error') });
+        }
+    }
 
     const studentIds = Array.from(new Set(attempts.map(function (a) { return a.student_id; }))).filter(function (id) { return uuid.test(String(id)); });
     const sRes = studentIds.length ? await fetch(
@@ -1000,4 +1022,98 @@ async function handleQuestionBank(request, env) {
 
     const res = await fetch(q, { headers: { 'apikey': serviceKey, 'Authorization': `Bearer ${serviceKey}` } });
     return json(await res.json(), res.status);
+}
+
+
+// ── Per-question results straight from Moodle (used when student_attempts has no rows) ──
+async function moodleCall(cfg, fn, params) {
+    const body = new URLSearchParams({ wstoken: cfg.moodle_token, wsfunction: fn, moodlewsrestformat: 'json' });
+    Object.keys(params || {}).forEach(function (k) {
+        const v = params[k];
+        if (Array.isArray(v)) v.forEach(function (x, i) { body.append(`${k}[${i}]`, x); });
+        else body.append(k, v);
+    });
+    const r = await fetch(String(cfg.moodle_url).replace(/\/$/, '') + '/webservice/rest/server.php', {
+        method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body
+    });
+    const d = await r.json();
+    if (d && d.exception) throw new Error(d.message || d.errorcode || 'Moodle error');
+    return d;
+}
+
+export function normText(html) {
+    return String(html || '').replace(/<[^>]*>/g, ' ').replace(/&nbsp;|&amp;|&lt;|&gt;|&quot;|&#\d+;/g, ' ')
+        .toLowerCase().replace(/[^a-z0-9ऀ-ॿ]+/g, ' ').trim();
+}
+function qtextOf(html) {
+    const m = /<div class="qtext">([\s\S]*?)<\/div>\s*(?:<div class="ablock|<\/div>|$)/.exec(String(html || ''));
+    return normText(m ? m[1] : html);
+}
+function moodleStatus(st) {
+    st = String(st || '').toLowerCase();
+    if (st === 'gradedright' || st === 'correct') return 'correct';
+    if (st === 'gradedwrong' || st === 'gradedpartial' || st === 'partiallycorrect' || st === 'incorrect') return 'wrong';
+    return 'skipped'; // gaveup, todo, invalid, notanswered...
+}
+
+export async function loadMoodleRows(cfg, quizRef) {
+    const courses = await moodleCall(cfg, 'core_course_get_courses', {});
+    const ids = (courses || []).map(function (c) { return c.id; }).filter(function (id) { return id !== 1; });
+    if (!ids.length) return { rows: [], note: 'no courses' };
+    const qz = await moodleCall(cfg, 'mod_quiz_get_quizzes_by_courses', { courseids: ids });
+    const quiz = ((qz && qz.quizzes) || []).find(function (q) { return String(q.id) === String(quizRef) || String(q.coursemodule) === String(quizRef); });
+    if (!quiz) return { rows: [], note: 'quiz not found in Moodle' };
+    const users = (await moodleCall(cfg, 'core_enrol_get_enrolled_users', { courseid: quiz.course })) || [];
+    const rows = [];
+    const todo = users.slice(0, 200);
+    for (let i = 0; i < todo.length; i += 8) {
+        await Promise.all(todo.slice(i, i + 8).map(async function (u) {
+            let list;
+            try { list = await moodleCall(cfg, 'mod_quiz_get_user_attempts', { quizid: quiz.id, userid: u.id, status: 'finished', includepreviews: 0 }); }
+            catch (e) { return; }
+            const attempts = (list && list.attempts) || [];
+            if (!attempts.length) return;
+            const best = attempts[attempts.length - 1]; // latest finished attempt
+            let rev;
+            try { rev = await moodleCall(cfg, 'mod_quiz_get_attempt_review', { attemptid: best.id }); } catch (e) { return; }
+            ((rev && rev.questions) || []).forEach(function (q) {
+                rows.push({
+                    student_id: String(u.id), student_name: u.fullname || ('User ' + u.id),
+                    key: qtextOf(q.html), status: moodleStatus(q.status),
+                    marks: Number(q.mark || 0), maxmark: Number(q.maxmark || 1)
+                });
+            });
+        }));
+    }
+    return { rows, quiz: { id: quiz.id, name: quiz.name } };
+}
+
+// Match Moodle question text to the question bank to get subject / chapter / difficulty.
+export async function lookupTags(keys, fetchRows) {
+    const out = {};
+    const uniq = Array.from(new Set(keys)).filter(Boolean);
+    for (let i = 0; i < uniq.length; i += 8) {
+        await Promise.all(uniq.slice(i, i + 8).map(async function (k) {
+            const words = k.split(' ').filter(function (w) { return w.length > 1; }).slice(0, 8).map(function (w) { return w.replace(/[*,()%_]/g, ''); });
+            if (words.length < 3) return;
+            const found = await fetchRows('*' + words.join('*') + '*');
+            const hit = (found || []).find(function (r) { return normText(r.question_text).indexOf(k.slice(0, 60)) === 0; });
+            if (hit) out[k] = hit;
+        }));
+    }
+    return out;
+}
+
+export function buildMoodlePayload(rows, tags) {
+    const qMeta = {};
+    const results = rows.map(function (r) {
+        const t = tags[r.key] || {};
+        const qid = t.id || ('moodle:' + r.key.slice(0, 40));
+        qMeta[qid] = {
+            id: qid, subject: t.subject || 'Untagged', chapter: t.chapter || 'Untagged', topic: t.topic || '',
+            difficulty: t.difficulty_level || 'Unspecified', max_marks: r.maxmark, neg_marks: 0
+        };
+        return { student_id: r.student_id, student_name: r.student_name, question_id: qid, status: r.status, marks: r.marks, time_seconds: null };
+    });
+    return { questions: Object.keys(qMeta).map(function (k) { return qMeta[k]; }), question_results: results, source: 'moodle' };
 }

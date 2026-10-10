@@ -1,238 +1,108 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Student Analysis Preview</title>
-<style>
-:root{--bg:#f6f7f9;--card:#fff;--text:#1a1d23;--muted:#5b6472;--line:#e3e6eb;--text-primary:#1a1d23;--text-secondary:#5b6472}
-@media (prefers-color-scheme:dark){:root{--bg:#14161a;--card:#1d2026;--text:#e8eaee;--muted:#9aa3b2;--line:#2c313a;--text-primary:#e8eaee;--text-secondary:#9aa3b2}}
-body{margin:0;background:var(--bg);color:var(--text);font:15px/1.5 system-ui,sans-serif}
-main{max-width:980px;margin:0 auto;padding:20px 16px 48px}
-h1{font-size:1.25rem;margin:0 0 4px}
-.sub{color:var(--muted);margin:0 0 16px;font-size:.9rem}
-.table-wrap{overflow-x:auto;background:var(--card);border:1px solid var(--line);border-radius:10px}
-.report-table{border-collapse:collapse;width:100%;font-size:.88rem}
-.report-table th{text-align:left;padding:8px 12px;color:var(--muted);font-weight:600;border-bottom:1px solid var(--line);white-space:nowrap}
-.report-table td{padding:8px 12px;border-bottom:1px solid var(--line)}
-.report-table tr:last-child td{border-bottom:0}
-details{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:10px 14px;margin:8px 0}
-summary{cursor:pointer}
-small{color:var(--muted)}
-</style></head><body><main>
-<h1>Student analysis — preview</h1>
-<p class="sub">Same panel as in Reports &amp; Analytics, rendered from the DEMO sample (8 students, 15 real JEE topics from the portal syllabus, 30 questions).</p>
-<div id="analysisPanel"></div>
-</main>
-<script>/*
- * analysis.js — question-level analysis for reports.html
- *
- * Data contract (additive; the report webhook may return these next to
- * `analytics` and `leaderboard`):
- *   data.questions        [{ id, subject, chapter, topic?, difficulty?, max_marks?, neg_marks? }]
- *   data.question_results [{ student_id, student_name, question_id,
- *                            status: 'correct'|'wrong'|'skipped', marks, time_seconds? }]
- *
- * Pure functions (PGAnalysis.build) have no DOM access so they can be tested in node.
- */
-(function (root) {
-  'use strict';
-
-  var WEAK_BELOW = 50;      // accuracy % under which an area is "needs improvement"
-  var MIN_QS = 2;           // ignore areas with fewer questions than this (noise)
-
-  function pct(a, b) { return b ? Math.round((a / b) * 1000) / 10 : 0; }
-  function label(q) { return (q.subject || 'Unknown') + ' › ' + (q.chapter || 'Unknown') + (q.topic ? ' › ' + q.topic : ''); }
-
-  function blank() { return { total: 0, correct: 0, wrong: 0, skipped: 0, marks: 0, max: 0, lost: 0, negLoss: 0, time: 0, timed: 0 }; }
-
-  function add(bucket, q, r) {
-    var max = Number(q.max_marks != null ? q.max_marks : 1);
-    var marks = Number(r.marks || 0);
-    bucket.total++;
-    bucket.max += max;
-    bucket.marks += marks;
-    bucket.lost += Math.max(0, max - marks);
-    if (r.status === 'correct') bucket.correct++;
-    else if (r.status === 'wrong') { bucket.wrong++; if (marks < 0) bucket.negLoss += -marks; }
-    else bucket.skipped++;
-    if (r.time_seconds != null) { bucket.time += Number(r.time_seconds); bucket.timed++; }
-  }
-
-  function finish(b, extra) {
-    var o = Object.assign({}, extra, b);
-    o.accuracy = pct(b.correct, b.total);
-    o.attempted = b.correct + b.wrong;
-    o.attemptAccuracy = pct(b.correct, o.attempted);
-    o.avgTime = b.timed ? Math.round(b.time / b.timed) : null;
-    o.weak = o.total >= MIN_QS && o.accuracy < WEAK_BELOW;
-    return o;
-  }
-
-  function group(results, qmap, keyFn, metaFn) {
-    var buckets = {};
-    results.forEach(function (r) {
-      var q = qmap[r.question_id];
-      if (!q) return;
-      var k = keyFn(q);
-      if (!buckets[k]) buckets[k] = { b: blank(), meta: metaFn(q) };
-      add(buckets[k].b, q, r);
-    });
-    return Object.keys(buckets).map(function (k) { return finish(buckets[k].b, buckets[k].meta); });
-  }
-
-  function byLostDesc(a, b) { return b.lost - a.lost || a.accuracy - b.accuracy; }
-
-  function build(data) {
-    var questions = (data && data.questions) || [];
-    var results = (data && data.question_results) || [];
-    if (!questions.length || !results.length) return null;
-
-    var qmap = {};
-    questions.forEach(function (q) { qmap[q.id] = q; });
-
-    var subjKey = function (q) { return q.subject || 'Unknown'; };
-    var chapKey = function (q) { return subjKey(q) + '||' + (q.chapter || 'Unknown'); };
-    var chapMeta = function (q) { return { subject: subjKey(q), chapter: q.chapter || 'Unknown', name: label({ subject: q.subject, chapter: q.chapter }) }; };
-    var topicKey = function (q) { return chapKey(q) + '||' + (q.topic || ''); };
-    var topicMeta = function (q) { return { subject: subjKey(q), chapter: q.chapter || 'Unknown', topic: q.topic || '', name: label(q) }; };
-    var hasTopics = questions.some(function (q) { return q.topic; });
-
-    var cohort = {
-      subjects: group(results, qmap, subjKey, function (q) { return { subject: subjKey(q), name: subjKey(q) }; }).sort(byLostDesc),
-      chapters: group(results, qmap, chapKey, chapMeta).sort(byLostDesc),
-      topics: hasTopics ? group(results, qmap, topicKey, topicMeta).sort(byLostDesc) : [],
-      difficulty: group(results, qmap, function (q) { return q.difficulty || 'Unspecified'; }, function (q) { return { name: q.difficulty || 'Unspecified' }; }),
-      overall: finish(results.reduce(function (b, r) { var q = qmap[r.question_id]; if (q) add(b, q, r); return b; }, blank()), { name: 'Overall' })
-    };
-
-    var ids = {};
-    results.forEach(function (r) { (ids[r.student_id] = ids[r.student_id] || { name: r.student_name, rows: [] }).rows.push(r); });
-    var students = {};
-    Object.keys(ids).forEach(function (sid) {
-      var rows = ids[sid].rows;
-      var chapters = group(rows, qmap, chapKey, chapMeta).sort(byLostDesc);
-      var topics = hasTopics ? group(rows, qmap, topicKey, topicMeta).sort(byLostDesc) : [];
-      students[sid] = {
-        student_id: sid,
-        student_name: ids[sid].name,
-        overall: finish(rows.reduce(function (b, r) { var q = qmap[r.question_id]; if (q) add(b, q, r); return b; }, blank()), { name: 'Overall' }),
-        subjects: group(rows, qmap, subjKey, function (q) { return { subject: subjKey(q), name: subjKey(q) }; }).sort(byLostDesc),
-        chapters: chapters,
-        topics: topics,
-        difficulty: group(rows, qmap, function (q) { return q.difficulty || 'Unspecified'; }, function (q) { return { name: q.difficulty || 'Unspecified' }; }),
-        needsImprovement: (hasTopics ? topics : chapters).filter(function (c) { return c.weak; }).slice(0, 5)
-      };
-    });
-
-    return { cohort: cohort, students: students };
-  }
-
-  // One-line weak-area summary for the parent WhatsApp message.
-  function parentSummary(student) {
-    if (!student || !student.needsImprovement.length) return '';
-    return 'Focus areas: ' + student.needsImprovement.slice(0, 3).map(function (c) {
-      return c.subject + ' – ' + c.chapter + (c.topic ? ' – ' + c.topic : '') + ' (' + c.accuracy + '%)';
-    }).join('; ');
-  }
-
-  // ---- rendering (browser only) ---------------------------------------
-  function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
-  function bar(p) {
-    var col = p < WEAK_BELOW ? '#dc2626' : (p < 75 ? '#d97706' : '#16a34a');
-    return '<div style="background:rgba(128,128,128,.2);border-radius:4px;height:6px;min-width:70px"><div style="width:' + Math.min(100, p) + '%;background:' + col + ';height:6px;border-radius:4px"></div></div>';
-  }
-  function areaRows(list, n) {
-    return list.slice(0, n).map(function (a) {
-      return '<tr><td>' + esc(a.name) + (a.weak ? ' <span style="color:#dc2626;font-weight:700">● weak</span>' : '') + '</td>' +
-        '<td>' + a.correct + '/' + a.total + '</td><td style="min-width:90px">' + bar(a.accuracy) + '<small>' + a.accuracy + '%</small></td>' +
-        '<td>' + a.skipped + '</td><td>' + (a.negLoss ? '-' + a.negLoss : '0') + '</td><td>' + (a.avgTime != null ? a.avgTime + 's' : '—') + '</td></tr>';
-    }).join('');
-  }
-  function table(title, list, n) {
-    return '<h4 style="margin:1rem 0 .4rem;font-size:.9rem">' + esc(title) + '</h4><div class="table-wrap"><table class="report-table"><thead><tr>' +
-      '<th>Area</th><th>Correct</th><th>Accuracy</th><th>Skipped</th><th>Neg. marks</th><th>Avg time</th></tr></thead><tbody>' +
-      areaRows(list, n || 10) + '</tbody></table></div>';
-  }
-
-  function render(el, analysis, opts) {
-    opts = opts || {};
-    if (!el) return;
-    if (!analysis) {
-      el.innerHTML = '<p style="color:var(--text-secondary);font-size:.85rem">Question-level data is not available for this test yet, so subject/chapter analysis cannot be shown.</p>';
-      return;
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Student & Batch Analysis Preview ? Pitthugram</title>
+  <link rel="icon" type="image/png" href="favicon.png">
+  <style>
+    :root {
+      --bg: #f8fafc;
+      --card: #ffffff;
+      --text: #0f172a;
+      --muted: #64748b;
+      --line: #e2e8f0;
+      --text-primary: #0f172a;
+      --text-secondary: #64748b;
+      --border-color: #e2e8f0;
+      --bg-card: #ffffff;
     }
-    var c = analysis.cohort;
-    var weak = (c.topics.length ? c.topics : c.chapters).filter(function (x) { return x.weak; });
-    var h = '';
-    if (opts.demo) h += '<div style="background:#fef3c7;color:#92400e;border:1px solid #f59e0b;border-radius:8px;padding:.5rem .8rem;font-weight:700;margin-bottom:.75rem">DEMO DATA — sample students, not real results. Remove ?demo=1 from the URL to hide.</div>';
-    h += '<h3 style="font-size:1.05rem;font-weight:700;margin:1.5rem 0 .5rem">Subject &amp; Chapter Analysis</h3>';
-    h += table('Subjects (most marks lost first)', c.subjects);
-    h += weak.length ? table('Cohort weak areas (accuracy below ' + WEAK_BELOW + '%)', weak) : '<p style="font-size:.85rem">No chapter is below ' + WEAK_BELOW + '% accuracy for this cohort.</p>';
-    h += table('Accuracy by difficulty', c.difficulty);
-    h += '<h4 style="margin:1rem 0 .4rem;font-size:.9rem">Per-student: what to improve</h4>';
-    Object.keys(analysis.students).forEach(function (sid) {
-      var s = analysis.students[sid];
-      h += '<details style="margin:.3rem 0"><summary style="cursor:pointer;font-weight:600">' + esc(s.student_name) + ' — ' + s.overall.accuracy + '% accuracy' +
-        (s.needsImprovement.length ? ' · improve: ' + esc(s.needsImprovement.slice(0, 2).map(function (x) { return x.topic || x.chapter; }).join(', ')) : '') + '</summary>' +
-        (s.needsImprovement.length ? table('Needs improvement', s.needsImprovement) : '<p style="font-size:.85rem">No weak chapter detected.</p>') +
-        table('All subjects', s.subjects) + '</details>';
-    });
-    el.innerHTML = h;
-  }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #0f172a;
+        --card: #1e293b;
+        --text: #f1f5f9;
+        --muted: #94a3b8;
+        --line: #334155;
+        --text-primary: #f1f5f9;
+        --text-secondary: #94a3b8;
+        --border-color: #334155;
+        --bg-card: #1e293b;
+      }
+    }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font: 14.5px/1.55 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+    main {
+      max-width: 1040px;
+      margin: 0 auto;
+      padding: 24px 16px 64px;
+    }
+    header {
+      margin-bottom: 20px;
+      border-bottom: 1px solid var(--line);
+      padding-bottom: 16px;
+    }
+    h1 {
+      font-size: 1.4rem;
+      font-weight: 800;
+      margin: 0 0 6px;
+      letter-spacing: -0.02em;
+    }
+    .sub {
+      color: var(--muted);
+      margin: 0;
+      font-size: 0.9rem;
+    }
+    .table-wrap {
+      overflow-x: auto;
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+    }
+    .report-table {
+      border-collapse: collapse;
+      width: 100%;
+      font-size: 0.88rem;
+    }
+    .report-table th {
+      text-align: left;
+      padding: 9px 12px;
+      color: var(--muted);
+      font-weight: 600;
+      border-bottom: 1px solid var(--line);
+      white-space: nowrap;
+    }
+    .report-table td {
+      padding: 9px 12px;
+      border-bottom: 1px solid var(--line);
+    }
+    .report-table tr:last-child td {
+      border-bottom: 0;
+    }
+  </style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>Class Performance &amp; Student Analysis ? Live Preview</h1>
+    <p class="sub">Demonstrating whole class diagnostics, topic error heatmaps, and individual student drill-down via Roll Number &amp; Name selector.</p>
+  </header>
+  <div id="analysisPanel"></div>
+</main>
 
-  root.PGAnalysis = { build: build, render: render, parentSummary: parentSummary, WEAK_BELOW: WEAK_BELOW };
-  if (typeof module !== 'undefined') module.exports = root.PGAnalysis;
-})(typeof window !== 'undefined' ? window : globalThis);
+<script src="demo-analysis-data.js"></script>
+<script src="analysis.js"></script>
+<script>
+  if (window.PGAnalysis && window.PG_DEMO_ANALYSIS) {
+    var builtData = window.PGAnalysis.build(window.PG_DEMO_ANALYSIS);
+    window.PGAnalysis.render(document.getElementById('analysisPanel'), builtData, { demo: true });
+  } else {
+    document.getElementById('analysisPanel').innerHTML = '<p style="color:red">Failed to load analysis engine or demo data.</p>';
+  }
 </script>
-<script>/* DEMO ONLY — fake data for verifying reports analysis. Safe to delete this file;
-   reports.html only uses it when the URL has ?demo=1. All names start with "DEMO". */
-(function (root) {
-  // Subjects / chapters / topics are real rows from the portal's jee_syllabus table (exam = JEE).
-  var spec = [
-    ['Chemistry','Alcohols, Phenols and Ethers','Williamson synthesis','Medium'],
-    ['Chemistry','Alcohols, Phenols and Ethers','Kolbe reaction','Hard'],
-    ['Chemistry','Aldehydes, Ketones and Carboxylic Acids','Oxidation','Easy'],
-    ['Chemistry','Aldehydes, Ketones and Carboxylic Acids','Cannizzaro reaction','Hard'],
-    ['Chemistry','Amines','Diazonium salts','Medium'],
-    ['Chemistry','Amines','Azo coupling','Hard'],
-    ['Maths','Applications of Derivatives',"Lagrange's mean value theorem",'Hard'],
-    ['Maths','Applications of Derivatives','Increasing and decreasing functions','Medium'],
-    ['Maths','Application of Integrals','Application of Integrals','Medium'],
-    ['Physics','Alternating Current','Alternating Current','Easy'],
-    ['Physics','Alternating Current','Power factor','Medium'],
-    ['Physics','Atoms','X-rays','Medium'],
-    ['Physics','Atoms',"Moseley's law",'Hard'],
-    ['Physics','Current Electricity','Heating effect','Easy'],
-    ['Physics','Current Electricity','Current Electricity','Medium']
-  ];
-  var questions = [];
-  spec.forEach(function (c, i) {
-    for (var k = 0; k < 2; k++) questions.push({ id: 'DEMO-Q' + (i * 2 + k + 1), subject: c[0], chapter: c[1], topic: c[2], difficulty: c[3], max_marks: 4, neg_marks: 1 });
-  });
-  // accuracy per topic, 0..1 (rest are wrong; the 2nd question of a 0-accuracy topic is skipped)
-  var weakTopics = {
-    'DEMO Aarav Sharma (strong)': {},
-    'DEMO Diya Patel (weak Organic Chemistry)': { 'Williamson synthesis': 0, 'Kolbe reaction': 0, 'Cannizzaro reaction': 0, 'Diazonium salts': 0.5, 'Azo coupling': 0 },
-    'DEMO Kabir Singh (weak Calculus)': { "Lagrange's mean value theorem": 0, 'Increasing and decreasing functions': 0, 'Application of Integrals': 0 },
-    'DEMO Meera Iyer (weak Atoms and AC)': { 'X-rays': 0, "Moseley's law": 0, 'Power factor': 0, 'Alternating Current': 0.5 },
-    'DEMO Rohan Das (average)': { "Moseley's law": 0, 'Azo coupling': 0, "Lagrange's mean value theorem": 0.5, 'Kolbe reaction': 0.5 },
-    'DEMO Sana Khan (guesses a lot)': { 'Heating effect': 0, 'Oxidation': 0, 'Application of Integrals': 0, 'Power factor': 0, 'Diazonium salts': 0 },
-    'DEMO Vikram Rao (weak Maths)': { "Lagrange's mean value theorem": 0, 'Increasing and decreasing functions': 0, 'Application of Integrals': 0, 'Current Electricity': 0.5 },
-    'DEMO Tara Menon (top)': { "Moseley's law": 0.5 }
-  };
-  var results = [];
-  Object.keys(weakTopics).forEach(function (name, si) {
-    var seen = {};
-    questions.forEach(function (q, qi) {
-      seen[q.topic] = (seen[q.topic] || 0) + 1;
-      var acc = weakTopics[name][q.topic]; if (acc === undefined) acc = 1;
-      var ok = acc >= 1 || (acc > 0 && seen[q.topic] === 1);
-      var skip = !ok && acc === 0 && seen[q.topic] === 2;
-      var status = ok ? 'correct' : (skip ? 'skipped' : 'wrong');
-      results.push({ student_id: 'DEMO-S' + (si + 1), student_name: name, question_id: q.id, status: status,
-        marks: ok ? 4 : (skip ? 0 : -1), time_seconds: 35 + ((qi * 11 + si * 17) % 80) });
-    });
-  });
-  root.PG_DEMO_ANALYSIS = { questions: questions, question_results: results };
-})(window);
-</script>
-<script>PGAnalysis.render(document.getElementById('analysisPanel'), PGAnalysis.build(window.PG_DEMO_ANALYSIS), { demo: true });
-document.querySelectorAll('details').forEach(function(d,i){ if(i<2) d.open=true; });</script>
-</body></html>
+</body>
+</html>
