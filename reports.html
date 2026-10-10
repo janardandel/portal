@@ -6,10 +6,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>Reports & Analytics &mdash; Portal</title>
   <link rel="icon" type="image/png" href="./favicon.png">
-  <link rel="preconnect" href="
-  <link rel="preconnect" href=" crossorigin>
-  <link href=" rel="stylesheet">
-  <script src=" defer></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/@phosphor-icons/web" defer></script>
   <link rel="stylesheet" href="./style.css">
   <link rel="stylesheet" href="./pitthugram.css">
   <style>
@@ -456,7 +456,7 @@ function openSidebar() {
 function buildWhatsAppReportUrl(student, quizName, tenantName) {
   if (student && student.whatsapp_url && typeof student.whatsapp_url === 'string') {
     const raw = student.whatsapp_url.trim();
-    if (raw.startsWith(' || raw.startsWith(' {
+    if (raw.startsWith('https://wa.me/') || raw.startsWith('https://api.whatsapp.com/')) {
       return raw;
     }
   }
@@ -560,7 +560,7 @@ async function loadTestsDirectory() {
   listEl.innerHTML = '<p style="color:var(--text-secondary);font-size:0.8rem;text-align:center;padding:1rem 0;"><i class="ph ph-spinner-gap spinner"></i> Loading tests...</p>';
 
   try {
-    const res = await fetch(' + encodeURIComponent((function(){ try { var m = JSON.parse(localStorage.getItem('pg_memberships') || '[]').find(function(x){ return x.role === 'owner' || x.role === 'teacher'; }); return m ? m.institute_id : ''; } catch (e) { return ''; } })()), { headers: { Authorization: 'Bearer ' + (localStorage.getItem('pg_access_token') || '') } });
+    const res = await fetch('/api/scheduled-quizzes?institute_id=' + encodeURIComponent((function(){ try { var m = JSON.parse(localStorage.getItem('pg_memberships') || '[]').find(function(x){ return x.role === 'owner' || x.role === 'teacher'; }); return m ? m.institute_id : ''; } catch (e) { return ''; } })()), { headers: { Authorization: 'Bearer ' + (localStorage.getItem('pg_access_token') || '') } });
     const list = await res.json();
 
     if (!list || !list.length) {
@@ -668,7 +668,7 @@ async function selectTest(quizId, quizTitle) {
     const tenantName = sessionStorage.getItem('pg_institute_name') || localStorage.getItem('pg_institute_name') || 'Classes Institute';
     const moodleUrl = getTenantMoodleUrl();
 
-    const reportUrl = `
+    const reportUrl = `https://awsn8n.pitthugram.com/webhook/moodle-quiz-report?quiz_id=${encodeURIComponent(quizId)}&institute_id=${encodeURIComponent(instituteId)}&institute_name=${encodeURIComponent(tenantName)}&moodle_url=${encodeURIComponent(moodleUrl)}`;
     
     let data;
     const isSampleTest = (allTests.find(t => (t.moodle_quiz_id === quizId || t.id === quizId)) || {}).is_sample;
