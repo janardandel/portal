@@ -493,9 +493,9 @@ _Sent via ${institute} Portal_`;
   }
 
   if (phoneDigits && phoneDigits.length >= 10) {
-    return `
+    return `https://wa.me/${phoneDigits}?text=${encodeURIComponent(msg)}`;
   }
-  return `
+  return `https://wa.me/?text=${encodeURIComponent(msg)}`;
 }
 
 function closeSidebar() {
