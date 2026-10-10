@@ -3,7 +3,7 @@
 <head>
 <script src="./session.js"></script>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>Reports & Analytics &mdash; Portal</title>
   <link rel="icon" type="image/png" href="./favicon.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -13,8 +13,8 @@
   <link rel="stylesheet" href="./style.css">
   <link rel="stylesheet" href="./pitthugram.css">
   <style>
-    /* -- Desktop sidebar (721px+) -- */
-    @media (min-width: 721px) {
+    /* -- Desktop sidebar (1024px+) -- */
+    @media (min-width: 1024px) {
       #qbSidebar {
         display: flex !important;
         flex-direction: column !important;
@@ -32,11 +32,61 @@
       }
       #qbPage.qb-page { margin-left: 280px !important; }
       #qbPage .qb-layout { display: block !important; }
+      #sidebarToggle { display: none !important; }
+      #sidebarBackdrop { display: none !important; }
+      #sidebarClose { display: none !important; }
     }
 
-    @media (max-width: 720px) {
+    /* -- Tablet, iPad & Mobile Sidebar Drawer (<1024px) -- */
+    @media (max-width: 1023px) {
       #sidebarToggle { display: inline-flex !important; }
-      #qbPage.qb-page { padding: 1rem 1rem 5rem !important; }
+      #qbPage.qb-page { margin-left: 0 !important; padding: 1.25rem 1.25rem max(4rem, env(safe-area-inset-bottom)) !important; }
+      #qbSidebar {
+        position: fixed !important;
+        inset: 0 auto 0 0 !important;
+        width: min(320px, 86vw) !important;
+        height: 100vh !important;
+        max-height: 100vh !important;
+        transform: translateX(-100%) !important;
+        transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        z-index: 300 !important;
+        box-shadow: var(--shadow-xl) !important;
+      }
+      #qbSidebar.open {
+        transform: translateX(0) !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+      }
+      #sidebarBackdrop {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.7);
+        backdrop-filter: blur(4px);
+        -webkit-backdrop-filter: blur(4px);
+        z-index: 290;
+      }
+      #sidebarBackdrop.show { display: block !important; }
+      #sidebarClose { display: inline-flex !important; }
+    }
+
+    /* -- Mobile (<768px) -- */
+    @media (max-width: 768px) {
+      #qbPage.qb-page { padding: 1rem 0.85rem max(4rem, env(safe-area-inset-bottom)) !important; }
+      .kpi-grid { grid-template-columns: repeat(2, 1fr) !important; gap: 0.75rem !important; }
+      .kpi-card { padding: 0.9rem 0.85rem !important; }
+      .kpi-value { font-size: 1.45rem !important; }
+      .nav-extra-btn { display: none !important; }
+    }
+
+    /* -- Foldable Cover Screen (<380px) -- */
+    @media (max-width: 380px) {
+      #qbPage.qb-page { padding: 0.75rem 0.5rem max(4rem, env(safe-area-inset-bottom)) !important; }
+      .kpi-grid { grid-template-columns: repeat(2, 1fr) !important; gap: 0.5rem !important; }
+      .kpi-card { padding: 0.65rem 0.5rem !important; }
+      .kpi-value { font-size: 1.2rem !important; }
+      .kpi-label { font-size: 0.7rem !important; }
+      .report-table th, .report-table td { padding: 0.65rem 0.5rem !important; font-size: 0.78rem !important; }
     }
 
     /* -- Test Card Directory inside Sidebar -- */
@@ -209,13 +259,13 @@
       <a href="./reports.html" class="btn btn-sm" style="padding:0.45rem 0.85rem;display:inline-flex;align-items:center;gap:0.35rem;background:var(--primary);color:#fff;border-color:var(--primary);font-weight:700;">
         <i class="ph-bold ph-chart-line-up"></i> Reports & Analytics
       </a>
-      <a href="./quiz-builder.html" class="btn btn-outline btn-sm" style="padding:0.45rem 0.85rem;display:inline-flex;align-items:center;gap:0.35rem;">
+      <a href="./quiz-builder.html" class="btn btn-outline btn-sm nav-extra-btn" style="padding:0.45rem 0.85rem;display:inline-flex;align-items:center;gap:0.35rem;">
         <i class="ph ph-plus-circle"></i> Quiz Builder
       </a>
-      <a href="./review-mcq.html" class="btn btn-outline btn-sm" style="padding:0.45rem 0.85rem;display:inline-flex;align-items:center;gap:0.35rem;">
+      <a href="./review-mcq.html" class="btn btn-outline btn-sm nav-extra-btn" style="padding:0.45rem 0.85rem;display:inline-flex;align-items:center;gap:0.35rem;">
         <i class="ph ph-calendar-check"></i> Scheduled Tests
       </a>
-      <a href="./review-mcq.html?tab=ocr" class="btn btn-outline btn-sm" style="padding:0.45rem 0.85rem;display:inline-flex;align-items:center;gap:0.35rem;">
+      <a href="./review-mcq.html?tab=ocr" class="btn btn-outline btn-sm nav-extra-btn" style="padding:0.45rem 0.85rem;display:inline-flex;align-items:center;gap:0.35rem;">
         <i class="ph ph-file-text"></i> OCR Review
       </a>
       <a href="https://lms.pitthugram.com" target="_blank" class="btn btn-outline btn-sm" style="padding:0.45rem 0.85rem;display:inline-flex;align-items:center;gap:0.35rem;border-color:var(--primary);color:var(--primary);">
@@ -403,6 +453,53 @@ function openSidebar() {
   if (sb) sb.classList.add('open');
   if (bd) bd.classList.add('show');
   document.body.style.overflow = 'hidden';
+}
+
+
+function buildWhatsAppReportUrl(student, quizName, tenantName) {
+  if (student && student.whatsapp_url && typeof student.whatsapp_url === 'string') {
+    const raw = student.whatsapp_url.trim();
+    if (raw.startsWith('https://wa.me/') || raw.startsWith('https://api.whatsapp.com/')) {
+      return raw;
+    }
+  }
+
+  const sName = (student && (student.student_name || student.name)) || 'Student';
+  const roll = (student && student.roll_number) ? ` (Roll: ${student.roll_number})` : '';
+  const score = (student && student.score != null) ? student.score : 0;
+  const maxScore = (student && student.max_score != null) ? student.max_score : 120;
+  const pct = (student && student.percentage != null) ? student.percentage : Math.round((score / (maxScore || 1)) * 100);
+  const rank = (student && student.rank) ? `#${student.rank}` : 'Participated';
+  const timeTaken = (student && student.time_taken_formatted) ? `⏱ Time Taken: ${student.time_taken_formatted}\n` : '';
+  const institute = tenantName || 'Classes Institute';
+  const testTitle = quizName || 'Assessment Test';
+  const dateStr = new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
+
+  const msg = 
+`📊 *${institute}*
+📝 *Student Report Card — ${testTitle}*
+📅 Date: ${dateStr}
+
+👤 *Student:* ${sName}${roll}
+🏆 *Rank:* ${rank}
+🎯 *Score:* ${score} / ${maxScore}
+📈 *Accuracy:* ${pct}%
+${timeTaken}
+💡 *Teacher Feedback:* Good attempt! Review question analysis to master weaker topics.
+
+🔗 LMS Portal: https://lms.pitthugram.com
+_Sent via ${institute} Portal_`;
+
+  let phoneDigits = '';
+  if (student && student.phone) {
+    phoneDigits = String(student.phone).replace(/[^0-9]/g, '');
+    if (phoneDigits.length === 10) phoneDigits = '91' + phoneDigits;
+  }
+
+  if (phoneDigits && phoneDigits.length >= 10) {
+    return `https://wa.me/${phoneDigits}?text=${encodeURIComponent(msg)}`;
+  }
+  return `https://wa.me/?text=${encodeURIComponent(msg)}`;
 }
 
 function closeSidebar() {
@@ -595,14 +692,28 @@ async function selectTest(quizId, quizTitle) {
           highest_score: 120,
           lowest_score: 64
         },
-        leaderboard: (window.PG_DEMO_ANALYSIS.students || []).map((s, idx) => ({
-          rank: idx + 1,
-          name: s.student_name,
-          email: `${s.roll_number.toLowerCase()}@pitthugram.com`,
-          score: 120 - idx * 8,
-          percentage: Math.round(((120 - idx * 8) / 120) * 1000) / 10,
-          status: 'Finished'
-        })),
+        leaderboard: (window.PG_DEMO_ANALYSIS.students || []).map((s, idx) => {
+          const score = 120 - idx * 8;
+          const maxScore = 120;
+          const pct = Math.round(((120 - idx * 8) / 120) * 1000) / 10;
+          const phone = '91987654321' + idx;
+          const dummyStudent = {
+            rank: idx + 1,
+            student_name: s.student_name,
+            name: s.student_name,
+            roll_number: s.roll_number,
+            email: `${(s.roll_number || 'stu').toLowerCase()}@pitthugram.com`,
+            phone: phone,
+            score: score,
+            max_score: maxScore,
+            percentage: pct,
+            time_taken_formatted: `${35 + idx * 2}m 10s`,
+            submitted_at: Date.now() - (idx * 3600 * 1000),
+            status: 'Finished'
+          };
+          dummyStudent.whatsapp_url = buildWhatsAppReportUrl(dummyStudent, quizTitle || 'JEE Advanced Grand Mock Test 01', tenantName);
+          return dummyStudent;
+        }),
         questions: window.PG_DEMO_ANALYSIS.questions,
         question_results: window.PG_DEMO_ANALYSIS.question_results
       };
@@ -679,15 +790,16 @@ async function selectTest(quizId, quizTitle) {
       const pctClass = st.percentage >= 75 ? 'approved' : (st.percentage >= 40 ? 'draft' : 'failed');
       const submittedDate = st.submitted_at ? new Date(st.submitted_at).toLocaleString('en-IN', { dateStyle:'medium', timeStyle:'short' }) : 'Completed';
 
+      const waLink = buildWhatsAppReportUrl(st, data.quiz_name, tenantName);
       return `
         <tr>
           <td>${rankBadge}</td>
           <td>
-            <div style="font-weight:700;color:var(--text-primary);">${escHtml(st.student_name)}</div>
+            <div style="font-weight:700;color:var(--text-primary);">${escHtml(st.student_name || st.name || 'Anonymous Student')}</div>
             <div style="font-size:0.77rem;color:var(--text-secondary);">${escHtml(st.email || '&mdash;')}${st.phone ? ' &bull; ' + escHtml(st.phone) : ''}</div>
           </td>
           <td style="font-weight:700;color:var(--text-primary);">
-            ${st.score} <span style="font-size:0.76rem;font-weight:400;color:var(--text-secondary);">/ ${st.max_score}</span>
+            ${st.score} <span style="font-size:0.76rem;font-weight:400;color:var(--text-secondary);">/ ${st.max_score || data.max_score || 120}</span>
           </td>
           <td>
             <span class="status-badge ${pctClass}">${st.percentage}%</span>
@@ -699,7 +811,7 @@ async function selectTest(quizId, quizTitle) {
             ${submittedDate}
           </td>
           <td style="text-align:right;">
-            <a href="${(st.whatsapp_url && (st.whatsapp_url.startsWith('https://wa.me/') || st.whatsapp_url.startsWith('https://api.whatsapp.com/'))) ? escHtml(st.whatsapp_url) : '#'}" target="_blank" rel="noopener noreferrer" class="btn btn-sm" style="background:#25D366;color:#fff;border-radius:var(--radius-sm);display:inline-flex;align-items:center;gap:0.35rem;font-size:0.8rem;text-decoration:none;font-weight:700;padding:0.4rem 0.8rem;box-shadow:0 2px 6px rgba(37,211,102,0.3);">
+            <a href="${escHtml(waLink)}" target="_blank" rel="noopener noreferrer" class="btn btn-sm wa-send-btn" style="background:#25D366;color:#fff;border-radius:var(--radius-sm);display:inline-flex;align-items:center;gap:0.35rem;font-size:0.8rem;text-decoration:none;font-weight:700;padding:0.4rem 0.8rem;box-shadow:0 2px 6px rgba(37,211,102,0.3);white-space:nowrap;">
               <i class="ph-fill ph-whatsapp-logo" style="font-size:1.05rem;"></i> Send Report
             </a>
           </td>

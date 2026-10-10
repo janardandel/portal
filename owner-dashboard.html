@@ -2,8 +2,8 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Owner Dashboard — Pitthugram</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Owner Dashboard — Portal</title>
     <link rel="icon" type="image/png" href="./favicon.png">
     <script>if(!localStorage.getItem('pg_access_token')){location.replace('index.html');}</script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -13,8 +13,8 @@
       <link rel="stylesheet" href="./style.css">
   <link rel="stylesheet" href="./pitthugram.css">
   <style>
-    /* Desktop sidebar (721px+) */
-    @media (min-width: 721px) {
+    /* Desktop sidebar (1024px+) */
+    @media (min-width: 1024px) {
       #qbSidebar {
         display: flex !important;
         flex-direction: column !important;
@@ -32,11 +32,15 @@
       }
       #qbPage.qb-page { margin-left: 280px !important; }
       #qbPage .qb-layout { display: block !important; }
+      #sidebarToggle { display: none !important; }
+      #sidebarBackdrop { display: none !important; }
+      #sidebarClose { display: none !important; }
     }
 
-    @media (max-width: 720px) {
+    /* Tablet, iPad & Mobile Drawer (<1024px) */
+    @media (max-width: 1023px) {
       #sidebarToggle { display: inline-flex !important; }
-      #qbPage.qb-page { padding: 1rem 1rem 5rem !important; }
+      #qbPage.qb-page { margin-left: 0 !important; padding: 1.25rem 1.25rem max(4rem, env(safe-area-inset-bottom)) !important; }
     }
     <style>
         .od-page { min-height: calc(100vh - 72px); background: var(--bg-base); padding: 2rem 1.5rem; }

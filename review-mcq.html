@@ -3,7 +3,7 @@
 <head>
 <script src="./session.js"></script>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>Review & Analytics — Portal</title>
   <link rel="icon" type="image/png" href="./favicon.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -12,8 +12,8 @@
     <link rel="stylesheet" href="./style.css">
   <link rel="stylesheet" href="./pitthugram.css">
   <style>
-    /* Desktop sidebar (721px+) */
-    @media (min-width: 721px) {
+    /* Desktop sidebar (1024px+) */
+    @media (min-width: 1024px) {
       #qbSidebar {
         display: flex !important;
         flex-direction: column !important;
@@ -31,13 +31,47 @@
       }
       #qbPage.qb-page { margin-left: 280px !important; }
       #qbPage .qb-layout { display: block !important; }
+      #sidebarToggle { display: none !important; }
+      #sidebarBackdrop { display: none !important; }
+      #sidebarClose { display: none !important; }
     }
 
-    @media (max-width: 720px) {
+    /* Tablet, iPad & Mobile Sidebar Drawer (<1024px) */
+    @media (max-width: 1023px) {
       #sidebarToggle { display: inline-flex !important; }
-      #qbPage.qb-page { padding: 1rem 1rem 5rem !important; }
+      #qbPage.qb-page { margin-left: 0 !important; padding: 1.25rem 1.25rem max(4rem, env(safe-area-inset-bottom)) !important; }
+      #qbSidebar {
+        position: fixed !important;
+        inset: 0 auto 0 0 !important;
+        width: min(320px, 86vw) !important;
+        height: 100vh !important;
+        max-height: 100vh !important;
+        transform: translateX(-100%) !important;
+        transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        z-index: 300 !important;
+        box-shadow: var(--shadow-xl) !important;
+      }
+      #qbSidebar.open {
+        transform: translateX(0) !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+      }
+      #sidebarBackdrop {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.7);
+        backdrop-filter: blur(4px);
+        -webkit-backdrop-filter: blur(4px);
+        z-index: 290;
+      }
+      #sidebarBackdrop.show { display: block !important; }
+      #sidebarClose { display: inline-flex !important; }
     }
-  <style>
+
+    @media (max-width: 768px) {
+      .nav-extra-btn { display: none !important; }
+    }
     .review-layout { display:grid; grid-template-columns:280px 1fr; min-height:calc(100vh - 72px); }
     @media(max-width:800px){ .review-layout{grid-template-columns:1fr;} }
 
@@ -920,7 +954,7 @@ async function openQuizResults(quizId, quizTitle) {
           <i class="ph ph-timer"></i> ${st.time_taken_formatted || '—'}
         </td>
         <td style="padding:0.85rem 1rem;text-align:right;">
-          <a href="${(st.whatsapp_url && (st.whatsapp_url.startsWith('https://wa.me/') || st.whatsapp_url.startsWith('https://api.whatsapp.com/'))) ? escHtml(st.whatsapp_url) : '#'}" target="_blank" rel="noopener noreferrer" class="btn btn-sm" style="background:#25D366;color:#fff;border-radius:var(--radius-md);display:inline-flex;align-items:center;gap:0.35rem;font-size:0.8rem;text-decoration:none;font-weight:700;padding:0.4rem 0.75rem;box-shadow:0 2px 6px rgba(37,211,102,0.3);">
+          <a href="${escHtml(buildWhatsAppReportUrl(st, activeQuizTitle, tenantName))}" target="_blank" rel="noopener noreferrer" class="btn btn-sm wa-send-btn" style="background:#25D366;color:#fff;border-radius:var(--radius-md);display:inline-flex;align-items:center;gap:0.35rem;font-size:0.8rem;text-decoration:none;font-weight:700;padding:0.4rem 0.75rem;box-shadow:0 2px 6px rgba(37,211,102,0.3);white-space:nowrap;">
             <i class="ph-fill ph-whatsapp-logo" style="font-size:1rem;"></i> Send Report
           </a>
         </td>
@@ -930,6 +964,53 @@ async function openQuizResults(quizId, quizTitle) {
   } catch(e) {
     bodyEl.innerHTML = `<tr><td colspan="6" style="padding:2rem;text-align:center;color:var(--primary);"><i class="ph ph-warning-circle" style="font-size:1.5rem;margin-bottom:0.4rem;display:block;"></i> Failed to load report: ${escHtml(e.message)}</td></tr>`;
   }
+}
+
+
+function buildWhatsAppReportUrl(student, quizName, tenantName) {
+  if (student && student.whatsapp_url && typeof student.whatsapp_url === 'string') {
+    const raw = student.whatsapp_url.trim();
+    if (raw.startsWith('https://wa.me/') || raw.startsWith('https://api.whatsapp.com/')) {
+      return raw;
+    }
+  }
+
+  const sName = (student && (student.student_name || student.name)) || 'Student';
+  const roll = (student && student.roll_number) ? ` (Roll: ${student.roll_number})` : '';
+  const score = (student && student.score != null) ? student.score : 0;
+  const maxScore = (student && student.max_score != null) ? student.max_score : 120;
+  const pct = (student && student.percentage != null) ? student.percentage : Math.round((score / (maxScore || 1)) * 100);
+  const rank = (student && student.rank) ? `#${student.rank}` : 'Participated';
+  const timeTaken = (student && student.time_taken_formatted) ? `⏱ Time Taken: ${student.time_taken_formatted}\n` : '';
+  const institute = tenantName || 'Classes Institute';
+  const testTitle = quizName || 'Assessment Test';
+  const dateStr = new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
+
+  const msg = 
+`📊 *${institute}*
+📝 *Student Report Card — ${testTitle}*
+📅 Date: ${dateStr}
+
+👤 *Student:* ${sName}${roll}
+🏆 *Rank:* ${rank}
+🎯 *Score:* ${score} / ${maxScore}
+📈 *Accuracy:* ${pct}%
+${timeTaken}
+💡 *Teacher Feedback:* Good attempt! Review question analysis to master weaker topics.
+
+🔗 LMS Portal: https://lms.pitthugram.com
+_Sent via ${institute} Portal_`;
+
+  let phoneDigits = '';
+  if (student && student.phone) {
+    phoneDigits = String(student.phone).replace(/[^0-9]/g, '');
+    if (phoneDigits.length === 10) phoneDigits = '91' + phoneDigits;
+  }
+
+  if (phoneDigits && phoneDigits.length >= 10) {
+    return `https://wa.me/${phoneDigits}?text=${encodeURIComponent(msg)}`;
+  }
+  return `https://wa.me/?text=${encodeURIComponent(msg)}`;
 }
 
 function closeResultsModal() {

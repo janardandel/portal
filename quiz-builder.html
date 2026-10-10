@@ -3,8 +3,8 @@
 <head>
 <script src="./session.js"></script>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Quiz Builder &mdash; Pitthugram</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Quiz Builder &mdash; Portal</title>
     <link rel="icon" type="image/png" href="./favicon.png">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -12,11 +12,21 @@
     <script src="https://unpkg.com/@phosphor-icons/web" defer></script>
     <link rel="stylesheet" href="./pitthugram.css">
     <style>
-        /* -- Desktop sidebar (721px+) -- */
-        @media(min-width:721px){
-            #qbSidebar{display:flex!important;flex-direction:column!important;position:fixed!important;top:72px!important;left:0!important;width:260px!important;height:calc(100vh - 72px)!important;max-height:none!important;border-radius:0!important;transform:none!important;visibility:visible!important;opacity:1!important;z-index:50!important;}
-            #qbPage.qb-page{margin-left:260px!important;}
+        /* -- Desktop sidebar (1024px+) -- */
+        @media(min-width:1024px){
+            #qbSidebar{display:flex!important;flex-direction:column!important;position:fixed!important;top:72px!important;left:0!important;width:280px!important;height:calc(100vh - 72px)!important;max-height:none!important;border-radius:0!important;transform:none!important;visibility:visible!important;opacity:1!important;z-index:50!important;}
+            #qbPage.qb-page{margin-left:280px!important;}
             #qbPage .qb-layout{display:block!important;}
+            #sidebarToggle{display:none!important;}
+            #sidebarBackdrop{display:none!important;}
+            #sidebarClose{display:none!important;}
+        }
+        @media(max-width:1023px){
+            #sidebarToggle{display:inline-flex!important;}
+            #qbPage.qb-page{margin-left:0!important;padding:1.25rem 1.25rem max(4rem, env(safe-area-inset-bottom))!important;}
+        }
+        @media(max-width:768px){
+            .nav-extra-btn{display:none!important;}
         }
 
         /* -- Schedule fields -- */
