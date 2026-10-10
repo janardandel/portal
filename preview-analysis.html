@@ -1,4 +1,4 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8">
@@ -165,25 +165,28 @@
 
 <!-- Canonical Portal Navbar (Matching all portal.classes.institute pages) -->
 <header class="navbar">
-  <div class="nav-inner">
-    <a href="./quiz-builder.html" class="logo">
+  <div class="nav-inner" style="max-width:1200px;margin:0 auto;padding:0 1.5rem;display:flex;align-items:center;justify-content:space-between;gap:1rem;">
+    <a href="./quiz-builder.html" class="logo" style="display:flex;align-items:center;gap:0.5rem;font-weight:700;font-size:1.15rem;color:var(--text-primary);text-decoration:none;">
       <i class="ph-fill ph-graduation-cap" style="font-size:1.6rem;color:var(--primary);"></i>
       <span>Portal</span>
     </a>
-    <div class="nav-actions">
-      <a href="./reports.html?demo=1" class="btn btn-sm btn-primary">
-        <i class="ph-bold ph-chart-line-up"></i> Reports &amp; Analytics
-      </a>
-      <a href="./quiz-builder.html" class="btn btn-sm btn-outline">
+    <div class="nav-actions" style="display:flex;align-items:center;gap:0.5rem;flex-wrap:wrap;">
+      <a href="./quiz-builder.html" class="btn btn-sm btn-outline nav-extra-btn" style="padding:0.45rem 0.85rem;display:inline-flex;align-items:center;gap:0.35rem;">
         <i class="ph ph-plus-circle"></i> Quiz Builder
       </a>
-      <a href="./review-mcq.html" class="btn btn-sm btn-outline">
+      <a href="./reports.html?demo=1" class="btn btn-sm btn-primary" style="padding:0.45rem 0.85rem;display:inline-flex;align-items:center;gap:0.35rem;background:var(--primary);color:#fff;border-color:var(--primary);font-weight:700;">
+        <i class="ph-bold ph-chart-line-up"></i> Reports & Analytics
+      </a>
+      <a href="./review-mcq.html" class="btn btn-sm btn-outline nav-extra-btn" style="padding:0.45rem 0.85rem;display:inline-flex;align-items:center;gap:0.35rem;">
         <i class="ph ph-calendar-check"></i> Scheduled Tests
       </a>
-      <a href="./review-mcq.html?tab=ocr" class="btn btn-sm btn-outline">
+      <a href="./create-mcq.html" class="btn btn-sm btn-outline nav-extra-btn" style="padding:0.45rem 0.85rem;display:inline-flex;align-items:center;gap:0.35rem;">
+        <i class="ph ph-pencil-simple-line"></i> Add MCQ
+      </a>
+      <a href="./review-mcq.html?tab=ocr" class="btn btn-sm btn-outline nav-extra-btn" style="padding:0.45rem 0.85rem;display:inline-flex;align-items:center;gap:0.35rem;">
         <i class="ph ph-file-text"></i> OCR Review
       </a>
-      </div>
+    </div>
   </div>
 </header>
 
@@ -199,8 +202,9 @@
       <i class="ph-fill ph-graduation-cap" style="font-size:1.6rem;color:var(--primary);"></i>
       <div>
         <div style="font-size:0.75rem;text-transform:uppercase;color:var(--text-secondary);font-weight:700;">Connected Assessment Instance</div>
-        <div style="font-size:0.95rem;font-weight:700;">
-          </div>
+        <div style="font-size:0.95rem;font-weight:700;">Demo Assessment Instance</div>
+      </div>
+    </div>
   </div>
 
   <div id="analysisPanel"></div>
@@ -218,3 +222,6 @@
 </script>
 </body>
 </html>
+
+
+

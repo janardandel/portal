@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -525,21 +525,32 @@
             <span>Portal</span>
         </a>
         <div class="nav-actions" style="display:flex;align-items:center;gap:0.5rem;flex-wrap:wrap;">
-            <a href="./reports.html" class="btn btn-outline btn-sm" style="padding:0.45rem 0.85rem;display:inline-flex;align-items:center;gap:0.35rem;">
-                <i class="ph-bold ph-chart-line-up"></i> Reports & Analytics
+            <a href="./owner-dashboard.html" class="btn btn-sm" style="padding:0.45rem 0.85rem;display:inline-flex;align-items:center;gap:0.35rem;background:var(--primary);color:#fff;border-color:var(--primary);font-weight:700;">
+                <i class="ph-fill ph-crown"></i> Owner Dashboard
             </a>
-            <a href="./review-mcq.html" class="btn btn-outline btn-sm" style="padding:0.45rem 0.85rem;display:inline-flex;align-items:center;gap:0.35rem;">
-                <i class="ph ph-calendar-check"></i> Scheduled Tests
-            </a>
-            <a href="./review-mcq.html?tab=ocr" class="btn btn-outline btn-sm" style="padding:0.45rem 0.85rem;display:inline-flex;align-items:center;gap:0.35rem;">
-                <i class="ph ph-file-text"></i> OCR Review
-            </a>
-            <a href="./quiz-builder.html" class="btn btn-outline btn-sm" style="padding:0.45rem 0.85rem;display:inline-flex;align-items:center;gap:0.35rem;">
+            <a href="./quiz-builder.html" class="btn btn-outline btn-sm nav-extra-btn" style="padding:0.45rem 0.85rem;display:inline-flex;align-items:center;gap:0.35rem;">
                 <i class="ph ph-plus-circle"></i> Quiz Builder
             </a>
-            <button onclick="logout()" class="btn btn-outline btn-sm" style="padding:0.45rem 0.85rem;border-color:rgba(239,68,68,0.4);color:#FCA5A5;">
-                <i class="ph ph-sign-out"></i> Logout
-            </button>
+            <a href="./reports.html" class="btn btn-outline btn-sm nav-extra-btn" style="padding:0.45rem 0.85rem;display:inline-flex;align-items:center;gap:0.35rem;">
+                <i class="ph-bold ph-chart-line-up"></i> Reports & Analytics
+            </a>
+            <a href="./review-mcq.html" class="btn btn-outline btn-sm nav-extra-btn" style="padding:0.45rem 0.85rem;display:inline-flex;align-items:center;gap:0.35rem;">
+                <i class="ph ph-calendar-check"></i> Scheduled Tests
+            </a>
+            <a href="./create-mcq.html" class="btn btn-outline btn-sm nav-extra-btn" style="padding:0.45rem 0.85rem;display:inline-flex;align-items:center;gap:0.35rem;">
+                <i class="ph ph-pencil-simple-line"></i> Add MCQ
+            </a>
+            <a href="./review-mcq.html?tab=ocr" class="btn btn-outline btn-sm nav-extra-btn" style="padding:0.45rem 0.85rem;display:inline-flex;align-items:center;gap:0.35rem;">
+                <i class="ph ph-file-text"></i> OCR Review
+            </a>
+            <div id="authNavButtons" style="display:flex;align-items:center;gap:0.5rem;">
+                <button id="btnLogout" onclick="logout()" class="btn btn-outline btn-sm" style="padding:0.45rem 0.85rem;border-color:rgba(239,68,68,0.4);color:#FCA5A5;">
+                    <i class="ph ph-sign-out"></i> Logout
+                </button>
+                <a id="btnLogin" href="./index.html" class="btn btn-primary btn-sm" style="display:none;padding:0.45rem 0.85rem;">
+                    <i class="ph ph-sign-in"></i> Sign In
+                </a>
+            </div>
         </div>
     </div>
 </header>
@@ -1641,3 +1652,5 @@ async function changeCohort(action) {
 </script>
 </body>
 </html>
+
+

@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
 <script src="./session.js"></script>
@@ -183,9 +183,6 @@
             <span>Portal</span>
         </a>
         <div class="nav-actions" style="display:flex;align-items:center;gap:0.5rem;flex-wrap:wrap;">
-            <a href="./create-mcq.html" class="btn btn-sm" style="padding:0.45rem 0.85rem;display:inline-flex;align-items:center;gap:0.35rem;background:var(--primary);color:#fff;border-color:var(--primary);font-weight:700;">
-                <i class="ph ph-pencil-simple-line"></i> Add MCQ
-            </a>
             <a href="./quiz-builder.html" class="btn btn-outline btn-sm nav-extra-btn" style="padding:0.45rem 0.85rem;display:inline-flex;align-items:center;gap:0.35rem;">
                 <i class="ph ph-plus-circle"></i> Quiz Builder
             </a>
@@ -194,6 +191,9 @@
             </a>
             <a href="./review-mcq.html" class="btn btn-outline btn-sm nav-extra-btn" style="padding:0.45rem 0.85rem;display:inline-flex;align-items:center;gap:0.35rem;">
                 <i class="ph ph-calendar-check"></i> Scheduled Tests
+            </a>
+            <a href="./create-mcq.html" class="btn btn-sm" style="padding:0.45rem 0.85rem;display:inline-flex;align-items:center;gap:0.35rem;background:var(--primary);color:#fff;border-color:var(--primary);font-weight:700;">
+                <i class="ph ph-pencil-simple-line"></i> Add MCQ
             </a>
             <a href="./review-mcq.html?tab=ocr" class="btn btn-outline btn-sm nav-extra-btn" style="padding:0.45rem 0.85rem;display:inline-flex;align-items:center;gap:0.35rem;">
                 <i class="ph ph-file-text"></i> OCR Review
@@ -240,6 +240,7 @@
                         <li><a href="./review-mcq.html"><i class="ph ph-calendar-check"></i> Scheduled Tests</a></li>
                         <li><a href="./create-mcq.html" class="active"><i class="ph ph-pencil-simple-line" style="color:var(--primary);"></i> Add MCQ</a></li>
                         <li><a href="./review-mcq.html?tab=ocr"><i class="ph ph-file-text"></i> OCR Paper Review</a></li>
+                        <li id="sideNavOwnerLi" style="display:none;"><a href="./owner-dashboard.html"><i class="ph-fill ph-crown"></i> Owner Dashboard</a></li>
                     </ul>
                 </nav>
                 <div class="qb-sidebar-foot" style="margin-top:auto;padding-top:1rem;">
@@ -463,6 +464,10 @@ async function checkAuth() {
     try { currentUser = JSON.parse(user); } catch (_) { currentUser = { email: user }; }
     document.getElementById('authGate').style.display  = 'none';
     document.getElementById('cmContent').style.display = 'block';
+    if (localStorage.getItem('pg_role') === 'owner') {
+        const ownerLi = document.getElementById('sideNavOwnerLi');
+        if (ownerLi) ownerLi.style.display = 'block';
+    }
     await loadTeacher();
     return true;
 }
@@ -1190,3 +1195,5 @@ checkAuth();
 </script>
 </body>
 </html>
+
+
