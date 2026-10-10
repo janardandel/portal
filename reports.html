@@ -408,7 +408,7 @@ function closeSidebar() {
 }
 
 function getTenantMoodleUrl() {
-  return sessionStorage.getItem('pg_moodle_url') || localStorage.getItem('pg_moodle_url') || 'https://trial001.classes.institute';
+  return sessionStorage.getItem('pg_moodle_url') || localStorage.getItem('pg_moodle_url') || 'https://lms.pitthugram.com';
 }
 
 function escHtml(s) {
@@ -424,6 +424,30 @@ function escHtml(s) {
 async function loadTestsDirectory() {
   const listEl = document.getElementById('testsListContainer');
   if (!listEl) return;
+
+  const isDemo = new URLSearchParams(location.search).get('demo') === '1';
+  if (isDemo && window.PG_DEMO_ANALYSIS) {
+    allTests = [
+      {
+        id: 'demo-test-1',
+        quiz_title: 'JEE Advanced Grand Mock Test 01',
+        moodle_quiz_id: '101',
+        created_at: new Date().toISOString(),
+        question_ids: (window.PG_DEMO_ANALYSIS.questions || []).map(q => q.id)
+      },
+      {
+        id: 'demo-test-2',
+        quiz_title: 'Physics Electrostatics & Current Diagnostic',
+        moodle_quiz_id: '102',
+        created_at: new Date(Date.now() - 86400000).toISOString(),
+        question_ids: (window.PG_DEMO_ANALYSIS.questions || []).slice(0, 15).map(q => q.id)
+      }
+    ];
+    renderTestsList(allTests);
+    selectTest('101', allTests[0].quiz_title);
+    return;
+  }
+
   listEl.innerHTML = '<p style="color:var(--text-secondary);font-size:0.8rem;text-align:center;padding:1rem 0;"><i class="ph ph-spinner-gap spinner"></i> Loading tests...</p>';
 
   try {
@@ -526,8 +550,38 @@ async function selectTest(quizId, quizTitle) {
 
     const reportUrl = `https://awsn8n.pitthugram.com/webhook/moodle-quiz-report?quiz_id=${encodeURIComponent(quizId)}&institute_id=${encodeURIComponent(instituteId)}&institute_name=${encodeURIComponent(tenantName)}&moodle_url=${encodeURIComponent(moodleUrl)}`;
     
-    const res = await fetch(reportUrl);
-    const data = await res.json();
+    let data;
+    if (new URLSearchParams(location.search).get('demo') === '1' && window.PG_DEMO_ANALYSIS) {
+      data = {
+        quiz_name: window.PG_DEMO_ANALYSIS.quiz_title || 'JEE Advanced Grand Mock Test 01',
+        course_name: window.PG_DEMO_ANALYSIS.course_name || 'JEE Masterclass 2026',
+        question_count: (window.PG_DEMO_ANALYSIS.questions || []).length,
+        timelimit: 3600,
+        max_score: 120,
+        analytics: {
+          total_attempts: 8,
+          total_enrolled: 8,
+          participation_rate: 100,
+          average_score: 97.1,
+          average_percentage: 80.9,
+          highest_score: 120,
+          lowest_score: 64
+        },
+        leaderboard: (window.PG_DEMO_ANALYSIS.students || []).map((s, idx) => ({
+          rank: idx + 1,
+          name: s.student_name,
+          email: `${s.roll_number.toLowerCase()}@pitthugram.com`,
+          score: 120 - idx * 8,
+          percentage: Math.round(((120 - idx * 8) / 120) * 1000) / 10,
+          status: 'Finished'
+        })),
+        questions: window.PG_DEMO_ANALYSIS.questions,
+        question_results: window.PG_DEMO_ANALYSIS.question_results
+      };
+    } else {
+      const res = await fetch(reportUrl);
+      data = await res.json();
+    }
 
     if (!data || data.status === 'error') {
       document.getElementById('repQuizSubtitle').innerHTML = `<span style="color:var(--primary);"><i class="ph ph-warning-circle"></i> ${escHtml(data?.message || 'Report unavailable')}</span>`;

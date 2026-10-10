@@ -1,4 +1,4 @@
-/* DEMO ONLY — fake data for verifying reports analysis. Safe to delete this file;
+/* DEMO ONLY ? fake data for verifying reports analysis. Safe to delete this file;
    reports.html only uses it when the URL has ?demo=1. All names start with "DEMO". */
 (function (root) {
   // Subjects / chapters / topics are real rows from the portal's jee_syllabus table (exam = JEE).
@@ -69,6 +69,10 @@
   });
 
   root.PG_DEMO_ANALYSIS = {
+    moodle_url: 'https://lms.pitthugram.com',
+    quiz_title: 'JEE Advanced Grand Mock Test 01',
+    moodle_quiz_id: '101',
+    course_name: 'JEE Masterclass 2026',
     questions: questions,
     question_results: results,
     students: studentsRoster.map(function(s) { return { student_id: s.id, roll_number: s.roll_number, student_name: s.name }; })
