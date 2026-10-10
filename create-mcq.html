@@ -4,12 +4,13 @@
 <script src="./session.js"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Create MCQ — Pitthugram</title>
-    <link rel="icon" href="logo.png">
+    <title>Add MCQ &mdash; Portal</title>
+    <link rel="icon" type="image/png" href="./favicon.png">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/@phosphor-icons/web" defer></script>
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="./style.css">
+    <link rel="stylesheet" href="./pitthugram.css">
     <style>
         .cm-page { padding: 1.5rem; max-width: 860px; margin: 72px auto 6rem; }
         .cm-top { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1.5rem; flex-wrap: wrap; }
@@ -123,11 +124,23 @@
 <!-- Navbar -->
 <header class="navbar">
     <div class="container nav-inner">
-        <a href="index.html" class="logo"><img src="logo.png" alt="Pitthugram"></a>
-        <div class="nav-actions">
-            <a href="quiz-builder.html" class="btn btn-outline btn-sm" style="padding:0.5rem 1rem;">
-                <i class="ph ph-arrow-left"></i> Quiz Builder
+        <a href="./quiz-builder.html" class="logo" style="display:flex;align-items:center;gap:0.5rem;font-weight:700;font-size:1.15rem;color:var(--text-primary);text-decoration:none;">
+            <i class="ph-fill ph-graduation-cap" style="font-size:1.6rem;color:var(--primary);"></i>
+            <span>Portal</span>
+        </a>
+        <div class="nav-actions" style="display:flex;align-items:center;gap:0.5rem;flex-wrap:wrap;">
+            <a href="./quiz-builder.html" class="btn btn-outline btn-sm" style="padding:0.45rem 0.85rem;display:inline-flex;align-items:center;gap:0.35rem;">
+                <i class="ph ph-plus-circle"></i> Quiz Builder
             </a>
+            <a href="./reports.html" class="btn btn-outline btn-sm" style="padding:0.45rem 0.85rem;display:inline-flex;align-items:center;gap:0.35rem;">
+                <i class="ph-bold ph-chart-line-up"></i> Reports & Analytics
+            </a>
+            <a href="./review-mcq.html" class="btn btn-outline btn-sm" style="padding:0.45rem 0.85rem;display:inline-flex;align-items:center;gap:0.35rem;">
+                <i class="ph ph-calendar-check"></i> Scheduled Tests
+            </a>
+            <button onclick="logout()" class="btn btn-outline btn-sm" style="padding:0.45rem 0.85rem;border-color:rgba(239,68,68,0.4);color:#FCA5A5;">
+                <i class="ph ph-sign-out"></i> Logout
+            </button>
         </div>
     </div>
 </header>
@@ -140,7 +153,7 @@
         <i class="ph-fill ph-lock"></i>
         <h2>Login Required</h2>
         <p>Please sign in to create MCQs.</p>
-        <a href="portal/index.html" class="btn btn-primary"><i class="ph ph-sign-in"></i> Go to Login</a>
+        <a href="./index.html" class="btn btn-primary"><i class="ph ph-sign-in"></i> Go to Login</a>
     </div>
 </div>
 

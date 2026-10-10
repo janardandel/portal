@@ -3,11 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Pitthugram Paper Studio</title>
-<link rel="icon" href="logo.png">
+<title>Paper Studio &mdash; Portal</title>
+<link rel="icon" type="image/png" href="./favicon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/@phosphor-icons/web" defer></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <style>
@@ -73,7 +74,7 @@
 </div>
 
 <header style="display:none;" id="appHeader">
-  <span class="logo">PITTHUGRAM</span> <span class="pill">Paper Studio</span>
+  <span class="logo" style="display:flex;align-items:center;gap:0.4rem;font-weight:700;"><i class="ph-fill ph-graduation-cap" style="font-size:1.4rem;color:var(--red);"></i> Portal</span> <span class="pill">Paper Studio</span>
   <span class="who" id="who"></span>
   <button class="ghost" id="exportBtn">Export GIFT</button>
   <button class="ghost" id="logoutBtn">Sign out</button>

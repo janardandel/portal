@@ -4,7 +4,7 @@
 <script src="./session.js"></script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Reports & Analytics â€” Portal</title>
+  <title>Reports & Analytics &mdash; Portal</title>
   <link rel="icon" type="image/png" href="./favicon.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -13,7 +13,7 @@
   <link rel="stylesheet" href="./style.css">
   <link rel="stylesheet" href="./pitthugram.css">
   <style>
-    /* â”€â”€ Desktop sidebar (721px+) â”€â”€ */
+    /* -- Desktop sidebar (721px+) -- */
     @media (min-width: 721px) {
       #qbSidebar {
         display: flex !important;
@@ -39,7 +39,7 @@
       #qbPage.qb-page { padding: 1rem 1rem 5rem !important; }
     }
 
-    /* â”€â”€ Test Card Directory inside Sidebar â”€â”€ */
+    /* -- Test Card Directory inside Sidebar -- */
     .test-card {
       background: var(--bg-surface);
       border: 1px solid var(--border);
@@ -76,7 +76,7 @@
       align-items: center;
     }
 
-    /* â”€â”€ KPI Grid â”€â”€ */
+    /* -- KPI Grid -- */
     .kpi-grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
@@ -112,7 +112,7 @@
       margin-top: 0.35rem;
     }
 
-    /* â”€â”€ Leaderboard Table â”€â”€ */
+    /* -- Leaderboard Table -- */
     .table-wrap {
       overflow-x: auto;
       border: 1px solid var(--border);
@@ -148,7 +148,7 @@
     }
     .report-table tr:last-child td { border-bottom: none; }
 
-    /* â”€â”€ Badges â”€â”€ */
+    /* -- Badges -- */
     .status-badge {
       display: inline-flex;
       align-items: center;
@@ -356,7 +356,7 @@
 
           <div style="margin-top:1.25rem;padding:0.85rem 1.15rem;border-radius:var(--radius);background:var(--bg-surface);border:1px solid var(--border);font-size:0.8rem;color:var(--text-secondary);display:flex;align-items:center;gap:0.5rem;">
             <i class="ph-fill ph-whatsapp-logo" style="color:#25D366;font-size:1.2rem;"></i>
-            <span>Clicking <strong>Send Report</strong> opens WhatsApp directly with a pre-filled scorecard ready to send to the parent at <strong>â‚¹0 messaging cost</strong>.</span>
+            <span>Clicking <strong>Send Report</strong> opens WhatsApp directly with a pre-filled scorecard ready to send to the parent at <strong>&#8377;0 messaging cost</strong>.</span>
           </div>
         </div>
 
@@ -364,7 +364,10 @@
         <div class="empty-report" id="emptyReportState">
           <i class="ph ph-file-text"></i>
           <h3 style="font-size:1.15rem;font-weight:700;color:var(--text-primary);">No Test Selected</h3>
-          <p style="max-width:380px;font-size:0.85rem;">Select any test from the left directory to view full cohort analytics, student rankings, and WhatsApp parent scorecards.</p>
+          <p style="max-width:420px;font-size:0.85rem;line-height:1.5;">Select any scheduled test from the left directory to view full cohort analytics, student rankings, and WhatsApp parent scorecards, or load the sample cohort demo below.</p>
+          <button onclick="loadSampleDemoTest()" class="btn btn-outline btn-sm" style="margin-top:0.5rem;display:inline-flex;align-items:center;gap:0.4rem;border-color:var(--primary);color:var(--primary);font-weight:600;">
+            <i class="ph ph-flask"></i> Load Sample Assessment Demo
+          </button>
         </div>
       </main>
 
@@ -424,30 +427,40 @@ function escHtml(s) {
     .replace(/'/g, '&#39;');
 }
 
+const SAMPLE_DEMO_TESTS = [
+  {
+    id: 'demo-test-1',
+    quiz_title: 'JEE Advanced Grand Mock Test 01',
+    moodle_quiz_id: '101',
+    created_at: new Date().toISOString(),
+    question_ids: (window.PG_DEMO_ANALYSIS?.questions || []).map(q => q.id),
+    class: '12',
+    is_sample: true
+  },
+  {
+    id: 'demo-test-2',
+    quiz_title: 'Physics Electrostatics & Current Diagnostic',
+    moodle_quiz_id: '102',
+    created_at: new Date(Date.now() - 86400000).toISOString(),
+    question_ids: (window.PG_DEMO_ANALYSIS?.questions || []).slice(0, 15).map(q => q.id),
+    class: '11',
+    is_sample: true
+  }
+];
+
+function loadSampleDemoTest() {
+  allTests = SAMPLE_DEMO_TESTS;
+  renderTestsList(allTests);
+  selectTest('101', allTests[0].quiz_title);
+}
+
 async function loadTestsDirectory() {
   const listEl = document.getElementById('testsListContainer');
   if (!listEl) return;
 
   const isDemo = new URLSearchParams(location.search).get('demo') === '1';
   if (isDemo && window.PG_DEMO_ANALYSIS) {
-    allTests = [
-      {
-        id: 'demo-test-1',
-        quiz_title: 'JEE Advanced Grand Mock Test 01',
-        moodle_quiz_id: '101',
-        created_at: new Date().toISOString(),
-        question_ids: (window.PG_DEMO_ANALYSIS.questions || []).map(q => q.id)
-      },
-      {
-        id: 'demo-test-2',
-        quiz_title: 'Physics Electrostatics & Current Diagnostic',
-        moodle_quiz_id: '102',
-        created_at: new Date(Date.now() - 86400000).toISOString(),
-        question_ids: (window.PG_DEMO_ANALYSIS.questions || []).slice(0, 15).map(q => q.id)
-      }
-    ];
-    renderTestsList(allTests);
-    selectTest('101', allTests[0].quiz_title);
+    loadSampleDemoTest();
     return;
   }
 
@@ -458,7 +471,15 @@ async function loadTestsDirectory() {
     const list = await res.json();
 
     if (!list || !list.length) {
-      listEl.innerHTML = '<p style="color:var(--text-secondary);font-size:0.8rem;padding:1rem;text-align:center;">No tests found.</p>';
+      // Graceful fallback: If no live scheduled assessments in institute database yet,
+      // load the sample demo tests with an explanatory banner so the user never sees an empty screen.
+      allTests = SAMPLE_DEMO_TESTS;
+      renderTestsList(allTests);
+      const note = document.createElement('div');
+      note.style.cssText = 'padding:0.45rem 0.65rem;margin-bottom:0.6rem;background:rgba(244,0,9,0.08);border:1px dashed rgba(244,0,9,0.3);border-radius:var(--radius);font-size:0.75rem;color:var(--text-secondary);';
+      note.innerHTML = '<strong style="color:var(--primary);">Sample Tests:</strong> No live database tests found yet for your institute. Showing sample cohort data below.';
+      listEl.insertBefore(note, listEl.firstChild);
+      selectTest('101', allTests[0].quiz_title);
       return;
     }
 
@@ -476,7 +497,10 @@ async function loadTestsDirectory() {
       selectTest(qid || '13', firstTest.quiz_title || 'Recent Test');
     }
   } catch(e) {
-    listEl.innerHTML = `<p style="color:var(--primary);font-size:0.8rem;padding:0.75rem;">Failed to load tests: ${escHtml(e.message)}</p>`;
+    // On fetch error (e.g. offline/network), show sample tests so interface remains fully functional
+    allTests = SAMPLE_DEMO_TESTS;
+    renderTestsList(allTests);
+    selectTest('101', allTests[0].quiz_title);
   }
 }
 
@@ -554,9 +578,10 @@ async function selectTest(quizId, quizTitle) {
     const reportUrl = `https://awsn8n.pitthugram.com/webhook/moodle-quiz-report?quiz_id=${encodeURIComponent(quizId)}&institute_id=${encodeURIComponent(instituteId)}&institute_name=${encodeURIComponent(tenantName)}&moodle_url=${encodeURIComponent(moodleUrl)}`;
     
     let data;
-    if (new URLSearchParams(location.search).get('demo') === '1' && window.PG_DEMO_ANALYSIS) {
+    const isSampleTest = (allTests.find(t => (t.moodle_quiz_id === quizId || t.id === quizId)) || {}).is_sample;
+    if ((new URLSearchParams(location.search).get('demo') === '1' || isSampleTest) && window.PG_DEMO_ANALYSIS) {
       data = {
-        quiz_name: window.PG_DEMO_ANALYSIS.quiz_title || 'JEE Advanced Grand Mock Test 01',
+        quiz_name: quizTitle || window.PG_DEMO_ANALYSIS.quiz_title || 'JEE Advanced Grand Mock Test 01',
         course_name: window.PG_DEMO_ANALYSIS.course_name || 'JEE Masterclass 2026',
         question_count: (window.PG_DEMO_ANALYSIS.questions || []).length,
         timelimit: 3600,
@@ -615,12 +640,15 @@ async function selectTest(quizId, quizTitle) {
     document.getElementById('leaderboardSummary').textContent = `${list.length} student submission(s)`;
 
     // Question-level analysis: webhook data if present, else same-origin /api/question-analysis,
-    // or clearly-marked demo data via ?demo=1
+    // or sample/demo analysis data
     (async function () {
       var panel = document.getElementById('analysisPanel');
-      var demo = new URLSearchParams(location.search).get('demo') === '1' && window.PG_DEMO_ANALYSIS;
+      var demo = (new URLSearchParams(location.search).get('demo') === '1' || isSampleTest) && window.PG_DEMO_ANALYSIS;
       var src = null, isDemo = false;
-      if (data.questions && data.question_results) src = data;
+      if (data.questions && data.question_results) {
+        src = data;
+        isDemo = isSampleTest;
+      }
       else if (demo) { src = window.PG_DEMO_ANALYSIS; isDemo = true; }
       else {
         try {
@@ -656,7 +684,7 @@ async function selectTest(quizId, quizTitle) {
           <td>${rankBadge}</td>
           <td>
             <div style="font-weight:700;color:var(--text-primary);">${escHtml(st.student_name)}</div>
-            <div style="font-size:0.77rem;color:var(--text-secondary);">${escHtml(st.email || 'â€”')}${st.phone ? ' â€¢ ' + escHtml(st.phone) : ''}</div>
+            <div style="font-size:0.77rem;color:var(--text-secondary);">${escHtml(st.email || '&mdash;')}${st.phone ? ' &bull; ' + escHtml(st.phone) : ''}</div>
           </td>
           <td style="font-weight:700;color:var(--text-primary);">
             ${st.score} <span style="font-size:0.76rem;font-weight:400;color:var(--text-secondary);">/ ${st.max_score}</span>
@@ -665,7 +693,7 @@ async function selectTest(quizId, quizTitle) {
             <span class="status-badge ${pctClass}">${st.percentage}%</span>
           </td>
           <td style="font-size:0.85rem;color:var(--text-secondary);">
-            <i class="ph ph-timer"></i> ${st.time_taken_formatted || 'â€”'}
+            <i class="ph ph-timer"></i> ${st.time_taken_formatted || '&mdash;'}
           </td>
           <td style="font-size:0.82rem;color:var(--text-secondary);">
             ${submittedDate}

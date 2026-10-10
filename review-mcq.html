@@ -143,6 +143,9 @@
       <a href="./quiz-builder.html" class="btn btn-outline btn-sm" style="padding:0.45rem 0.85rem;display:inline-flex;align-items:center;gap:0.35rem;">
         <i class="ph ph-plus-circle"></i> Quiz Builder
       </a>
+      <a href="https://lms.pitthugram.com" target="_blank" class="btn btn-outline btn-sm" style="padding:0.45rem 0.85rem;display:inline-flex;align-items:center;gap:0.35rem;border-color:var(--primary);color:var(--primary);">
+        <i class="ph ph-arrow-square-out"></i> LMS
+      </a>
       <button onclick="logout()" class="btn btn-outline btn-sm" style="padding:0.45rem 0.85rem;border-color:rgba(239,68,68,0.4);color:#FCA5A5;">
         <i class="ph ph-sign-out"></i> Logout
       </button>
@@ -816,7 +819,7 @@ async function loadScheduledQuizzes() {
           <button onclick="openQuizResults('${targetQuizId}', '${safeTitle}')" class="btn btn-primary btn-sm" style="font-size:0.82rem;display:inline-flex;align-items:center;gap:0.35rem;font-weight:700;">
             <i class="ph-bold ph-chart-bar"></i> View Results
           </button>
-          <a :href="tenantMoodleUrl" href="https://trial001.classes.institute" onclick="this.href=getTenantMoodleUrl()" target="_blank" class="btn btn-outline btn-sm" style="font-size:0.8rem;"><i class="ph ph-arrow-square-out"></i> Moodle</a>
+          <a :href="tenantMoodleUrl" href="https://lms.pitthugram.com" onclick="this.href=getTenantMoodleUrl()" target="_blank" class="btn btn-outline btn-sm" style="font-size:0.8rem;"><i class="ph ph-arrow-square-out"></i> LMS</a>
         </div>
       </div>`;
     }).join('');
@@ -941,7 +944,7 @@ function refreshCurrentReport() {
 }
 
 function getTenantMoodleUrl() {
-    return sessionStorage.getItem('pg_moodle_url') || localStorage.getItem('pg_moodle_url') || 'https://trial001.classes.institute';
+    return sessionStorage.getItem('pg_moodle_url') || localStorage.getItem('pg_moodle_url') || 'https://lms.pitthugram.com';
 }
 function openSidebar() {
   const sb = document.getElementById('qbSidebar');
