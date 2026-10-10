@@ -6,6 +6,7 @@
   <title>Class Performance &amp; Student Analysis Preview &mdash; Pitthugram</title>
   <link rel="icon" type="image/png" href="favicon.png">
   <link rel="stylesheet" href="pitthugram.css">
+  <script src="https://unpkg.com/@phosphor-icons/web"></script>
   <style>
     :root {
       --bg: #f8fafc;
@@ -17,6 +18,8 @@
       --text-secondary: #64748b;
       --border-color: #e2e8f0;
       --bg-card: #ffffff;
+      --primary: #EF4444;
+      --primary-hover: #DC2626;
     }
     @media (prefers-color-scheme: dark) {
       :root {
@@ -37,12 +40,99 @@
       color: var(--text);
       font: 14.5px/1.55 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     }
+    
+    /* Top Header Bar */
+    .preview-header {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(255, 255, 255, 0.94);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      border-bottom: 1px solid var(--border-color);
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+    }
+    @media (prefers-color-scheme: dark) {
+      .preview-header {
+        background: rgba(15, 23, 42, 0.94);
+      }
+    }
+    .header-inner {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 10px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+    .brand-link {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+      color: var(--text-primary);
+      font-weight: 800;
+      font-size: 1.25rem;
+      letter-spacing: -0.02em;
+    }
+    .brand-link img {
+      height: 38px;
+      width: auto;
+      object-fit: contain;
+    }
+    .brand-badge {
+      font-size: 0.72rem;
+      background: rgba(239, 68, 68, 0.12);
+      color: var(--primary);
+      padding: 2px 7px;
+      border-radius: 4px;
+      font-weight: 700;
+      letter-spacing: normal;
+    }
+    .header-nav {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .nav-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 0.84rem;
+      font-weight: 600;
+      text-decoration: none;
+      color: var(--text-secondary);
+      border: 1px solid transparent;
+      transition: all 0.15s ease;
+    }
+    .nav-btn:hover {
+      color: var(--text-primary);
+      background: rgba(128, 128, 128, 0.08);
+      border-color: var(--border-color);
+    }
+    .nav-btn.active {
+      color: var(--primary);
+      background: rgba(239, 68, 68, 0.08);
+      border-color: rgba(239, 68, 68, 0.25);
+    }
+    .nav-btn-primary {
+      color: white !important;
+      background: #2563eb;
+    }
+    .nav-btn-primary:hover {
+      background: #1d4ed8;
+    }
+
     main {
       max-width: 1040px;
       margin: 0 auto;
       padding: 24px 16px 64px;
     }
-    header {
+    .page-title-row {
       margin-bottom: 20px;
       border-bottom: 1px solid var(--line);
       padding-bottom: 16px;
@@ -95,16 +185,49 @@
   </style>
 </head>
 <body>
+
+<!-- Unified Pitthugram Top Header Bar -->
+<header class="preview-header">
+  <div class="header-inner">
+    <a href="./owner-dashboard.html" class="brand-link" title="Pitthugram Portal">
+      <img src="./logo.png" alt="Pitthugram" onerror="this.src='./favicon.png'">
+      <span>Pitthugram</span>
+      <span class="brand-badge">Portal</span>
+    </a>
+
+    <nav class="header-nav">
+      <a href="./reports.html?demo=1" class="nav-btn active">
+        <i class="ph-bold ph-chart-line-up"></i> Reports &amp; Analytics
+      </a>
+      <a href="./quiz-builder.html" class="nav-btn">
+        <i class="ph ph-plus-circle"></i> Quiz Builder
+      </a>
+      <a href="./owner-dashboard.html" class="nav-btn">
+        <i class="ph ph-squares-four"></i> Dashboard
+      </a>
+      <a href="./review-mcq.html" class="nav-btn">
+        <i class="ph ph-calendar-check"></i> Scheduled Tests
+      </a>
+      <a href="./paper-studio.html" class="nav-btn">
+        <i class="ph ph-file-text"></i> Paper Studio
+      </a>
+      <a href="https://lms.pitthugram.com" target="_blank" class="nav-btn nav-btn-primary" style="margin-left:6px;">
+        <i class="ph ph-arrow-square-out"></i> Open Moodle LMS &#8599;
+      </a>
+    </nav>
+  </div>
+</header>
+
 <main>
-  <header>
+  <div class="page-title-row">
     <h1>Class Performance &amp; Student Analysis &mdash; Live Preview</h1>
     <p class="sub">Demonstrating whole class diagnostics, topic error heatmaps, and individual student drill-down via Roll Number &amp; Name selector.</p>
-  </header>
+  </div>
 
   <!-- Connected Moodle LMS Instance Banner -->
   <div style="background:var(--card);border:1px solid var(--border-color);border-radius:8px;padding:12px 16px;margin-bottom:20px;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px;box-shadow:0 1px 2px rgba(0,0,0,0.04);">
-    <div style="display:flex;align-items:center;gap:10px;">
-      <div style="background:#eff6ff;color:#2563eb;width:36px;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-weight:700;">LMS</div>
+    <div style="display:flex;align-items:center;gap:12px;">
+      <img src="./logo.png" alt="Pitthugram" style="height:32px;width:auto;object-fit:contain;" onerror="this.style.display='none'">
       <div>
         <div style="font-size:0.75rem;text-transform:uppercase;color:var(--text-secondary);font-weight:700;">Connected LMS Instance</div>
         <div style="font-size:0.95rem;font-weight:700;">
