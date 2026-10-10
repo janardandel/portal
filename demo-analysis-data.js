@@ -1,4 +1,4 @@
-/* DEMO ONLY ? fake data for verifying reports analysis. Safe to delete this file;
+/* DEMO ONLY - fake data for verifying reports analysis. Safe to delete this file;
    reports.html only uses it when the URL has ?demo=1. All names start with "DEMO". */
 (function (root) {
   // Subjects / chapters / topics are real rows from the portal's jee_syllabus table (exam = JEE).

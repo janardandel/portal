@@ -12,7 +12,7 @@
     if (q.subject) p.push(q.subject);
     if (q.chapter && q.chapter !== q.subject) p.push(q.chapter);
     if (q.topic && q.topic !== q.chapter) p.push(q.topic);
-    return p.join(' ? ') || 'General';
+    return p.join(' > ') || 'General';
   }
 
   function add(bucket, q, r) {
@@ -150,6 +150,10 @@
     };
 
     return {
+      moodle_url: (data && data.moodle_url) || 'https://lms.pitthugram.com',
+      quiz_title: (data && data.quiz_title) || 'JEE Advanced Grand Mock Test 01',
+      moodle_quiz_id: (data && data.moodle_quiz_id) || '101',
+      course_name: (data && data.course_name) || 'JEE Masterclass 2026',
       cohort: cohort,
       classSummary: classSummary,
       students: students,
@@ -161,7 +165,7 @@
   function parentSummary(student) {
     if (!student || !student.needsImprovement || !student.needsImprovement.length) return '';
     return 'Focus areas: ' + student.needsImprovement.slice(0, 3).map(function (c) {
-      return c.subject + ' ? ' + c.chapter + (c.topic ? ' ? ' + c.topic : '') + ' (' + c.accuracy + '%)';
+      return c.subject + ' - ' + c.chapter + (c.topic ? ' - ' + c.topic : '') + ' (' + c.accuracy + '%)';
     }).join('; ');
   }
 
@@ -175,15 +179,15 @@
   function areaRows(list, n) {
     return list.slice(0, n).map(function (a) {
       var badge = a.accuracy < WEAK_BELOW
-        ? '<span style="background:#fee2e2;color:#991b1b;padding:2px 6px;border-radius:4px;font-size:0.75rem;font-weight:700">? Needs Review</span>'
-        : (a.accuracy >= 75 ? '<span style="background:#d1fae5;color:#065f46;padding:2px 6px;border-radius:4px;font-size:0.75rem;font-weight:600">? Strong</span>' : '');
+        ? '<span style="background:#fee2e2;color:#991b1b;padding:2px 6px;border-radius:4px;font-size:0.75rem;font-weight:700">&bull; Needs Review</span>'
+        : (a.accuracy >= 75 ? '<span style="background:#d1fae5;color:#065f46;padding:2px 6px;border-radius:4px;font-size:0.75rem;font-weight:600">&bull; Strong</span>' : '');
       return '<tr>' +
         '<td style="font-weight:500">' + esc(a.name) + ' ' + badge + '</td>' +
         '<td>' + a.correct + '/' + a.total + '</td>' +
         '<td style="min-width:110px"><div style="display:flex;align-items:center;gap:8px">' + bar(a.accuracy) + '<span style="font-weight:600;font-size:0.85rem">' + a.accuracy + '%</span></div></td>' +
         '<td>' + a.skipped + '</td>' +
         '<td style="color:' + (a.negLoss ? '#b91c1c' : 'inherit') + '">' + (a.negLoss ? '-' + a.negLoss : '0') + '</td>' +
-        '<td>' + (a.avgTime != null ? a.avgTime + 's' : '?') + '</td>' +
+        '<td>' + (a.avgTime != null ? a.avgTime + 's' : '&mdash;') + '</td>' +
         '</tr>';
     }).join('');
   }
@@ -213,7 +217,7 @@
 
     if (opts.demo) {
       h += '<div style="background:#fef3c7;color:#92400e;border:1px solid #f59e0b;border-radius:8px;padding:.6rem .9rem;font-weight:600;margin-bottom:1rem;display:flex;align-items:center;justify-content:space-between;">' +
-        '<span>?? <strong>DEMO MODE:</strong> Displaying simulated cohort performance across 8 students.</span>' +
+        '<span><strong>DEMO MODE:</strong> Displaying simulated cohort performance across 8 students.</span>' +
         '<span style="font-size:0.8rem;background:#fde68a;padding:2px 8px;border-radius:4px">Moodle Sync Preview</span></div>';
     }
 
@@ -225,8 +229,8 @@
     h += '<div style="display:flex;align-items:center;gap:10px;flex:1;min-width:280px;">';
     h += '<label for="pgStudentSelect" style="font-weight:700;font-size:0.88rem;white-space:nowrap;">Select View:</label>';
     h += '<select id="pgStudentSelect" style="flex:1;max-width:440px;padding:7px 12px;border:1px solid var(--border-color, #cbd5e1);border-radius:6px;font-size:0.88rem;font-weight:500;background:white;cursor:pointer;">';
-    h += '<option value="CLASS_OVERVIEW" selected>?? Entire Class Performance (Overview)</option>';
-    h += '<option value="TOPIC_ANALYSIS">?? Topic-wise Breakdown (Class Wide)</option>';
+    h += '<option value="CLASS_OVERVIEW" selected>Entire Class Performance (Overview)</option>';
+    h += '<option value="TOPIC_ANALYSIS">Topic-wise Breakdown (Class Wide)</option>';
     h += '<optgroup label="Individual Students (Roll Number - Name)">';
     roster.forEach(function (std) {
       h += '<option value="' + esc(std.student_id) + '">[' + esc(std.roll_number) + '] ' + esc(std.student_name) + ' (' + std.accuracy + '%)</option>';
@@ -261,13 +265,13 @@
 
       out += '<div style="background:var(--bg-card, white);border:1px solid var(--border-color, #e2e8f0);border-radius:8px;padding:12px 14px;">' +
         '<div style="font-size:0.75rem;text-transform:uppercase;color:var(--text-secondary, #64748b);font-weight:600">Top Performer</div>' +
-        '<div style="font-size:1.15rem;font-weight:700;color:#16a34a;margin-top:4px;text-overflow:ellipsis;overflow:hidden;white-space:nowrap">' + (summary.topStudent ? esc(summary.topStudent.student_name.split('(')[0].replace('DEMO','').trim()) : '?') + '</div>' +
-        '<div style="font-size:0.8rem;color:#64748b;margin-top:2px">Roll: ' + (summary.topStudent ? summary.topStudent.roll_number : '?') + ' (' + (summary.topStudent ? summary.topStudent.accuracy : 0) + '%)</div></div>';
+        '<div style="font-size:1.15rem;font-weight:700;color:#16a34a;margin-top:4px;text-overflow:ellipsis;overflow:hidden;white-space:nowrap">' + (summary.topStudent ? esc(summary.topStudent.student_name.split('(')[0].replace('DEMO','').trim()) : '&mdash;') + '</div>' +
+        '<div style="font-size:0.8rem;color:#64748b;margin-top:2px">Roll: ' + (summary.topStudent ? summary.topStudent.roll_number : '&mdash;') + ' (' + (summary.topStudent ? summary.topStudent.accuracy : 0) + '%)</div></div>';
 
       out += '<div style="background:var(--bg-card, white);border:1px solid var(--border-color, #e2e8f0);border-radius:8px;padding:12px 14px;">' +
         '<div style="font-size:0.75rem;text-transform:uppercase;color:var(--text-secondary, #64748b);font-weight:600">Lowest Score</div>' +
-        '<div style="font-size:1.15rem;font-weight:700;color:#dc2626;margin-top:4px;text-overflow:ellipsis;overflow:hidden;white-space:nowrap">' + (summary.lowestStudent ? esc(summary.lowestStudent.student_name.split('(')[0].replace('DEMO','').trim()) : '?') + '</div>' +
-        '<div style="font-size:0.8rem;color:#64748b;margin-top:2px">Roll: ' + (summary.lowestStudent ? summary.lowestStudent.roll_number : '?') + ' (' + (summary.lowestStudent ? summary.lowestStudent.accuracy : 0) + '%)</div></div>';
+        '<div style="font-size:1.15rem;font-weight:700;color:#dc2626;margin-top:4px;text-overflow:ellipsis;overflow:hidden;white-space:nowrap">' + (summary.lowestStudent ? esc(summary.lowestStudent.student_name.split('(')[0].replace('DEMO','').trim()) : '&mdash;') + '</div>' +
+        '<div style="font-size:0.8rem;color:#64748b;margin-top:2px">Roll: ' + (summary.lowestStudent ? summary.lowestStudent.roll_number : '&mdash;') + ' (' + (summary.lowestStudent ? summary.lowestStudent.accuracy : 0) + '%)</div></div>';
 
       out += '<div style="background:var(--bg-card, white);border:1px solid var(--border-color, #e2e8f0);border-radius:8px;padding:12px 14px;">' +
         '<div style="font-size:0.75rem;text-transform:uppercase;color:var(--text-secondary, #64748b);font-weight:600">At-Risk Students</div>' +
@@ -289,7 +293,7 @@
       if (weakTopics.length) {
         out += '<div style="background:#fff1f2;border:1px solid #fecdd3;border-radius:8px;padding:1rem;margin:1.5rem 0;">' +
           '<div style="display:flex;align-items:center;gap:8px;color:#9f1239;font-weight:700;margin-bottom:0.5rem">' +
-          '<span>?? Class-Wide Urgent Topics to Re-Teach (' + weakTopics.length + ' topics below ' + WEAK_BELOW + '% accuracy)</span></div>' +
+          '<span>Class-Wide Urgent Topics to Re-Teach (' + weakTopics.length + ' topics below ' + WEAK_BELOW + '% accuracy)</span></div>' +
           table('Critical Remediation Areas', weakTopics) + '</div>';
       }
 
@@ -312,7 +316,7 @@
           '<td style="padding:8px;font-weight:600">' + std.score + '/' + std.maxScore + '</td>' +
           '<td style="padding:8px;"><div style="display:flex;align-items:center;gap:6px;">' + bar(std.accuracy) + '<span>' + std.accuracy + '%</span> ' + statusBadge + '</div></td>' +
           '<td style="padding:8px;color:' + (std.weakCount ? '#dc2626' : '#16a34a') + ';font-weight:600;">' + std.weakCount + ' areas</td>' +
-          '<td style="padding:8px;"><button class="pg-inspect-btn" data-id="' + esc(std.student_id) + '" style="background:#2563eb;color:white;border:none;border-radius:4px;padding:4px 10px;font-size:0.8rem;cursor:pointer;font-weight:500;">View Analysis ?</button></td>' +
+          '<td style="padding:8px;"><button class="pg-inspect-btn" data-id="' + esc(std.student_id) + '" style="background:#2563eb;color:white;border:none;border-radius:4px;padding:4px 10px;font-size:0.8rem;cursor:pointer;font-weight:500;">View Analysis &rarr;</button></td>' +
           '</tr>';
       });
 
@@ -322,7 +326,7 @@
 
     function renderTopicAnalysis() {
       var out = '<div style="margin-bottom:1.5rem;">';
-      out += '<h3 style="font-size:1.05rem;font-weight:700;margin-bottom:0.5rem">?? Comprehensive Topic-Wise Diagnostics (Whole Class)</h3>';
+      out += '<h3 style="font-size:1.05rem;font-weight:700;margin-bottom:0.5rem">Comprehensive Topic-Wise Diagnostics (Whole Class)</h3>';
       out += '<p style="color:var(--text-secondary, #64748b);font-size:0.85rem;margin-bottom:1rem;">All tested syllabus topics ranked by accuracy and marks lost across all students in the batch.</p>';
       var list = c.topics.length ? c.topics : c.chapters;
       out += table('All Tested Topics (' + list.length + ' topics)', list);
@@ -342,7 +346,7 @@
       out += '<div>' +
         '<div style="font-size:0.8rem;color:#2563eb;font-weight:700;letter-spacing:0.05em;text-transform:uppercase">Roll No: ' + esc(s.roll_number) + '</div>' +
         '<h2 style="font-size:1.25rem;font-weight:800;margin:3px 0">' + esc(s.student_name) + '</h2>' +
-        '<div style="font-size:0.85rem;color:var(--text-secondary, #64748b);">Class Rank: <strong>#' + (s.rank || '?') + '</strong> of ' + summary.totalStudents + ' students</div>' +
+        '<div style="font-size:0.85rem;color:var(--text-secondary, #64748b);">Class Rank: <strong>#' + (s.rank || '&mdash;') + '</strong> of ' + summary.totalStudents + ' students</div>' +
         '</div>';
 
       out += '<div style="text-align:right;">' +
@@ -354,19 +358,19 @@
       // Needs Improvement Cards
       if (s.needsImprovement.length) {
         out += '<div style="background:#fff1f2;border:1px solid #fecdd3;border-radius:6px;padding:10px 14px;margin-bottom:1.2rem;">' +
-          '<div style="color:#9f1239;font-weight:700;font-size:0.9rem;margin-bottom:6px">?? Needs Immediate Improvement (' + s.needsImprovement.length + ' Weak Areas):</div>' +
+          '<div style="color:#9f1239;font-weight:700;font-size:0.9rem;margin-bottom:6px">Needs Immediate Improvement (' + s.needsImprovement.length + ' Weak Areas):</div>' +
           table('Weak Areas (< ' + WEAK_BELOW + '% accuracy)', s.needsImprovement) +
           '</div>';
       } else {
         out += '<div style="background:#ecfdf5;border:1px solid #a7f3d0;color:#065f46;border-radius:6px;padding:10px 14px;font-weight:600;font-size:0.88rem;margin-bottom:1.2rem;">' +
-          '?? Outstanding Performance: No weak topics detected for this student!</div>';
+          'Outstanding Performance: No weak topics detected for this student!</div>';
       }
 
       // WhatsApp Parent Summary Box
       var summaryMsg = parentSummary(s);
       if (summaryMsg) {
         out += '<div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:6px;padding:10px 14px;margin-bottom:1.2rem;">' +
-          '<div style="font-size:0.8rem;color:#166534;font-weight:700;text-transform:uppercase;margin-bottom:4px">?? Parent WhatsApp Feedback Note:</div>' +
+          '<div style="font-size:0.8rem;color:#166534;font-weight:700;text-transform:uppercase;margin-bottom:4px">Parent WhatsApp Feedback Note:</div>' +
           '<div style="font-size:0.88rem;color:#14532d;font-style:italic">"Dear Parent, ' + esc(s.student_name.split('(')[0].trim()) + ' scored ' + s.overall.accuracy + '% in the recent test. ' + esc(summaryMsg) + '."</div>' +
           '</div>';
       }

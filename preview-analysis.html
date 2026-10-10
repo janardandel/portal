@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Class Performance &amp; Student Analysis Preview ? Pitthugram</title>
+  <title>Class Performance &amp; Student Analysis Preview &mdash; Pitthugram</title>
   <link rel="icon" type="image/png" href="favicon.png">
   <link rel="stylesheet" href="pitthugram.css">
   <style>
@@ -84,31 +84,39 @@
     .report-table tr:last-child td {
       border-bottom: 0;
     }
+    .status-dot {
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      background: #16a34a;
+      border-radius: 50%;
+      margin-right: 5px;
+    }
   </style>
 </head>
 <body>
 <main>
   <header>
-    <h1>Class Performance &amp; Student Analysis ? Live Preview</h1>
+    <h1>Class Performance &amp; Student Analysis &mdash; Live Preview</h1>
     <p class="sub">Demonstrating whole class diagnostics, topic error heatmaps, and individual student drill-down via Roll Number &amp; Name selector.</p>
   </header>
 
   <!-- Connected Moodle LMS Instance Banner -->
   <div style="background:var(--card);border:1px solid var(--border-color);border-radius:8px;padding:12px 16px;margin-bottom:20px;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px;box-shadow:0 1px 2px rgba(0,0,0,0.04);">
     <div style="display:flex;align-items:center;gap:10px;">
-      <span style="font-size:1.4rem;">??</span>
+      <div style="background:#eff6ff;color:#2563eb;width:36px;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-weight:700;">LMS</div>
       <div>
         <div style="font-size:0.75rem;text-transform:uppercase;color:var(--text-secondary);font-weight:700;">Connected LMS Instance</div>
         <div style="font-size:0.95rem;font-weight:700;">
-          <a href="https://lms.pitthugram.com" target="_blank" style="color:#2563eb;text-decoration:none;">https://lms.pitthugram.com ?</a>
-          <span style="background:#dcfce7;color:#166534;font-size:0.72rem;padding:2px 8px;border-radius:12px;font-weight:700;margin-left:6px;">? Online (Active)</span>
+          <a href="https://lms.pitthugram.com" target="_blank" style="color:#2563eb;text-decoration:none;">https://lms.pitthugram.com &#8599;</a>
+          <span style="background:#dcfce7;color:#166534;font-size:0.75rem;padding:2px 8px;border-radius:12px;font-weight:700;margin-left:6px;"><span class="status-dot"></span>Online (Active)</span>
         </div>
       </div>
     </div>
     <div style="display:flex;align-items:center;gap:12px;">
       <span style="font-size:0.84rem;color:var(--text-secondary);">Course: <strong>JEE Masterclass 2026</strong></span>
       <a href="https://lms.pitthugram.com" target="_blank" style="background:#2563eb;color:white;text-decoration:none;padding:6px 14px;border-radius:6px;font-size:0.84rem;font-weight:600;display:inline-flex;align-items:center;gap:6px;">
-        Open Moodle LMS ?
+        Open Moodle LMS &#8599;
       </a>
     </div>
   </div>
