@@ -837,7 +837,13 @@ async function fetchQuestions() {
 
     // Direct query to the central question bank
     let url = SUPABASE_URL + '/rest/v1/questions?is_active=eq.true&select=*';
-    if (dbCls)       url += '&class=eq.' + encodeURIComponent(dbCls);
+    if (dbCls) {
+        if (dbCls === '11' || dbCls === '12') {
+            url += '&class=ilike.' + encodeURIComponent(dbCls) + '*';
+        } else {
+            url += '&class=eq.' + encodeURIComponent(dbCls);
+        }
+    }
     if (activeBoard) url += '&board=eq.' + encodeURIComponent(activeBoard);
     if (subject)     url += '&subject=ilike.*' + encodeURIComponent(subject) + '*';
     if (chapter)     url += '&chapter=ilike.*' + encodeURIComponent(chapterCore(chapter)) + '*';
@@ -871,7 +877,13 @@ async function fetchQuestions() {
     // Fallback 1: Relax chapter and difficulty if specific filters returned 0 rows
     try {
         let fallbackUrl = SUPABASE_URL + '/rest/v1/questions?is_active=eq.true&select=*';
-        if (dbCls)   fallbackUrl += '&class=eq.' + encodeURIComponent(dbCls);
+        if (dbCls) {
+            if (dbCls === '11' || dbCls === '12') {
+                fallbackUrl += '&class=ilike.' + encodeURIComponent(dbCls) + '*';
+            } else {
+                fallbackUrl += '&class=eq.' + encodeURIComponent(dbCls);
+            }
+        }
         if (subject) fallbackUrl += '&subject=ilike.*' + encodeURIComponent(subject) + '*';
         fallbackUrl += '&order=created_at.desc&limit=50';
         const fbRes = await fetch(fallbackUrl, {
@@ -1637,12 +1649,13 @@ async function loadFilterBar(cls, preSubject, board) {
 
     const dbCls = cls;
     const boardQ = board ? '&board=eq.' + encodeURIComponent(board) : '';
+    const classQ = (dbCls === '11' || dbCls === '12') ? ('&class=ilike.' + encodeURIComponent(dbCls) + '*') : (dbCls ? ('&class=eq.' + encodeURIComponent(dbCls)) : '');
     let subjects = [];
 
     // Boards: standard subjects from board_subjects
     if (board) {
         try {
-            const sr = await fetch(SUPABASE_URL + '/rest/v1/board_subjects?select=subject&board=eq.' + encodeURIComponent(board) + '&class=eq.' + encodeURIComponent(dbCls) + '&is_active=eq.true&order=subject.asc', { headers: { 'apikey': SUPABASE_KEY } });
+            const sr = await fetch(SUPABASE_URL + '/rest/v1/board_subjects?select=subject&board=eq.' + encodeURIComponent(board) + classQ + '&is_active=eq.true&order=subject.asc', { headers: { 'apikey': SUPABASE_KEY } });
             if (sr.ok) subjects = (await sr.json()).map(r => r.subject);
         } catch(_) {}
     }
@@ -1650,8 +1663,8 @@ async function loadFilterBar(cls, preSubject, board) {
     // Also include any subjects that already have questions for this class/board
     try {
         const [resA, resB] = await Promise.allSettled([
-            fetch(SUPABASE_URL + '/rest/v1/questions?select=subject&class=eq.' + encodeURIComponent(dbCls) + boardQ + '&limit=10000', { headers: { 'apikey': SUPABASE_KEY } }),
-            fetch(SUPA_B_URL   + '/rest/v1/questions?select=subject&class=eq.' + encodeURIComponent(dbCls) + boardQ + '&limit=10000', { headers: { 'apikey': SUPA_B_PUB  } })
+            fetch(SUPABASE_URL + '/rest/v1/questions?select=subject' + classQ + boardQ + '&limit=10000', { headers: { 'apikey': SUPABASE_KEY } }),
+            fetch(SUPA_B_URL   + '/rest/v1/questions?select=subject' + classQ + boardQ + '&limit=10000', { headers: { 'apikey': SUPA_B_PUB  } })
         ]);
         if (resA.status === 'fulfilled' && resA.value.ok) { try { subjects = subjects.concat((await resA.value.json()).map(r => r.subject)); } catch(_){} }
         if (resB.status === 'fulfilled' && resB.value.ok) { try { subjects = subjects.concat((await resB.value.json()).map(r => r.subject)); } catch(_){} }
