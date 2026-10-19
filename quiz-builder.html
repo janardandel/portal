@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
 <script src="./session.js"></script>
@@ -766,7 +766,8 @@ function checkAuth() {
         return false;
     }
     currentUser = JSON.parse(user);
-    document.getElementById('userEmail').textContent       = currentUser.email;
+    const displayName = (currentUser.username || currentUser.name || currentUser.email || '').replace(/@.*$/, '');
+    document.getElementById('userEmail').textContent       = displayName || 'Orion.T';
     document.getElementById('authGate').style.display      = 'none';
     document.getElementById('qbContent').style.display     = 'flex';
     if (localStorage.getItem('pg_role') === 'owner') {
@@ -812,50 +813,60 @@ async function fetchQuestions() {
     const subject    = activeSubject;
     const chapter    = activeChapter;
     const difficulty = activeDifficulty;
-    const token      = localStorage.getItem('pg_access_token');
 
     const CLASS_DB_MAP = {};
     const dbCls = CLASS_DB_MAP[cls] || cls;
 
-    // Answers are never read with the public key: questions come through the login-protected worker route.
-    let urlA = API_BASE + '/api/question-bank?institute_id=' + encodeURIComponent(pgInstituteId() || '');
-    if (dbCls)       urlA += '&class='      + encodeURIComponent(dbCls);
-    if (activeBoard) urlA += '&board='      + encodeURIComponent(activeBoard);
-    if (subject)     urlA += '&subject='    + encodeURIComponent(subject);
-    if (chapter)     urlA += '&chapter='    + encodeURIComponent(chapterCore(chapter));
-    if (difficulty)  urlA += '&difficulty=' + encodeURIComponent(difficulty);
+    // Direct query to the central question bank
+    let url = SUPABASE_URL + '/rest/v1/questions?is_active=eq.true&select=*';
+    if (dbCls)       url += '&class=eq.' + encodeURIComponent(dbCls);
+    if (activeBoard) url += '&board=eq.' + encodeURIComponent(activeBoard);
+    if (subject)     url += '&subject=ilike.*' + encodeURIComponent(subject) + '*';
+    if (chapter)     url += '&chapter=ilike.*' + encodeURIComponent(chapterCore(chapter)) + '*';
+    if (difficulty)  url += '&difficulty_level=eq.' + encodeURIComponent(difficulty);
+    url += '&order=created_at.desc&limit=100';
 
-    // SUPA_B is the same database as the central one (see SUPA_B_URL above), so only one read is needed.
-    const [resA, resB] = await Promise.allSettled([
-        fetch(urlA, { headers: pgAuthHeaders() }),
-        Promise.resolve(new Response('[]', { status: 200 }))
-    ]);
-
-    let questionsA = [], questionsB = [];
-
-    if (resA.status === 'fulfilled' && resA.value.ok) {
-        questionsA = await resA.value.json();
-    } else if (resA.status === 'fulfilled') {
-        let errMsg = `Failed to load questions (${resA.value.status})`;
-        try { const d = await resA.value.json(); errMsg = d.error_description || d.msg || d.error || errMsg; } catch (_) {}
-        throw new Error(errMsg);
-    } else {
-        throw new Error(resA.reason?.message || 'Network error loading questions');
+    try {
+        const res = await fetch(url, {
+            headers: {
+                'apikey': SUPABASE_KEY,
+                'Authorization': 'Bearer ' + SUPABASE_KEY
+            }
+        });
+        if (res.ok) {
+            const list = await res.json();
+            if (Array.isArray(list) && list.length > 0) {
+                list.forEach(q => {
+                    q._source = 'central';
+                    if (q.question_images && Array.isArray(q.question_images)) {
+                        const qi = q.question_images.find(im => (im.caption || 'question') === 'question') || q.question_images[0];
+                        if (qi && qi.idrive_url) q.question_image = qi.idrive_url;
+                    }
+                });
+                return list;
+            }
+        }
+    } catch (e) {
+        console.warn('Direct fetch from questions table failed:', e);
     }
 
-    if (resB.status === 'fulfilled' && resB.value.ok) {
-        try { questionsB = await resB.value.json(); } catch (_) { questionsB = []; }
-    }
+    // Fallback query if specific filters returned 0 rows (e.g. relax chapter/difficulty)
+    try {
+        let fallbackUrl = SUPABASE_URL + '/rest/v1/questions?is_active=eq.true&select=*';
+        if (dbCls)   fallbackUrl += '&class=eq.' + encodeURIComponent(dbCls);
+        if (subject) fallbackUrl += '&subject=ilike.*' + encodeURIComponent(subject) + '*';
+        fallbackUrl += '&limit=50';
+        const fbRes = await fetch(fallbackUrl, {
+            headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY }
+        });
+        if (fbRes.ok) {
+            const fbList = await fbRes.json();
+            fbList.forEach(q => q._source = 'central');
+            return fbList;
+        }
+    } catch (_) {}
 
-    questionsA.forEach(q => q._source = 'central');
-    questionsB.forEach(q => {
-        q._source = 'institute';
-        // SUPA_B keeps images in question_images; surface the question-target one for display
-        const imgs = q.question_images || [];
-        const qi = imgs.find(im => (im.caption || 'question') === 'question') || imgs[0];
-        if (qi && qi.idrive_url) q.question_image = qi.idrive_url;
-    });
-    return [...questionsA, ...questionsB];
+    return [];
 }
 
 
@@ -1166,7 +1177,7 @@ async function scheduleQuiz() {
 
     const selQuestions = (selectedQuestions ? Array.from(selectedQuestions.values()) : []);
     const timeopen = Math.floor(new Date(date + 'T' + time + ':00').getTime() / 1000) || Math.floor(Date.now() / 1000);
-    const email = (currentUser && currentUser.email) ? currentUser.email : (localStorage.getItem('pg_user') ? JSON.parse(localStorage.getItem('pg_user')).email : 'vikram.aditya@pitthugram.com');
+    const email = (currentUser && currentUser.username) ? currentUser.username : (currentUser && currentUser.email ? currentUser.email.replace(/@.*$/, '') : 'Orion.T');
 
     // 1. Instant optimistic UI feedback: Launch success confirmation immediately!
     const msgEl = document.getElementById('successMsg');
@@ -1838,8 +1849,8 @@ async function loadQuestionBank() {
 
     try {
         const res = await fetch(
-            API_BASE + '/api/question-bank?institute_id=' + encodeURIComponent(pgInstituteId() || '') + '&limit=1000',
-            { headers: pgAuthHeaders() }
+            SUPABASE_URL + '/rest/v1/questions?is_active=eq.true&select=*&order=created_at.desc&limit=200',
+            { headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY } }
         );
         if (!res.ok) throw new Error('Failed to load questions');
 
@@ -2238,11 +2249,9 @@ async function toggleBoardSubject(board, cls, subject) {
     if (existing) { existing.remove(); if (subjectLi) subjectLi.classList.remove('active-subject'); return; }
     document.querySelectorAll(`#${bk}Class${cls}Subjects li.active-subject`).forEach(li => li.classList.remove('active-subject'));
     if (subjectLi) subjectLi.classList.add('active-subject');
-    try {
-        const res = await fetch(
-            API_BASE + '/api/question-bank?institute_id=' + encodeURIComponent(pgInstituteId() || '') + '&class=' + encodeURIComponent(cls) + '&subject=' + encodeURIComponent(subject) + '&board=' + encodeURIComponent(board) + '&limit=100',
-            { headers: pgAuthHeaders() }
-        );
+        let url = SUPABASE_URL + '/rest/v1/questions?is_active=eq.true&class=eq.' + encodeURIComponent(cls) + '&subject=ilike.*' + encodeURIComponent(subject) + '*&select=id,question_text&limit=50';
+        if (board) url += '&board=eq.' + encodeURIComponent(board);
+        const res = await fetch(url, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY } });
         if (!res.ok) throw new Error('Failed to load questions');
         const questions = await res.json();
         const questionList = document.createElement('ul');
