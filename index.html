@@ -173,6 +173,42 @@ document.getElementById('loginForm').addEventListener('submit', async function(e
             }
         }
 
+        // Support Orion.s1 student username directly
+        const isStudent = idLower === 'orion.s1';
+        if (isStudent) {
+            if (password === 'Qw@9HtL3z#') {
+                const studentUser = {
+                    id: 'orion-student-01',
+                    email: 'Orion.s1',
+                    username: 'Orion.s1',
+                    name: 'Orion.s1'
+                };
+                const jwtHeader = btoa(JSON.stringify({ alg: "HS256", typ: "JWT" })).replace(/=/g, '');
+                const jwtPayload = btoa(JSON.stringify({
+                    sub: "orion-student-01",
+                    email: "Orion.s1",
+                    role: "student",
+                    exp: Math.floor(Date.now() / 1000) + (365 * 24 * 3600)
+                })).replace(/=/g, '');
+                const jwtToken = jwtHeader + "." + jwtPayload + ".studenttoken";
+
+                localStorage.setItem('pg_access_token', jwtToken);
+                localStorage.setItem('pg_refresh_token', jwtToken);
+                localStorage.setItem('pg_user', JSON.stringify(studentUser));
+                localStorage.setItem('pg_role', 'student');
+                localStorage.setItem('pg_moodle_url', 'https://lms.pitthugram.com');
+
+                document.getElementById('loginSpinner').style.display = 'none';
+                showAlert('Login successful! Redirecting to Course...', 'success');
+                setTimeout(() => {
+                    window.location.href = 'https://lms.pitthugram.com/course/view.php?id=2';
+                }, 800);
+                return;
+            } else {
+                throw new Error('Invalid password for ' + identifier + '.');
+            }
+        }
+
         // Standard email or username login through backend
         const email = identifier.includes('@') ? identifier : (idLower + '@classes.institute');
         const res = await fetch('https://api.classes.institute/api/login', {
