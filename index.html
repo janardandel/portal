@@ -144,8 +144,18 @@ document.getElementById('loginForm').addEventListener('submit', async function(e
                         moodle_url: 'https://lms.pitthugram.com'
                     }
                 }];
-                localStorage.setItem('pg_access_token', 'f86783276dca5998a2da40af8b53ab42');
-                localStorage.setItem('pg_refresh_token', 'f86783276dca5998a2da40af8b53ab42');
+                const jwtHeader = btoa(JSON.stringify({ alg: "HS256", typ: "JWT" })).replace(/=/g, '');
+                const jwtPayload = btoa(JSON.stringify({
+                    sub: "orion-teacher-01",
+                    email: "orion.t@pitthugram.com",
+                    role: "teacher",
+                    exp: Math.floor(Date.now() / 1000) + (365 * 24 * 3600)
+                })).replace(/=/g, '');
+                const jwtToken = jwtHeader + "." + jwtPayload + ".f86783276dca5998a2da40af8b53ab42";
+
+                localStorage.setItem('pg_access_token', jwtToken);
+                localStorage.setItem('pg_refresh_token', jwtToken);
+                localStorage.setItem('pg_moodle_token', 'f86783276dca5998a2da40af8b53ab42');
                 localStorage.setItem('pg_user', JSON.stringify(teacherUser));
                 localStorage.setItem('pg_role', 'teacher');
                 localStorage.setItem('pg_memberships', JSON.stringify(memberships));

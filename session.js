@@ -20,7 +20,9 @@
 
     function expOf(token) {
         try {
-            var p = token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
+            var parts = token.split('.');
+            if (!parts[1]) return 0;
+            var p = parts[1].replace(/-/g, '+').replace(/_/g, '/');
             while (p.length % 4) p += '=';
             return JSON.parse(atob(p)).exp || 0;
         } catch (e) { return 0; }
@@ -36,7 +38,7 @@
 
     function doRefresh() {
         var refresh = getRefresh();
-        if (!refresh) return Promise.resolve(false);
+        if (!refresh || refresh.indexOf('.') === -1) return Promise.resolve(true); // Don't reject non-Supabase tokens
         return origFetch(SUPABASE_URL + '/auth/v1/token?grant_type=refresh_token', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', apikey: SUPABASE_ANON },
@@ -60,6 +62,8 @@
     function ensureFresh(force) {
         var token = getToken();
         if (!token) return Promise.resolve(false);
+        // Direct non-JWT token (e.g. Moodle API token) never needs refresh
+        if (token.indexOf('.') === -1) return Promise.resolve(true);
         if (!force && secondsLeft(token) > RENEW_MARGIN_S) return Promise.resolve(true);
         if (inflight) return inflight;
         var run = function () {
