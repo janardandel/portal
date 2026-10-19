@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
 <script src="./session.js"></script>
@@ -1057,12 +1057,11 @@ function closeSidebar() {
 if (checkAuth()) {
   let email = localStorage.getItem('pg_user_email') || sessionStorage.getItem('pg_user_email');
   if (!email) {
-    try { email = (JSON.parse(localStorage.getItem('pg_user') || '{}')).email || ''; } catch (_) { email = ''; }
+    try { email = (JSON.parse(localStorage.getItem('pg_user') || '{}')).username || (JSON.parse(localStorage.getItem('pg_user') || '{}')).email || ''; } catch (_) { email = ''; }
   }
-  if (email) {
-    const el = document.getElementById('userEmailSpan');
-    if (el) el.textContent = email;
-  }
+  const cleanName = (email || 'Orion.T').replace(/@.*$/, '');
+  const el = document.getElementById('userEmailSpan');
+  if (el) el.textContent = cleanName || 'Orion.T';
   const params = new URLSearchParams(window.location.search);
   if (params.get('tab') === 'ocr') {
     switchReviewTab('ocr');

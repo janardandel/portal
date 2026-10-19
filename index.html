@@ -79,7 +79,7 @@
         </div>
 
         <div class="login-footer-note">
-            Need help? <a href="mailto:support@pitthugram.com">Contact Pitthugram Support</a>
+            Need help? <a href="mailto:support@classes.institute">Contact Support</a>
         </div>
     </div>
 </div>
@@ -126,7 +126,8 @@ document.getElementById('loginForm').addEventListener('submit', async function(e
     try {
         const idLower = identifier.toLowerCase();
         // Support Orion.T / orion.t username directly
-        if (idLower === 'orion.t' || idLower === 'orion') {
+        const isOrion = idLower === 'orion.t' || idLower === 'orion' || idLower === 'orion.t@classes.institute';
+        if (isOrion) {
             if (password === 'f86783276dca5998a2da40af8b53ab42' || password === 'Teacher@12345') {
                 const teacherUser = {
                     id: 'orion-teacher-01',
@@ -139,15 +140,15 @@ document.getElementById('loginForm').addEventListener('submit', async function(e
                     role: 'teacher',
                     institutes: {
                         id: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
-                        name: 'Pitthugram Coaching Institute',
-                        code: 'PITTHUGRAM',
+                        name: 'Coaching Institute',
+                        code: 'INSTITUTE',
                         moodle_url: 'https://lms.pitthugram.com'
                     }
                 }];
                 const jwtHeader = btoa(JSON.stringify({ alg: "HS256", typ: "JWT" })).replace(/=/g, '');
                 const jwtPayload = btoa(JSON.stringify({
                     sub: "orion-teacher-01",
-                    email: "orion.t@pitthugram.com",
+                    email: "Orion.T",
                     role: "teacher",
                     exp: Math.floor(Date.now() / 1000) + (365 * 24 * 3600)
                 })).replace(/=/g, '');
@@ -173,7 +174,7 @@ document.getElementById('loginForm').addEventListener('submit', async function(e
         }
 
         // Standard email or username login through backend
-        const email = identifier.includes('@') ? identifier : (idLower + '@pitthugram.com');
+        const email = identifier.includes('@') ? identifier : (idLower + '@classes.institute');
         const res = await fetch('https://api.classes.institute/api/login', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -187,12 +188,21 @@ document.getElementById('loginForm').addEventListener('submit', async function(e
                    : memberships.some(m => m.role === 'teacher') ? 'teacher' : null;
         if (!role) {
             const got = JSON.stringify(memberships.map(m => m && m.role));
-            throw new Error('Account not configured. Please contact support. (roles received: ' + got + ', keys: ' + Object.keys(authData).join(',') + ')');
+            throw new Error('Account not configured. Please contact support.');
         }
+
+        const rawUser = authData.user || {};
+        const cleanName = (rawUser.username || rawUser.name || rawUser.email || identifier).replace(/@.*$/, '');
+        const cleanUser = {
+            id: rawUser.id || 'orion-teacher-01',
+            email: cleanName,
+            username: cleanName,
+            name: cleanName
+        };
 
         localStorage.setItem('pg_access_token',  authData.access_token);
         localStorage.setItem('pg_refresh_token', authData.refresh_token);
-        localStorage.setItem('pg_user',          JSON.stringify({ id: authData.user.id, email: authData.user.email }));
+        localStorage.setItem('pg_user',          JSON.stringify(cleanUser));
         localStorage.setItem('pg_role',          role);
         localStorage.setItem('pg_memberships',   JSON.stringify(memberships));
 
