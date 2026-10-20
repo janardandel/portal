@@ -1286,18 +1286,21 @@ async function scheduleQuiz() {
         sModal.classList.add('show');
     }
 
-        // 2. Fire fast-path ingestion to Supabase Queue via AWS n8n Webhook
+        // 2. Fire high-throughput BullMQ Queue (VM 115)
     try {
-        const moodleSyncUrl   = 'https://awsn8n.pitthugram.com/webhook/moodle-tenant-sync';
-        const moodleStatusUrl = 'https://awsn8n.pitthugram.com/webhook/moodle-quiz-status';
+        const moodleQueueUrl  = 'https://queue.pitthugram.com/api/v1/quiz/schedule';
+        const queueSecret     = 'Bearer pitthu-secure-dispatch-key-2026';
 
         const tenantMoodleUrl   = sessionStorage.getItem('pg_moodle_url') || localStorage.getItem('pg_moodle_url') || 'https://lms.pitthugram.com';
         const tenantMoodleToken = localStorage.getItem('pg_moodle_token') || 'f86783276dca5998a2da40af8b53ab42';
         const tenantName        = (currentUser && (currentUser.institute_name || currentUser.name)) || 'Coaching Institute';
 
-        fetch(moodleSyncUrl, {
+        fetch(moodleQueueUrl, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 
+                'Content-Type': 'application/json',
+                'Authorization': queueSecret
+            },
             body: JSON.stringify({
                 action:         'schedule_quiz',
                 institute_id:   teacherInstituteId || 'inst-orion-01',
@@ -1333,7 +1336,7 @@ async function scheduleQuiz() {
             } else if (data && data.job_id) {
                 const jobId = data.job_id;
                 if (msgEl) {
-                    msgEl.innerHTML = `<strong>${title}</strong> is queued for creation... <span style="display:inline-block;width:12px;height:12px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;animation:spin 0.75s linear infinite;margin-left:5px;vertical-align:middle;"></span>`;
+                    msgEl.innerHTML = `<strong>${title}</strong> is queued in BullMQ... <span style="display:inline-block;width:12px;height:12px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;animation:spin 0.75s linear infinite;margin-left:5px;vertical-align:middle;"></span>`;
                 }
 
                 let pollCount = 0;
@@ -1344,22 +1347,22 @@ async function scheduleQuiz() {
                         clearInterval(pollTimer);
                         return;
                     }
-                    fetch(moodleStatusUrl + '?job_id=' + encodeURIComponent(jobId))
+                    fetch('https://queue.pitthugram.com/api/v1/jobs/' + encodeURIComponent(jobId) + '/status')
                         .then(function(sRes) { return sRes.json(); })
                         .then(function(sData) {
-                            if (sData && sData.status === 'created' && sData.quiz_url) {
+                            if (sData && sData.state === 'completed' && sData.result && sData.result.quiz_url) {
                                 clearInterval(pollTimer);
                                 if (lmsBtn) {
-                                    lmsBtn.href = sData.quiz_url;
+                                    lmsBtn.href = sData.result.quiz_url;
                                     lmsBtn.style.display = 'inline-flex';
                                 }
                                 if (msgEl) {
-                                    msgEl.innerHTML = `<strong>${title}</strong> is scheduled for ${data.tenant_name || 'your class'} (${courseTxt}) with ${data.questioncount || selQuestions.length} MCQs!`;
+                                    msgEl.innerHTML = `<strong>${title}</strong> is scheduled in Central Moodle (${courseTxt}) with ${selQuestions.length} MCQs!`;
                                 }
-                            } else if (sData && sData.status === 'failed') {
+                            } else if (sData && sData.state === 'failed') {
                                 clearInterval(pollTimer);
                                 if (msgEl) {
-                                    msgEl.innerHTML = `<span style="color:#ef4444;">Notice: ${sData.error_message || 'Scheduling queue pending'}</span>`;
+                                    msgEl.innerHTML = `<span style="color:#ef4444;">Notice: ${sData.error || 'Scheduling failed in queue'}</span>`;
                                 }
                             }
                         }).catch(function(err) {
