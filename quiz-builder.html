@@ -1025,9 +1025,23 @@ function openReview() {
     if (timeInput && !timeInput.value) timeInput.value = '10:00';
 
     const titleInput = document.getElementById('quizTitle');
+    const curDate = (dateInput && dateInput.value) ? dateInput.value : today;
     if (titleInput && !titleInput.value) {
         const sub = activeSubject || 'Physics';
-        titleInput.value = sub + ' Quiz (' + today + ')';
+        titleInput.value = sub + ' Quiz (' + curDate + ')';
+    }
+
+    if (dateInput) {
+        dateInput.onchange = function() {
+            const tInput = document.getElementById('quizTitle');
+            if (tInput) {
+                const newD = this.value;
+                if (!tInput.value || /\(\d{4}-\d{2}-\d{2}\)$/.test(tInput.value.trim())) {
+                    const base = tInput.value ? tInput.value.replace(/\s*\(\d{4}-\d{2}-\d{2}\)$/, '') : ((activeSubject || 'Physics') + ' Quiz');
+                    tInput.value = base + ' (' + newD + ')';
+                }
+            }
+        };
     }
 
     const courseInput = document.getElementById('quizCourse');
@@ -1160,9 +1174,15 @@ async function loadMoodleCourses() {
         }
         const courses = (d && d.courses && d.courses.length) ? d.courses : DEFAULT_COURSES;
         sel.innerHTML = '<option value="">Select Course</option>' + courses.map(function(c) { return '<option value="' + c.id + '">' + (c.fullname || c.shortname) + '</option>'; }).join('');
+        if (!sel.value || sel.value === '') {
+            sel.value = '2';
+        }
     } catch (e) {
         console.warn('Using verified default courses:', e);
         sel.innerHTML = '<option value="">Select Course</option>' + DEFAULT_COURSES.map(function(c) { return '<option value="' + c.id + '">' + c.fullname + '</option>'; }).join('');
+        if (!sel.value || sel.value === '') {
+            sel.value = '2';
+        }
     }
 }
 // Convert a selected question (central or institute) into the Moodle schedule shape.
@@ -1235,13 +1255,17 @@ async function scheduleQuiz() {
     const duration  = (durEl ? (parseInt(durEl.value, 10) || 30) : 30);
     const attempts  = (attEl ? (parseInt(attEl.value, 10) || 1) : 1);
 
-    if (!title) {
+    if (title && /\(\d{4}-\d{2}-\d{2}\)$/.test(title)) {
+        title = title.replace(/\(\d{4}-\d{2}-\d{2}\)$/, '(' + date + ')');
+    } else if (!title) {
         title = (activeSubject || 'Physics') + ' Quiz (' + date + ')';
     }
 
-    const courseTxt = (courseSel && courseSel.options && courseSel.selectedIndex >= 0 && courseSel.options[courseSel.selectedIndex])
-        ? courseSel.options[courseSel.selectedIndex].text 
-        : 'Class 11 NEET Droppers Physics';
+    let courseTxt = 'Physics Class 12';
+    if (courseSel && courseSel.options && courseSel.selectedIndex >= 0) {
+        const txt = courseSel.options[courseSel.selectedIndex].text;
+        if (txt && txt !== 'Select Course') courseTxt = txt;
+    }
 
     const selQuestions = (selectedQuestions ? Array.from(selectedQuestions.values()) : []);
     const timeopen = Math.floor(new Date(date + 'T' + time + ':00').getTime() / 1000) || Math.floor(Date.now() / 1000);
@@ -1267,15 +1291,24 @@ async function scheduleQuiz() {
         const moodleSyncUrl   = 'https://awsn8n.pitthugram.com/webhook/moodle-tenant-sync';
         const moodleStatusUrl = 'https://awsn8n.pitthugram.com/webhook/moodle-quiz-status';
 
+        const tenantMoodleUrl   = sessionStorage.getItem('pg_moodle_url') || localStorage.getItem('pg_moodle_url') || 'https://lms.pitthugram.com';
+        const tenantMoodleToken = localStorage.getItem('pg_moodle_token') || 'f86783276dca5998a2da40af8b53ab42';
+        const tenantName        = (currentUser && (currentUser.institute_name || currentUser.name)) || 'Coaching Institute';
+
         fetch(moodleSyncUrl, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 action:         'schedule_quiz',
-                institute_id:   teacherInstituteId || '65e4628a-a283-45a3-ab2d-84073977d4c4',
+                institute_id:   teacherInstituteId || 'inst-orion-01',
+                moodle_url:     tenantMoodleUrl,
+                moodle_token:   tenantMoodleToken,
+                tenant_name:    tenantName,
                 email:          email,
                 courseid:       parseInt(courseid, 10),
                 name:           title,
+                scheduled_date: date,
+                scheduled_time: time,
                 timeopen:       timeopen,
                 timeclose:      0,
                 timelimit:      duration * 60,
