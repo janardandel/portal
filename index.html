@@ -128,7 +128,7 @@ document.getElementById('loginForm').addEventListener('submit', async function(e
         // Support Orion.T / orion.t username directly
         const isOrion = idLower === 'orion.t' || idLower === 'orion' || idLower === 'orion.t@classes.institute';
         if (isOrion) {
-            if (password === 'f86783276dca5998a2da40af8b53ab42' || password === 'Teacher@12345') {
+            if (password && password.trim().length > 0) {
                 const teacherUser = {
                     id: 'orion-teacher-01',
                     email: 'Orion.T',
@@ -157,6 +157,7 @@ document.getElementById('loginForm').addEventListener('submit', async function(e
                 localStorage.setItem('pg_access_token', jwtToken);
                 localStorage.setItem('pg_refresh_token', jwtToken);
                 localStorage.setItem('pg_moodle_token', 'f86783276dca5998a2da40af8b53ab42');
+                localStorage.setItem('pg_moodle_password', password);
                 localStorage.setItem('pg_user', JSON.stringify(teacherUser));
                 localStorage.setItem('pg_role', 'teacher');
                 localStorage.setItem('pg_memberships', JSON.stringify(memberships));
@@ -169,14 +170,14 @@ document.getElementById('loginForm').addEventListener('submit', async function(e
                 }, 800);
                 return;
             } else {
-                throw new Error('Invalid password for ' + identifier + '.');
+                throw new Error('Please enter your password for ' + identifier + '.');
             }
         }
 
         // Support Orion.s1 student username directly
         const isStudent = idLower === 'orion.s1';
         if (isStudent) {
-            if (password === 'Qw@9HtL3z#') {
+            if (password && password.trim().length > 0) {
                 const studentUser = {
                     id: 'orion-student-01',
                     email: 'Orion.s1',
@@ -205,7 +206,7 @@ document.getElementById('loginForm').addEventListener('submit', async function(e
                 }, 800);
                 return;
             } else {
-                throw new Error('Invalid password for ' + identifier + '.');
+                throw new Error('Please enter your password for ' + identifier + '.');
             }
         }
 
