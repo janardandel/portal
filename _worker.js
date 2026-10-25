@@ -290,7 +290,6 @@ async function handleMoodleCredentials(request, env) {
                 institute_id: institute_id,
                 moodle_url: targetUrl,
                 moodle_token: targetToken,
-                tenant_name: (body && body.tenant_name) || 'Coaching Institute',
                 updated_at: new Date().toISOString()
             })
         });
@@ -300,6 +299,15 @@ async function handleMoodleCredentials(request, env) {
 
     // 2. Update DB3 moodle_credentials if table exists
     try {
+        const credBody = {
+            institute_id: institute_id,
+            username: username || 'Orion.T',
+            moodle_url: targetUrl,
+            updated_at: new Date().toISOString()
+        };
+        if (password) {
+            credBody.password = password;
+        }
         await fetch(`${SUPABASE_URL}/rest/v1/moodle_credentials`, {
             method: 'POST',
             headers: {
@@ -308,13 +316,7 @@ async function handleMoodleCredentials(request, env) {
                 'Content-Type': 'application/json',
                 'Prefer': 'resolution=merge-duplicates'
             },
-            body: JSON.stringify({
-                institute_id: institute_id,
-                username: username || 'Orion.T',
-                moodle_url: targetUrl,
-                moodle_token: targetToken,
-                updated_at: new Date().toISOString()
-            })
+            body: JSON.stringify(credBody)
         });
     } catch (e) {
         console.warn('moodle_credentials sync notice:', e);
