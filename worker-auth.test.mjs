@@ -63,6 +63,12 @@ const w2 = await worker.fetch(req(`/api/moodle-config?institute_id=${INST}`, 'go
 const cfg2 = calls.find(c => c.url.includes('/rest/v1/moodle_config'));
 assert.strictEqual(cfg2.opts.headers.Authorization, 'Bearer cfgsvc');
 console.log('service-key moodle_config test ok');
+
+// moodle-credentials tests
+assert.strictEqual(await status(req('/api/moodle-credentials', null, { method: 'POST', body: JSON.stringify({ institute_id: INST }) })), 401);
+assert.strictEqual(await status(req('/api/moodle-credentials', 'good', { method: 'POST', body: JSON.stringify({ institute_id: OTHER }) })), 403);
+assert.strictEqual(await status(req('/api/moodle-credentials', 'good', { method: 'POST', body: JSON.stringify({ institute_id: INST, moodle_url: 'https://lms.pitthugram.com' }) })), 200);
+console.log('moodle_credentials auth tests ok');
 // mcq-presign / mcq-save
 const envS3 = { ...env, S3_ACCESS_KEY_ID: 'a', S3_SECRET_ACCESS_KEY: 'b' };
 const run = async (r, e = envS3) => (await worker.fetch(r, e)).status;

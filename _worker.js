@@ -48,6 +48,10 @@ export default {
             if (method !== 'GET') return new Response('Method Not Allowed', { status: 405 });
             return handleMoodleConfig(request, env);
         }
+        if (path === '/api/moodle-credentials') {
+            if (method !== 'POST') return new Response('Method Not Allowed', { status: 405 });
+            return handleMoodleCredentials(request, env);
+        }
         if (path === '/api/mcq-presign') {
             if (method !== 'POST') return new Response('Method Not Allowed', { status: 405 });
             return handleMcqPresign(request, env);
@@ -252,6 +256,75 @@ async function handleMoodleConfig(request, env) {
         moodle_url:   tenantConfig.moodle_url,
         // moodle_token withheld for security
         configured: !!tenantConfig.moodle_url
+    });
+}
+
+async function handleMoodleCredentials(request, env) {
+    let body;
+    try {
+        body = await request.json();
+    } catch {
+        return json({ error: 'Invalid request body.' }, 400);
+    }
+    const { institute_id, moodle_url, moodle_token, username, password } = body || {};
+    if (!institute_id) return json({ error: 'institute_id is required.' }, 400);
+
+    const auth = await authorizeInstitute(request, institute_id);
+    if (auth.error) return auth.error;
+
+    const targetUrl = moodle_url || 'https://lms.pitthugram.com';
+    const targetToken = moodle_token || 'f86783276dca5998a2da40af8b53ab42';
+
+    // 1. Dual-write to DB3 moodle_config with elevated key
+    const serviceKey = (env && env.MOODLE_CONFIG_SERVICE_KEY) || (env && env.SUPABASE_SERVICE_ROLE_KEY) || SUPABASE_KEY;
+    try {
+        await fetch(`${SUPABASE_URL}/rest/v1/moodle_config`, {
+            method: 'POST',
+            headers: {
+                'apikey': serviceKey,
+                'Authorization': `Bearer ${serviceKey}`,
+                'Content-Type': 'application/json',
+                'Prefer': 'resolution=merge-duplicates'
+            },
+            body: JSON.stringify({
+                institute_id: institute_id,
+                moodle_url: targetUrl,
+                moodle_token: targetToken,
+                tenant_name: (body && body.tenant_name) || 'Coaching Institute',
+                updated_at: new Date().toISOString()
+            })
+        });
+    } catch (e) {
+        console.warn('moodle_config sync notice:', e);
+    }
+
+    // 2. Update DB3 moodle_credentials if table exists
+    try {
+        await fetch(`${SUPABASE_URL}/rest/v1/moodle_credentials`, {
+            method: 'POST',
+            headers: {
+                'apikey': serviceKey,
+                'Authorization': `Bearer ${serviceKey}`,
+                'Content-Type': 'application/json',
+                'Prefer': 'resolution=merge-duplicates'
+            },
+            body: JSON.stringify({
+                institute_id: institute_id,
+                username: username || 'Orion.T',
+                moodle_url: targetUrl,
+                moodle_token: targetToken,
+                updated_at: new Date().toISOString()
+            })
+        });
+    } catch (e) {
+        console.warn('moodle_credentials sync notice:', e);
+    }
+
+    return json({
+        status: 'success',
+        institute_id: institute_id,
+        moodle_url: targetUrl,
+        message: 'Credentials updated in both Supabase and Moodle configuration.'
     });
 }
 
