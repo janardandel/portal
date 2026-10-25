@@ -958,21 +958,51 @@ function render(questions) {
     const list = document.createElement('div');
     list.className = 'question-list';
 
+    const instId = pgInstituteId();
+    let currentUserId = null;
+    try {
+        const u = JSON.parse(localStorage.getItem('pg_user') || '{}');
+        currentUserId = u.id || null;
+    } catch (_) {}
+
     questions.forEach(q => {
         const isSel = selected.has(q.id);
+        const isCentral = (!q.institute_id && (q.added_by === 'system' || q.added_by === 'gemini-auto'));
+        const isInst = Boolean(instId && (q.institute_id === instId || (q.added_by && (q.added_by === currentUserId || q.added_by === instId)) || q._source === 'institute'));
+        const canDelete = Boolean(instId && (isInst || (!isCentral && q.institute_id)));
 
         const row = document.createElement('div');
         row.className = 'question-row' + (isSel ? ' selected' : '');
         row.dataset.id = q.id;
         const qEscaped = escapeHtml(q.question_text || '');
         row.innerHTML = `
-            <input type="checkbox" class="q-checkbox" ${isSel ? 'checked' : ''} aria-label="Select question">
-            <span class="q-text">${qEscaped}${q.question_image ? `<img class="q-thumb" src="${q.question_image}" alt="figure" loading="lazy">` : ''}</span>`;
+            <div style="display:flex;align-items:flex-start;gap:0.75rem;flex:1;min-width:0;">
+                <input type="checkbox" class="q-checkbox" ${isSel ? 'checked' : ''} aria-label="Select question">
+                <span class="q-text">
+                    ${isInst ? '<span class="badge-inst-mcq" style="background:#e0f2fe;color:#0369a1;font-size:0.7rem;font-weight:700;padding:0.15rem 0.45rem;border-radius:4px;margin-right:0.4rem;display:inline-block;">My Institute</span>' : ''}
+                    ${qEscaped}
+                    ${q.question_image ? `<img class="q-thumb" src="${q.question_image}" alt="figure" loading="lazy">` : ''}
+                </span>
+            </div>
+            ${canDelete ? `
+            <button type="button" class="btn-del-bank-q" title="Delete question from bank" style="background:none;border:none;color:#ef4444;cursor:pointer;padding:0.35rem 0.5rem;border-radius:6px;display:inline-flex;align-items:center;justify-content:center;font-size:1.1rem;opacity:0.75;transition:all 0.15s ease;flex-shrink:0;">
+                <i class="ph ph-trash"></i>
+            </button>` : ''}`;
 
         const checkbox = row.querySelector('.q-checkbox');
         checkbox.addEventListener('change', () => {
             toggleCard(q, row);
         });
+
+        const delBtn = row.querySelector('.btn-del-bank-q');
+        if (delBtn) {
+            delBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                deleteQuestionFromBank(q.id, e);
+            });
+            delBtn.addEventListener('mouseenter', () => { delBtn.style.opacity = '1'; delBtn.style.background = 'rgba(239,68,68,0.1)'; });
+            delBtn.addEventListener('mouseleave', () => { delBtn.style.opacity = '0.75'; delBtn.style.background = 'none'; });
+        }
 
         list.appendChild(row);
     });
@@ -980,6 +1010,78 @@ function render(questions) {
     container.innerHTML = '';
     container.appendChild(list);
     updateUI();
+}
+
+async function deleteQuestionFromBank(id, e) {
+    if (e) e.stopPropagation();
+    const instId = pgInstituteId();
+    if (!instId) {
+        alert('Please log in with your coaching institute account to remove questions.');
+        return;
+    }
+
+    const conf = confirm('Are you sure you want to delete this question from your institute question bank?\n\nThis cannot be undone.');
+    if (!conf) return;
+
+    const row = document.querySelector(`.question-row[data-id="${id}"]`);
+    if (row) row.style.opacity = '0.4';
+
+    try {
+        const token = localStorage.getItem('pg_access_token') || '';
+        const res = await fetch(`/api/question-delete?id=${encodeURIComponent(id)}&institute_id=${encodeURIComponent(instId)}`, {
+            method: 'DELETE',
+            headers: {
+                'Authorization': 'Bearer ' + token,
+                'Content-Type': 'application/json'
+            }
+        });
+
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) {
+            throw new Error(data.error || data.message || ('Server error (' + res.status + ')'));
+        }
+
+        // Animate removal from DOM
+        if (row) {
+            row.style.transition = 'all 0.25s ease';
+            row.style.height = row.offsetHeight + 'px';
+            row.style.opacity = '0';
+            setTimeout(() => {
+                row.remove();
+                // Update total count
+                const curCount = parseInt(document.getElementById('totalCount').textContent || '0', 10);
+                if (curCount > 0) document.getElementById('totalCount').textContent = curCount - 1;
+            }, 250);
+        }
+
+        // Remove from memory
+        allQuestions = allQuestions.filter(q => q.id !== id);
+        if (selected.has(id)) {
+            selected.delete(id);
+            selectedQuestions.delete(id);
+            updateUI();
+        }
+
+        // Show feedback notification
+        const errEl = document.getElementById('qbErr');
+        const msgEl = document.getElementById('qbErrMsg');
+        if (errEl && msgEl) {
+            errEl.style.display = 'flex';
+            errEl.style.background = '#ecfdf5';
+            errEl.style.color = '#065f46';
+            errEl.style.border = '1px solid #a7f3d0';
+            msgEl.textContent = 'Question removed from question bank.';
+            setTimeout(() => {
+                errEl.style.display = 'none';
+                errEl.style.background = '';
+                errEl.style.color = '';
+                errEl.style.border = '';
+            }, 3500);
+        }
+    } catch (err) {
+        if (row) row.style.opacity = '1';
+        alert('Could not delete question: ' + err.message);
+    }
 }
 
 function toggleCard(q, card) {

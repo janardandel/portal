@@ -8,6 +8,17 @@ globalThis.fetch = async (url, opts = {}) => {
   const ok = (b, s = 200) => new Response(JSON.stringify(b), { status: s });
   if (url.includes('/auth/v1/user')) return (opts.headers.Authorization === 'Bearer good') ? ok({ id: USER }) : ok({ error: 'bad' }, 401);
   if (url.includes('/institute_members')) return ok(url.includes(INST) ? [{ role: 'teacher' }] : []);
+  if (url.includes('/rest/v1/questions') && url.includes('id=eq.')) {
+    if (url.includes('77777777-7777')) return ok([]);
+    if (url.includes('55555555-5555')) return ok([{ id: '55555555-5555-5555-5555-555555555555', institute_id: OTHER, is_active: true }]);
+    if (url.includes('66666666-6666')) return ok([{ id: '66666666-6666-6666-6666-666666666666', institute_id: null, added_by: 'system', is_active: true }]);
+    if (url.includes('88888888-8888')) {
+      if (opts.method === 'PATCH' || opts.method === 'DELETE') return ok([{ id: '88888888-8888-8888-8888-888888888888', is_active: false }]);
+      return ok([{ id: '88888888-8888-8888-8888-888888888888', institute_id: null, added_by: USER, is_active: true }]);
+    }
+    if (opts.method === 'PATCH' || opts.method === 'DELETE') return ok([{ id: '44444444-4444-4444-4444-444444444444', is_active: false }]);
+    return ok([{ id: '44444444-4444-4444-4444-444444444444', institute_id: INST, is_active: true }]);
+  }
   if (url.includes('/rest/v1/questions') && opts.method === 'POST') return ok([{ id: 'new-q' }]);
   if (url.includes('/rest/v1/scheduled_quizzes')) return ok(opts.method === 'POST' ? [{ id: 'x' }] : []);
   return ok([]);
@@ -88,3 +99,40 @@ assert.strictEqual(await run(qb(`institute_id=${INST}&class=11&subject=Phy*sics,
 const f = calls.find(c => c.url.includes('qnqcys') && c.url.includes('/rest/v1/questions')).url;
 assert.ok(f.includes('is_active=eq.true') && f.includes('class=eq.11') && f.includes('subject=eq.Physicsx') && f.includes('limit=1000') && !f.includes('evil') && !f.includes('select=*'), f);
 console.log('question-bank tests ok');
+
+// question deletion
+const Q_MY = '44444444-4444-4444-4444-444444444444';
+const Q_OTHER = '55555555-5555-5555-5555-555555555555';
+const Q_CENTRAL = '66666666-6666-6666-6666-666666666666';
+const Q_NOTFOUND = '77777777-7777-7777-7777-777777777777';
+const Q_USER = '88888888-8888-8888-8888-888888888888';
+
+const delQb = (qs, t) => req('/api/question-bank?' + qs, t, { method: 'DELETE' });
+const delQp = (qs, t) => req('/api/question-delete?' + qs, t, { method: 'DELETE' });
+
+assert.strictEqual(await run(delQb(`id=${Q_MY}&institute_id=${INST}`)), 401, 'delete needs login');
+assert.strictEqual(await run(delQb(`id=${Q_MY}&institute_id=${INST}`, 'x')), 401, 'rejects forged token');
+assert.strictEqual(await run(delQb(`id=bad-uuid&institute_id=${INST}`, 'good')), 400, 'validates question uuid');
+assert.strictEqual(await run(delQb(`id=${Q_MY}&institute_id=bad-uuid`, 'good')), 400, 'validates institute uuid');
+assert.strictEqual(await run(delQb(`id=${Q_MY}&institute_id=${OTHER}`, 'good')), 403, 'cannot delete for other institute');
+assert.strictEqual(await run(delQb(`id=${Q_NOTFOUND}&institute_id=${INST}`, 'good')), 404, 'returns 404 if question missing');
+assert.strictEqual(await run(delQb(`id=${Q_OTHER}&institute_id=${INST}`, 'good')), 403, 'cannot delete question of another institute');
+assert.strictEqual(await run(delQb(`id=${Q_CENTRAL}&institute_id=${INST}`, 'good')), 403, 'cannot delete central question');
+
+calls.length = 0;
+assert.strictEqual(await run(delQb(`id=${Q_MY}&institute_id=${INST}`, 'good')), 200, 'soft delete succeeds');
+const patchCall = calls.find(c => c.opts.method === 'PATCH' && c.url.includes(Q_MY));
+assert.ok(patchCall, 'PATCH was sent to Supabase');
+assert.strictEqual(JSON.parse(patchCall.opts.body).is_active, false, 'is_active set to false');
+
+calls.length = 0;
+assert.strictEqual(await run(delQp(`id=${Q_MY}&institute_id=${INST}&hard=true`, 'good')), 200, 'hard delete succeeds');
+const deleteCall = calls.find(c => c.opts.method === 'DELETE' && c.url.includes(Q_MY));
+assert.ok(deleteCall, 'DELETE method was sent to Supabase');
+
+// POST /api/question-delete with json body and question created by caller user
+calls.length = 0;
+const postDel = req('/api/question-delete', 'good', { method: 'POST', body: JSON.stringify({ question_id: Q_USER, institute_id: INST }) });
+assert.strictEqual(await run(postDel), 200, 'POST delete succeeds for owner question');
+console.log('question deletion tests ok');
+

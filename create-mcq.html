@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
 <script src="./session.js"></script>
@@ -886,7 +886,7 @@ async function saveQuestions() {
         const res = await fetch(N8N_SAVE, {
             method: 'POST',
             headers: pgAuthHeaders({ 'Content-Type': 'application/json' }),
-            body: JSON.stringify({ questions: payload })
+            body: JSON.stringify({ institute_id: instId, questions: payload })
         });
         const data = await res.json();
         if (!res.ok) throw new Error(data.message || data.error || 'Server error');

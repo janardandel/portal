@@ -32,8 +32,13 @@ export default {
             return handleMoodleCourses(request, env);
         }
         if (path === '/api/question-bank') {
-            if (method !== 'GET') return new Response('Method Not Allowed', { status: 405 });
-            return handleQuestionBank(request, env);
+            if (method === 'GET') return handleQuestionBank(request, env);
+            if (method === 'DELETE') return handleQuestionDelete(request, env);
+            return new Response('Method Not Allowed', { status: 405 });
+        }
+        if (path === '/api/question-delete') {
+            if (method !== 'DELETE' && method !== 'POST') return new Response('Method Not Allowed', { status: 405 });
+            return handleQuestionDelete(request, env);
         }
         if (path === '/api/question-analysis') {
             if (method !== 'GET') return new Response('Method Not Allowed', { status: 405 });
@@ -366,8 +371,8 @@ async function handleMcqSave(request, env) {
     }
     const { subject, chapter, board, questions } = body;
     const cls         = body.class;
-    const instituteId = body.institute_id;
-    const teacherId   = body.teacher_id || null;
+    const instituteId = body.institute_id || (Array.isArray(questions) && questions[0] && questions[0].institute_id);
+    const teacherId   = body.teacher_id || (Array.isArray(questions) && questions[0] && questions[0].teacher_id) || null;
     if (!Array.isArray(questions) || !questions.length) return json({ error: 'No questions to save.' }, 400);
     if (!instituteId) return json({ error: 'Missing institute_id.' }, 400);
     if (questions.length > 200) return json({ error: 'Too many questions in one request.' }, 400);
@@ -1022,6 +1027,116 @@ async function handleQuestionBank(request, env) {
 
     const res = await fetch(q, { headers: { 'apikey': serviceKey, 'Authorization': `Bearer ${serviceKey}` } });
     return json(await res.json(), res.status);
+}
+
+// DELETE /api/question-bank?id=<uuid>&institute_id=<uuid>[&hard=true]
+// or DELETE/POST /api/question-delete with query params or JSON body { id/question_id, institute_id, hard }
+// Owner/teacher of institute_id only. Multi-tenant check: can only delete question if question belongs to institute_id or added_by user/institute.
+async function handleQuestionDelete(request, env) {
+    const u = new URL(request.url);
+    let questionId = u.searchParams.get('id') || u.searchParams.get('question_id') || '';
+    let instituteId = u.searchParams.get('institute_id') || '';
+    let hard = u.searchParams.get('hard') === 'true';
+
+    if (request.method === 'POST' || (request.headers.get('content-type') || '').includes('application/json')) {
+        try {
+            const body = await request.clone().json();
+            if (body && typeof body === 'object') {
+                if (!questionId) questionId = body.id || body.question_id || '';
+                if (!instituteId) instituteId = body.institute_id || '';
+                if (body.hard !== undefined) hard = Boolean(body.hard);
+            }
+        } catch (_) {}
+    }
+
+    if (!UUID_RE.test(instituteId)) return json({ error: 'Invalid or missing institute_id.' }, 400);
+    if (!UUID_RE.test(questionId)) return json({ error: 'Invalid or missing question id.' }, 400);
+
+    const auth = await authorizeInstitute(request, instituteId, ['owner', 'teacher']);
+    if (auth.error) return auth.error;
+
+    const serviceKey = (env && env.SUPABASE_SERVICE_ROLE_KEY) || QB_SERVICE_KEY;
+    const supaDbKey  = (env && env.SUPA_DB_SERVICE_KEY) || serviceKey;
+    if (!serviceKey && !supaDbKey) return json({ error: 'Database not configured.' }, 500);
+
+    // Locate question in DB (checking QB_SUPABASE_URL and SAVE_DB_URL)
+    const targets = [
+        { url: QB_SUPABASE_URL, key: serviceKey },
+        ...(SAVE_DB_URL && SAVE_DB_URL !== QB_SUPABASE_URL ? [{ url: SAVE_DB_URL, key: supaDbKey }] : [])
+    ];
+
+    let foundTarget = null;
+    let questionRow = null;
+
+    for (const t of targets) {
+        if (!t.key) continue;
+        try {
+            const checkRes = await fetch(`${t.url}/rest/v1/questions?id=eq.${questionId}&select=id,is_active,institute_id,added_by`, {
+                headers: { 'apikey': t.key, 'Authorization': `Bearer ${t.key}` }
+            });
+            if (checkRes.ok) {
+                const rows = await checkRes.json();
+                if (Array.isArray(rows) && rows.length > 0) {
+                    foundTarget = t;
+                    questionRow = rows[0];
+                    break;
+                }
+            }
+        } catch (_) {}
+    }
+
+    if (!questionRow) {
+        return json({ error: 'Question not found.' }, 404);
+    }
+
+    // Multi-tenant check:
+    // If the question has an institute_id, it must match the caller's institute_id.
+    if (questionRow.institute_id && questionRow.institute_id !== instituteId) {
+        return json({ error: 'Forbidden: question belongs to another institute.' }, 403);
+    }
+
+    // If the question has no institute_id, check added_by. If added_by is system/gemini-auto or empty, it's central curriculum.
+    if (!questionRow.institute_id) {
+        const addedBy = String(questionRow.added_by || '').trim();
+        const callerUserId = auth.user ? auth.user.id : '';
+        const isOwnerCreator = addedBy && (addedBy === callerUserId || addedBy === instituteId);
+        if (!isOwnerCreator) {
+            return json({ error: 'Forbidden: central curriculum questions cannot be deleted.' }, 403);
+        }
+    }
+
+    // Execute deletion (soft-delete by default, or hard delete if requested)
+    const delHeaders = {
+        'apikey': foundTarget.key,
+        'Authorization': `Bearer ${foundTarget.key}`,
+        'Content-Type': 'application/json'
+    };
+
+    let delRes;
+    if (hard) {
+        delRes = await fetch(`${foundTarget.url}/rest/v1/questions?id=eq.${questionId}`, {
+            method: 'DELETE',
+            headers: { ...delHeaders, 'Prefer': 'return=representation' }
+        });
+    } else {
+        delRes = await fetch(`${foundTarget.url}/rest/v1/questions?id=eq.${questionId}`, {
+            method: 'PATCH',
+            headers: { ...delHeaders, 'Prefer': 'return=representation' },
+            body: JSON.stringify({ is_active: false })
+        });
+    }
+
+    if (!delRes.ok) {
+        const errText = await delRes.text();
+        return json({ error: 'Failed to delete question from database: ' + errText }, 502);
+    }
+
+    return json({
+        success: true,
+        id: questionId,
+        hard: hard,
+        message: hard ? 'Question permanently deleted.' : 'Question removed from question bank.'
+    }, 200);
 }
 
 
