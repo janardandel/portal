@@ -1450,6 +1450,7 @@ async function scheduleQuiz() {
         sModal.classList.add('show');
     }
 
+    try {
         // 2. Direct dual-persistence to Supabase DB1 scheduled_quizzes
         const qIds = selQuestions.map(function(q) { return q.id; }).filter(Boolean);
         const schedPayload = {
