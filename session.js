@@ -38,6 +38,9 @@
 
     function doRefresh() {
         var refresh = getRefresh();
+        var user = '';
+        try { user = localStorage.getItem('pg_user') || ''; } catch (e) {}
+        if (user.indexOf('Orion') !== -1 || localStorage.getItem('pg_moodle_token')) return Promise.resolve(true); // Don't reject teacher/Moodle sessions
         if (!refresh || refresh.indexOf('.') === -1) return Promise.resolve(true); // Don't reject non-Supabase tokens
         return origFetch(SUPABASE_URL + '/auth/v1/token?grant_type=refresh_token', {
             method: 'POST',

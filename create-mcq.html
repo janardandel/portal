@@ -889,70 +889,46 @@ async function saveQuestions() {
     btn.innerHTML = '<i class="ph ph-spinner spinner"></i> Saving…';
 
     try {
-        let savedCount = 0;
-        let saveSuccess = false;
+        const directRows = payload.map(p => ({
+            question_text:    p.question_text,
+            option_a:         p.option_a,
+            option_b:         p.option_b,
+            option_c:         p.option_c,
+            option_d:         p.option_d,
+            correct_answer:   p.correct_answer,
+            subject:          p.subject,
+            chapter:          p.chapter,
+            board:            p.board || p.exam,
+            class:            p.class,
+            difficulty_level: p.difficulty_level || 'Intermediate',
+            explanation:      p.explanation,
+            added_by:         teacherWpId || 'Orion.T',
+            is_active:        true,
+            question_type:    'MCQ',
+            question_image:   (p.image_urls && p.image_urls[0]) || null,
+            option_a_image:   (p.option_image_urls && p.option_image_urls.a) || null,
+            option_b_image:   (p.option_image_urls && p.option_image_urls.b) || null,
+            option_c_image:   (p.option_image_urls && p.option_image_urls.c) || null,
+            option_d_image:   (p.option_image_urls && p.option_image_urls.d) || null
+        }));
 
-        // Layer 1: Attempt Cloudflare Worker API Gateway
-        try {
-            const res = await fetch(N8N_SAVE, {
-                method: 'POST',
-                headers: pgAuthHeaders({ 'Content-Type': 'application/json' }),
-                body: JSON.stringify({ institute_id: instId || 'a1b2c3d4-e5f6-7890-abcd-ef1234567890', questions: payload })
-            });
-            if (res.ok) {
-                const data = await res.json();
-                savedCount = data.saved_count || payload.length;
-                saveSuccess = true;
-            } else {
-                console.warn('API Gateway save returned status:', res.status);
-            }
-        } catch (gwErr) {
-            console.warn('API Gateway call encountered network issue, proceeding to direct DB1 pipeline:', gwErr);
+        const dRes = await fetch(`${SUPA_A_URL}/rest/v1/questions`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'apikey': SUPA_A_KEY_SERVICE,
+                'Authorization': 'Bearer ' + SUPA_A_KEY_SERVICE,
+                'Prefer': 'return=representation'
+            },
+            body: JSON.stringify(directRows)
+        });
+
+        if (!dRes.ok) {
+            const dTxt = await dRes.text();
+            throw new Error(`Direct save error: ${dTxt}`);
         }
-
-        // Layer 2: Fallback direct insertion into Supabase DB1 questions table
-        if (!saveSuccess) {
-            const directRows = payload.map(p => ({
-                question_text:    p.question_text,
-                option_a:         p.option_a,
-                option_b:         p.option_b,
-                option_c:         p.option_c,
-                option_d:         p.option_d,
-                correct_answer:   p.correct_answer,
-                subject:          p.subject,
-                chapter:          p.chapter,
-                board:            p.board || p.exam,
-                class:            p.class,
-                difficulty_level: p.difficulty_level || 'Intermediate',
-                explanation:      p.explanation,
-                added_by:         teacherWpId || 'Orion.T',
-                is_active:        true,
-                question_type:    'MCQ',
-                question_image:   (p.image_urls && p.image_urls[0]) || null,
-                option_a_image:   (p.option_image_urls && p.option_image_urls.a) || null,
-                option_b_image:   (p.option_image_urls && p.option_image_urls.b) || null,
-                option_c_image:   (p.option_image_urls && p.option_image_urls.c) || null,
-                option_d_image:   (p.option_image_urls && p.option_image_urls.d) || null
-            }));
-
-            const dRes = await fetch(`${SUPA_A_URL}/rest/v1/questions`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'apikey': SUPA_A_KEY_SERVICE,
-                    'Authorization': 'Bearer ' + SUPA_A_KEY_SERVICE,
-                    'Prefer': 'return=representation'
-                },
-                body: JSON.stringify(directRows)
-            });
-
-            if (!dRes.ok) {
-                const dTxt = await dRes.text();
-                throw new Error(`Direct save error: ${dTxt}`);
-            }
-            const dData = await dRes.json();
-            savedCount = dData.length;
-        }
+        const dData = await dRes.json();
+        const savedCount = dData.length;
 
         showToast(`Successfully saved ${savedCount} question${savedCount > 1 ? 's' : ''} to Question Bank!`, 'success');
 
