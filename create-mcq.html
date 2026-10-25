@@ -500,8 +500,11 @@ function parseGIFT(raw) {
         const body  = m[2].trim();
         if (!qText || !body) continue;
 
-        // Parse answer lines
-        const lines   = body.split('\n').map(l => l.trim()).filter(Boolean);
+        // Parse answer lines or inline options
+        let lines   = body.split('\n').map(l => l.trim()).filter(Boolean);
+        if (lines.length <= 1 && (body.includes('~') || body.includes('='))) {
+            lines = body.split(/(?=[=~])/).map(l => l.trim()).filter(Boolean);
+        }
         const opts    = [];
         let correctIdx = -1;
 
