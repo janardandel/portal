@@ -1059,9 +1059,9 @@ if (checkAuth()) {
   if (!email) {
     try { email = (JSON.parse(localStorage.getItem('pg_user') || '{}')).username || (JSON.parse(localStorage.getItem('pg_user') || '{}')).email || ''; } catch (_) { email = ''; }
   }
-  const cleanName = (email || 'Orion.T').replace(/@.*$/, '');
+  const cleanName = (email || 'Teacher').replace(/@.*$/, '');
   const el = document.getElementById('userEmailSpan');
-  if (el) el.textContent = cleanName || 'Orion.T';
+  if (el) el.textContent = cleanName || 'Teacher';
   const params = new URLSearchParams(window.location.search);
   if (params.get('tab') === 'ocr') {
     switchReviewTab('ocr');

@@ -774,11 +774,11 @@ function checkAuth() {
     try {
         currentUser = JSON.parse(user);
     } catch (_) {
-        currentUser = { username: 'Orion.T', name: 'Orion.T' };
+        currentUser = { username: 'Teacher', name: 'Teacher' };
     }
-    let displayName = (currentUser.username || currentUser.name || currentUser.email || 'Orion.T');
+    let displayName = (currentUser.username || currentUser.name || currentUser.email || 'Teacher');
     displayName = displayName.replace(/@.*$/, '');
-    if (!displayName || displayName.toLowerCase() === 'loading...') displayName = 'Orion.T';
+    if (!displayName || displayName.toLowerCase() === 'loading...') displayName = 'Teacher';
     const uEmailEl = document.getElementById('userEmail');
     if (uEmailEl) uEmailEl.textContent = displayName;
 
@@ -1371,7 +1371,7 @@ async function scheduleQuiz() {
 
     const selQuestions = (selectedQuestions ? Array.from(selectedQuestions.values()) : []);
     const timeopen = Math.floor(new Date(date + 'T' + time + ':00').getTime() / 1000) || Math.floor(Date.now() / 1000);
-    const email = (currentUser && currentUser.username) ? currentUser.username : (currentUser && currentUser.email ? currentUser.email.replace(/@.*$/, '') : 'Orion.T');
+    const email = (currentUser && currentUser.username) ? currentUser.username : (currentUser && currentUser.email ? currentUser.email.replace(/@.*$/, '') : 'Teacher');
 
     // 1. Instant optimistic UI feedback: Launch success confirmation immediately!
     const msgEl = document.getElementById('successMsg');
