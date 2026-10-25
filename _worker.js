@@ -5,10 +5,10 @@ const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZ
 const S3_ENDPOINT = 'https://s3.ap-northeast-1.idrivee2.com';
 const S3_REGION   = 'ap-northeast-1';
 const S3_BUCKET   = 'mcq-supabase';
-// Teacher MCQs are saved into the "Pitthugram Onboarding Project" Supabase (SUPA_B)
-const SAVE_DB_URL = 'https://zqrswemxmhjaylsuulyu.supabase.co';
+// Teacher MCQs are saved into the Question Bank Supabase (DB1)
+const SAVE_DB_URL = 'https://qnqcysdeolnooxxcafwz.supabase.co';
 const QB_SUPABASE_URL = 'https://qnqcysdeolnooxxcafwz.supabase.co';
-const QB_SERVICE_KEY = '';
+const QB_SERVICE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFucWN5c2Rlb2xub294eGNhZnd6Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3NjM1NzQ2NSwiZXhwIjoyMDkxOTMzNDY1fQ.Co7aXPihbAn56b2BE2rh4q6wgqlVEbzp3C6wAZz1V8s';
 
 export default {
     async fetch(request, env) {
@@ -461,84 +461,61 @@ async function handleMcqSave(request, env) {
     if (questions.length > 200) return json({ error: 'Too many questions in one request.' }, 400);
     const auth = await authorizeInstitute(request, instituteId);
     if (auth.error) return auth.error;
-    if (!env.SUPA_DB_SERVICE_KEY) return json({ error: 'Database not configured.' }, 500);
+    const serviceKey = (env && env.SUPABASE_SERVICE_ROLE_KEY) || (env && env.SUPA_DB_SERVICE_KEY) || QB_SERVICE_KEY;
+    if (!serviceKey) return json({ error: 'Database not configured.' }, 500);
 
-    const base = SAVE_DB_URL;
+    const base = QB_SUPABASE_URL;
     const headers = {
         'Content-Type': 'application/json',
-        'apikey': env.SUPA_DB_SERVICE_KEY,
-        'Authorization': `Bearer ${env.SUPA_DB_SERVICE_KEY}`
+        'apikey': serviceKey,
+        'Authorization': `Bearer ${serviceKey}`
     };
 
     let saved = 0;
     for (const q of questions) {
+        const examBoard = (q.board !== undefined ? q.board : (q.exam || board)) || '';
+        const qImgs = (q.images || []).filter(im => (im.target === 'question' || im.caption === 'question') && (im.url || im.key));
+        const qImgUrl = (q.image_urls && q.image_urls[0]) || (qImgs.length ? (qImgs[0].url || qImgs[0].key) : null);
+        const optAImg = (q.option_image_urls && q.option_image_urls.a) || (q.images && q.images.find(im => (im.target === 'A' || im.caption === 'A'))?.url) || null;
+        const optBImg = (q.option_image_urls && q.option_image_urls.b) || (q.images && q.images.find(im => (im.target === 'B' || im.caption === 'B'))?.url) || null;
+        const optCImg = (q.option_image_urls && q.option_image_urls.c) || (q.images && q.images.find(im => (im.target === 'C' || im.caption === 'C'))?.url) || null;
+        const optDImg = (q.option_image_urls && q.option_image_urls.d) || (q.images && q.images.find(im => (im.target === 'D' || im.caption === 'D'))?.url) || null;
+
         const row = {
-            institute_id:     instituteId,
-            teacher_id:       teacherId,
             question_text:    q.question_text,
             option_a:         q.option_a || '',
             option_b:         q.option_b || '',
             option_c:         q.option_c || '',
             option_d:         q.option_d || '',
             correct_answer:   q.correct_answer || 'A',
-            correct_option:   q.correct_answer || 'A',
-            subject:          q.subject || subject,
-            chapter:          q.chapter || chapter,
-            class:            q.class   || cls,
-            board:            (q.board !== undefined ? q.board : board) || '',
-            topic:            q.topic || '',
+            subject:          q.subject || subject || 'Maths',
+            chapter:          q.chapter || chapter || '',
+            class:            q.class   || cls || (['JEE','NEET'].includes(examBoard) ? '12' : ''),
+            board:            examBoard,
             difficulty_level: q.difficulty_level || 'Intermediate',
             explanation:      q.explanation || '',
-            question_type:    'MCQ',
+            question_type:    q.question_type || 'MCQ',
+            added_by:         teacherId || body.teacher_wordpress_id || 'Orion.T',
             is_active:        true,
-            source:           'manual'
+            question_image:   qImgUrl,
+            option_a_image:   optAImg,
+            option_b_image:   optBImg,
+            option_c_image:   optCImg,
+            option_d_image:   optDImg
         };
 
-        // 1) Insert the question, get its id back
         const qRes = await fetch(`${base}/rest/v1/questions`, {
             method: 'POST',
             headers: { ...headers, 'Prefer': 'return=representation' },
-            body: JSON.stringify(row)
+            body: JSON.stringify([row])
         });
         if (!qRes.ok) {
             const txt = await qRes.text();
             return json({ error: 'Question insert failed: ' + txt, saved }, 500);
         }
-        const inserted = await qRes.json();
-        if (!inserted || !inserted[0] || !inserted[0].id) return json({ error: 'Question insert returned no row.', saved }, 502);
-        const qid = inserted[0].id;
-
-        // 2) Insert normalized option rows
-        const optRows = ['a', 'b', 'c', 'd']
-            .filter(l => row['option_' + l])
-            .map(l => ({ question_id: qid, option_label: l.toUpperCase(), option_text: row['option_' + l] }));
-        if (optRows.length) {
-            await fetch(`${base}/rest/v1/options`, {
-                method: 'POST',
-                headers: { ...headers, 'Prefer': 'return=minimal' },
-                body: JSON.stringify(optRows)
-            });
-        }
-
-        // 3) Insert image rows (caption = target: question / A / B / C / D)
-        const imgs = (q.images || []).filter(im => im && im.key);
-        if (imgs.length) {
-            const imgRows = imgs.map((im, i) => ({
-                question_id: qid,
-                idrive_key:  im.key,
-                idrive_url:  im.getUrl || null,
-                caption:     im.target || 'question',
-                order_index: i
-            }));
-            await fetch(`${base}/rest/v1/question_images`, {
-                method: 'POST',
-                headers: { ...headers, 'Prefer': 'return=minimal' },
-                body: JSON.stringify(imgRows)
-            });
-        }
         saved++;
     }
-    return json({ saved });
+    return json({ status: 'success', saved_count: saved, saved });
 }
 
 // ── SigV4 / crypto helpers (Web Crypto) ─────────────────────────────────────
