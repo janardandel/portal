@@ -187,6 +187,14 @@ const TENANT_MOODLE_MAP = {
     '65e4628a-a283-45a3-ab2d-84073977d4c4': {
         moodle_url: 'https://trial001.classes.institute',
         tenant_name: 'Pitthugram Trial'
+    },
+    'a1b2c3d4-e5f6-7890-abcd-ef1234567890': {
+        moodle_url: 'https://lms.pitthugram.com',
+        tenant_name: 'Coaching Institute'
+    },
+    'inst-orion-01': {
+        moodle_url: 'https://lms.pitthugram.com',
+        tenant_name: 'Coaching Institute'
     }
 };
 
@@ -194,7 +202,7 @@ async function getTenantMoodleConfig(instituteId, env, userToken) {
     // 1. Check in-memory mapping
     if (instituteId && TENANT_MOODLE_MAP[instituteId]) {
         // env is only available per request, so the token is attached here, not at module load
-        return Object.assign({}, TENANT_MOODLE_MAP[instituteId], { moodle_token: (env && env.MOODLE_TOKEN) || '' });
+        return Object.assign({}, TENANT_MOODLE_MAP[instituteId], { moodle_token: (env && env.MOODLE_TOKEN) || 'f86783276dca5998a2da40af8b53ab42' });
     }
 
     // 2. Check Supabase institutes / moodle_config table if configured
@@ -226,7 +234,7 @@ async function getTenantMoodleConfig(instituteId, env, userToken) {
     // 3. Fallback to default trial Moodle
     return {
         moodle_url: (env && env.MOODLE_URL) || 'https://trial001.classes.institute',
-        moodle_token: (env && env.MOODLE_TOKEN) || '',
+        moodle_token: (env && env.MOODLE_TOKEN) || 'f86783276dca5998a2da40af8b53ab42',
         tenant_name: 'Default Trial'
     };
 }
