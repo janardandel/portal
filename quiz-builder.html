@@ -14,7 +14,7 @@
     <style>
         /* -- Desktop sidebar (1024px+) -- */
         @media(min-width:1024px){
-            #qbSidebar{display:flex!important;flex-direction:column!important;position:fixed!important;top:72px!important;left:0!important;width:280px!important;height:calc(100vh - 72px)!important;max-height:none!important;border-radius:0!important;transform:none!important;visibility:visible!important;opacity:1!important;z-index:50!important;}
+            #qbSidebar{display:flex!important;flex-direction:column!important;position:fixed!important;top:72px!important;left:0!important;width:280px!important;height:calc(100vh - 72px)!important;max-height:none!important;border-radius:0!important;transform:none!important;visibility:visible!important;opacity:1!important;z-index:50!important;overflow-y:auto!important;}
             #qbPage.qb-page{margin-left:280px!important;}
             #qbPage .qb-layout{display:block!important;}
             #sidebarToggle{display:none!important;}
@@ -272,7 +272,6 @@
                 <nav class="qb-nav">
                     <ul>
                         <li><a href="./quiz-builder.html" class="active"><i class="ph ph-plus-circle" style="color:var(--primary);"></i> Quiz Builder</a></li>
-                        <li><a href="#" onclick="openBatchModal(event)"><i class="ph ph-calendar-plus"></i> Schedule Quiz</a></li>
                         <li><a href="./reports.html"><i class="ph-bold ph-chart-line-up"></i> Reports & Analytics</a></li>
                         <li><a href="./review-mcq.html"><i class="ph ph-calendar-check"></i> Scheduled Tests</a></li>
                         <li><a href="./create-mcq.html"><i class="ph ph-pencil-simple-line"></i> Add MCQ</a></li>
@@ -380,11 +379,9 @@
                             <i class="ph ph-list"></i>
                         </button>
                         <h1>Quiz <span>Builder</span></h1>
-                        <button class="new-quiz-mobile-btn" onclick="openBatchModal(event)"><i class="ph ph-calendar-plus"></i> Schedule Quiz</button>
                         <button class="btn-outline btn-sm" onclick="showMyQuizzes(event)" style="display:inline-flex;align-items:center;gap:0.4rem;padding:0.45rem 0.85rem;border-radius:var(--radius);font-weight:600;cursor:pointer;border:1.5px solid var(--border-light);background:transparent;color:var(--text-primary);">
                             <i class="ph ph-calendar-check"></i> Scheduled Tests
                         </button>
-
                     </div>
                     <div class="user-chip">
                         <div class="avatar"><i class="ph-fill ph-user"></i></div>
@@ -395,19 +392,57 @@
                     </div>
                 </div>
 
-
-        <!-- Subject + Chapter filter bar (shows after class/exam is chosen) -->
-        <div id="chapterBar" class="chapter-bar" style="display:none;">
-            <div class="chapter-bar-header">
-                <span class="chapter-bar-title">
-                    <i class="ph ph-funnel-simple"></i>
-                    <span id="chapterBarTitle">Filters</span>
-                </span>
-                <button class="chapter-bar-reset" onclick="clearSubjectFilter()">
-                    <i class="ph ph-x"></i> Clear filter
-                </button>
+        <!-- Unified Exam, Board, Class & Chapter Control Panel -->
+        <div id="chapterBar" class="chapter-bar" style="display:block;margin-bottom:1.25rem;">
+            <!-- Top Row: Exam / Board Selector -->
+            <div style="margin-bottom:0.85rem;">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.55rem;flex-wrap:wrap;gap:0.5rem;">
+                    <span style="font-size:0.75rem;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.07em;display:flex;align-items:center;gap:0.4rem;">
+                        <i class="ph-bold ph-trophy" style="color:var(--primary);"></i> Exam / Board
+                    </span>
+                    <div style="display:flex;align-items:center;gap:0.6rem;">
+                        <span id="chapterBarTitle" style="font-size:0.8rem;font-weight:600;color:var(--text-secondary);background:var(--bg-base);padding:0.25rem 0.6rem;border-radius:var(--radius-sm);border:1px solid var(--border-light);"></span>
+                        <button class="chapter-bar-reset" onclick="clearSubjectFilter()" title="Reset subject and chapter filters">
+                            <i class="ph ph-arrow-counter-clockwise"></i> Reset
+                        </button>
+                    </div>
+                </div>
+                <div class="batch-btn-grid" id="onPageExamGrid">
+                    <button type="button" class="batch-btn" data-exam="JEE" onclick="selectUnifiedExam('JEE')">JEE</button>
+                    <button type="button" class="batch-btn active" data-exam="NEET" onclick="selectUnifiedExam('NEET')">NEET</button>
+                    <button type="button" class="batch-btn" data-exam="CBSE" onclick="selectUnifiedBoard('CBSE')">CBSE</button>
+                    <button type="button" class="batch-btn" data-exam="ICSE" onclick="selectUnifiedBoard('ICSE')">ICSE</button>
+                    <button type="button" class="batch-btn" data-exam="UP Board" onclick="selectUnifiedBoard('UP Board')">UP Board</button>
+                </div>
             </div>
-            <div class="filter-dropdowns-row">
+
+            <!-- Class Picker Row (Visible when CBSE / ICSE / UP Board is active) -->
+            <div id="onPageBoardClassRow" style="display:none;margin-bottom:0.85rem;background:var(--bg-base);padding:0.75rem 1rem;border-radius:var(--radius);border:1px solid var(--border-light);">
+                <span style="display:block;font-size:0.75rem;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.07em;margin-bottom:0.35rem;">
+                    <i class="ph-bold ph-graduation-cap" style="color:var(--primary);"></i> Select Class
+                </span>
+                <select class="batch-filter-select" id="onPageBoardClass" onchange="onUnifiedBoardClassChange()">
+                    <option value="">Select Class</option>
+                    <option value="6">Class 6</option>
+                    <option value="7">Class 7</option>
+                    <option value="8">Class 8</option>
+                    <option value="9">Class 9</option>
+                    <option value="10">Class 10</option>
+                    <option value="11-PCM">Class 11 — Science (PCM)</option>
+                    <option value="11-PCB">Class 11 — Science (PCB)</option>
+                    <option value="11-Commerce">Class 11 — Commerce</option>
+                    <option value="11-Arts">Class 11 — Arts</option>
+                    <option value="11-Agriculture">Class 11 — Agriculture</option>
+                    <option value="12-PCM">Class 12 — Science (PCM)</option>
+                    <option value="12-PCB">Class 12 — Science (PCB)</option>
+                    <option value="12-Commerce">Class 12 — Commerce</option>
+                    <option value="12-Arts">Class 12 — Arts</option>
+                    <option value="12-Agriculture">Class 12 — Agriculture</option>
+                </select>
+            </div>
+
+            <!-- Subject, Chapter, and Difficulty Filters -->
+            <div class="filter-dropdowns-row" style="grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 0.65rem;">
                 <div>
                     <p class="batch-filters-label">Subject</p>
                     <select class="batch-filter-select" id="filterSubject" onchange="onFilterSubjectChange()">
@@ -418,6 +453,15 @@
                     <p class="batch-filters-label">Chapter</p>
                     <select class="batch-filter-select" id="filterChapter" onchange="onFilterChapterChange()">
                         <option value="">All Chapters</option>
+                    </select>
+                </div>
+                <div>
+                    <p class="batch-filters-label">Difficulty</p>
+                    <select class="batch-filter-select" id="filterDifficulty" onchange="onFilterDifficultyChange()">
+                        <option value="">All Levels</option>
+                        <option value="Basic">Basic</option>
+                        <option value="Intermediate">Intermediate</option>
+                        <option value="Advanced">Advanced</option>
                     </select>
                 </div>
             </div>
@@ -1277,7 +1321,16 @@ async function loadMoodleCourses() {
         const courses = (d && d.courses && d.courses.length) ? d.courses : DEFAULT_COURSES;
         sel.innerHTML = '<option value="">Select Course</option>' + courses.map(function(c) { return '<option value="' + c.id + '">' + (c.fullname || c.shortname) + '</option>'; }).join('');
         if (!sel.value || sel.value === '') {
-            sel.value = '2';
+            const sub = (activeSubject || '').toLowerCase();
+            const ex = (activeClass || activeBoard || '').toLowerCase();
+            const match = courses.find(c => {
+                const fn = (c.fullname || '').toLowerCase();
+                return (ex && fn.includes(ex)) && (!sub || fn.includes(sub));
+            }) || courses.find(c => {
+                const fn = (c.fullname || '').toLowerCase();
+                return sub && fn.includes(sub);
+            });
+            sel.value = match ? String(match.id) : (courses[0] ? String(courses[0].id) : '2');
         }
     } catch (e) {
         console.warn('Using verified default courses:', e);
@@ -1785,10 +1838,12 @@ async function loadFilterBar(cls, preSubject, board) {
     const selCh   = document.getElementById('filterChapter');
 
     const clsLabel = isNaN(cls) ? cls : 'Class ' + cls;
-    title.textContent = board ? (board + ' Â· ' + clsLabel) : clsLabel;
-    bar.style.display = 'block';
+    if (title) title.textContent = board ? (board + ' · ' + clsLabel) : clsLabel;
+    if (bar) bar.style.display = 'block';
     _fbClass = cls;
     _fbBoard = board || '';
+
+    syncOnPageExamGrid(cls, board);
 
     selSub.innerHTML = '<option value="">Loading&hellip;</option>';
     selCh.innerHTML  = '<option value="">All Chapters</option>';
@@ -1828,14 +1883,96 @@ async function loadFilterBar(cls, preSubject, board) {
     selSub.innerHTML = '<option value="">All Subjects</option>';
     subjects.forEach(s => { const o = document.createElement('option'); o.value = s; o.textContent = s; selSub.appendChild(o); });
 
-    if (preSubject) selSub.value = preSubject;
+    if (preSubject && subjects.includes(preSubject)) {
+        selSub.value = preSubject;
+    } else if (preSubject) {
+        // If preSubject not in array yet, add it
+        const o = document.createElement('option');
+        o.value = preSubject; o.textContent = preSubject;
+        selSub.appendChild(o);
+        selSub.value = preSubject;
+    }
     await loadFilterChapters(selSub.value);
+}
+
+function syncOnPageExamGrid(cls, board) {
+    const grid = document.getElementById('onPageExamGrid');
+    const targetExam = board || (cls === 'JEE' ? 'JEE' : cls === 'NEET' ? 'NEET' : '');
+    if (grid) {
+        grid.querySelectorAll('.batch-btn').forEach(btn => {
+            if (btn.dataset.exam === targetExam) {
+                btn.classList.add('active');
+            } else {
+                btn.classList.remove('active');
+            }
+        });
+    }
+
+    const row = document.getElementById('onPageBoardClassRow');
+    const sel = document.getElementById('onPageBoardClass');
+    if (row) {
+        if (board && ['CBSE', 'ICSE', 'UP Board'].includes(board)) {
+            row.style.display = 'block';
+            if (sel && cls && isNaN(cls) === false) sel.value = cls;
+            else if (sel && cls) sel.value = cls;
+        } else {
+            row.style.display = 'none';
+        }
+    }
+}
+
+async function selectUnifiedExam(exam, preSub) {
+    activeBoard = '';
+    activeClass = exam;
+    activeChapter = '';
+    activeDifficulty = '';
+    localStorage.setItem('qb_last_exam', exam);
+    localStorage.removeItem('qb_last_board');
+    localStorage.removeItem('qb_last_class');
+
+    const defSub = preSub || 'Physics';
+    await quickLoad(exam, defSub, '');
+}
+
+async function selectUnifiedBoard(board, preClass, preSub) {
+    activeBoard = board;
+    const classSel = document.getElementById('onPageBoardClass');
+    const cls = preClass || (classSel && classSel.value ? classSel.value : '10');
+    activeClass = cls;
+    activeChapter = '';
+    activeDifficulty = '';
+    localStorage.setItem('qb_last_board', board);
+    localStorage.setItem('qb_last_class', cls);
+    localStorage.removeItem('qb_last_exam');
+
+    const row = document.getElementById('onPageBoardClassRow');
+    if (row) row.style.display = 'block';
+    if (classSel) classSel.value = cls;
+
+    await quickLoad(cls, preSub || '', board);
+}
+
+async function onUnifiedBoardClassChange() {
+    const sel = document.getElementById('onPageBoardClass');
+    const cls = sel ? sel.value : '10';
+    if (!cls) return;
+    activeClass = cls;
+    activeChapter = '';
+    localStorage.setItem('qb_last_class', cls);
+    await quickLoad(cls, '', activeBoard);
+}
+
+function onFilterDifficultyChange() {
+    const sel = document.getElementById('filterDifficulty');
+    activeDifficulty = sel ? sel.value : '';
+    refresh();
 }
 
 function onFilterSubjectChange() {
     activeSubject = document.getElementById('filterSubject').value;
     activeChapter = '';
     document.getElementById('filterChapter').value = '';
+    if (activeSubject) localStorage.setItem('qb_last_subject', activeSubject);
     loadFilterChapters(activeSubject);
     refresh();
 }
@@ -1845,27 +1982,30 @@ function onFilterChapterChange() {
     refresh();
 }
 
-// -- Quick-load a subject directly from sidebar --------
+// -- Quick-load a subject directly from sidebar or on-page switcher --------
 async function quickLoad(batch, subject, board) {
     const determinedBoard = board || (batch === 'JEE' ? 'JEE' : batch === 'NEET' ? 'NEET' : '');
     activeClass      = batch || 'NEET';
     activeBoard      = determinedBoard;
-    activeSubject    = subject || 'Physics';
+    activeSubject    = subject || '';
     activeChapter    = '';
-    activeDifficulty = '';
+
+    if (activeSubject) localStorage.setItem('qb_last_subject', activeSubject);
 
     // Highlight active subject in sidebar
     document.querySelectorAll('.qb-subjects li').forEach(li => li.classList.remove('active-subject'));
     document.querySelectorAll('.qb-subjects-sublist li').forEach(li => li.classList.remove('active-subject'));
 
-    const allLis = [...document.querySelectorAll('.qb-subjects li'), ...document.querySelectorAll('.qb-subjects-sublist li')];
-    allLis.forEach(li => {
-        const text = (li.textContent || '').trim().toLowerCase();
-        const oc = li.getAttribute('onclick') || '';
-        if (oc.includes(activeSubject) || text.includes(activeSubject.toLowerCase())) {
-            li.classList.add('active-subject');
-        }
-    });
+    if (activeSubject) {
+        const allLis = [...document.querySelectorAll('.qb-subjects li'), ...document.querySelectorAll('.qb-subjects-sublist li')];
+        allLis.forEach(li => {
+            const text = (li.textContent || '').trim().toLowerCase();
+            const oc = li.getAttribute('onclick') || '';
+            if (oc.includes(activeSubject) || text.includes(activeSubject.toLowerCase())) {
+                li.classList.add('active-subject');
+            }
+        });
+    }
 
     closeSidebar();
     await refresh();
@@ -1873,16 +2013,18 @@ async function quickLoad(batch, subject, board) {
 }
 
 function clearSubjectFilter() {
-    activeClass      = '';
     activeSubject    = '';
     activeChapter    = '';
     activeDifficulty = '';
     _filterAllRows   = [];
     document.querySelectorAll('.qb-subjects li[onclick]').forEach(li => li.classList.remove('active-subject'));
     document.querySelectorAll('.qb-subjects-sublist').forEach(sub => sub.remove());
-    document.getElementById('chapterBar').style.display = 'none';
-    document.getElementById('filterSubject').innerHTML = '<option value="">All Subjects</option>';
-    document.getElementById('filterChapter').innerHTML = '<option value="">All Chapters</option>';
+    const selSub = document.getElementById('filterSubject');
+    const selCh  = document.getElementById('filterChapter');
+    const selDiff = document.getElementById('filterDifficulty');
+    if (selSub) selSub.value = '';
+    if (selCh) selCh.value = '';
+    if (selDiff) selDiff.value = '';
     refresh();
 }
 
@@ -2510,9 +2652,20 @@ async function init() {
     // Show dashboard by default
     showDashboard();
 
-    // Auto-load questions immediately so teacher never faces a blank screen
+    // Auto-load questions immediately based on teacher's last active preference or default
     if (!activeSubject) {
-        await quickLoad('NEET', 'Physics');
+        const lastBoard = localStorage.getItem('qb_last_board');
+        const lastClass = localStorage.getItem('qb_last_class');
+        const lastExam  = localStorage.getItem('qb_last_exam');
+        const lastSub   = localStorage.getItem('qb_last_subject');
+
+        if (lastBoard) {
+            await selectUnifiedBoard(lastBoard, lastClass || '10', lastSub || '');
+        } else if (lastExam === 'JEE') {
+            await selectUnifiedExam('JEE', lastSub || 'Physics');
+        } else {
+            await selectUnifiedExam('NEET', lastSub || 'Physics');
+        }
     }
 
     // Load section collapsed states
