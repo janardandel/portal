@@ -1432,8 +1432,13 @@ async function scheduleQuiz() {
 
     // 1. Instant optimistic UI feedback: Launch success confirmation immediately!
     const msgEl = document.getElementById('successMsg');
+    const lmsBtn = document.getElementById('openLmsBtn');
     if (msgEl) {
-        msgEl.textContent = '"' + title + '" successfully scheduled in ' + courseTxt + ' with ' + (selQuestions.length || qCount) + ' question(s), opening on ' + date + ' at ' + time + '.';
+        msgEl.innerHTML = `<strong>${title}</strong> scheduled in Central Moodle (<strong>${courseTxt}</strong>) with <strong>${selQuestions.length || qCount}</strong> MCQs, opening on <strong>${date}</strong> at <strong>${time}</strong>.`;
+    }
+    if (lmsBtn) {
+        lmsBtn.href = 'https://lms.pitthugram.com/course/view.php?id=' + courseid;
+        lmsBtn.style.display = 'inline-flex';
     }
     
     closeReview();
@@ -1521,7 +1526,7 @@ async function scheduleQuiz() {
             } else if (data && data.job_id) {
                 const jobId = data.job_id;
                 if (msgEl) {
-                    msgEl.innerHTML = `<strong>${title}</strong> is queued in BullMQ... <span style="display:inline-block;width:12px;height:12px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;animation:spin 0.75s linear infinite;margin-left:5px;vertical-align:middle;"></span>`;
+                    msgEl.innerHTML = `<strong>${title}</strong> is scheduled in Central Moodle (<strong>${courseTxt}</strong>) with <strong>${selQuestions.length}</strong> MCQs!<br><span style="font-size:12px;color:var(--text-muted, #64748b);">Synced to queue (Job ID: ${jobId}) <span style="display:inline-block;width:10px;height:10px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;animation:spin 0.75s linear infinite;margin-left:4px;vertical-align:middle;"></span></span>`;
                 }
 
                 let pollCount = 0;
@@ -1535,14 +1540,13 @@ async function scheduleQuiz() {
                     fetch('https://queue.pitthugram.com/api/v1/jobs/' + encodeURIComponent(jobId) + '/status')
                         .then(function(sRes) { return sRes.json(); })
                         .then(function(sData) {
-                            if (sData && sData.state === 'completed' && sData.result && sData.result.quiz_url) {
+                            if (sData && sData.state === 'completed') {
                                 clearInterval(pollTimer);
-                                if (lmsBtn) {
+                                if (sData.result && sData.result.quiz_url && lmsBtn) {
                                     lmsBtn.href = sData.result.quiz_url;
-                                    lmsBtn.style.display = 'inline-flex';
                                 }
                                 if (msgEl) {
-                                    msgEl.innerHTML = `<strong>${title}</strong> is scheduled in Central Moodle (${courseTxt}) with ${selQuestions.length} MCQs!`;
+                                    msgEl.innerHTML = `<strong>${title}</strong> is deployed in Central Moodle (<strong>${courseTxt}</strong>) with <strong>${selQuestions.length}</strong> MCQs!`;
                                 }
                             } else if (sData && sData.state === 'failed') {
                                 clearInterval(pollTimer);
