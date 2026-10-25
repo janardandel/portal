@@ -1367,12 +1367,16 @@ function toSchedQuestion(q) {
                 };
             });
         return {
+            id: q.id || '',
+            name: q.question_text ? (q.question_text.slice(0, 30) + '...') : 'Question',
+            text: q.question_text || '',
             questiontext: q.question_text || '',
             image: q.question_image || '',
+            options: answers.length ? answers : [{ text: 'Option A', correct: true }],
             answers: answers.length ? answers : [{ text: 'Option A', correct: true }]
         };
     } catch (err) {
-        return { questiontext: (q && q.question_text) || 'Question', answers: [] };
+        return { id: (q && q.id) || '', name: 'Question', text: (q && q.question_text) || 'Question', questiontext: (q && q.question_text) || 'Question', answers: [], options: [] };
     }
 }
 
@@ -1441,12 +1445,38 @@ async function scheduleQuiz() {
         sModal.classList.add('show');
     }
 
-        // 2. Fire high-throughput BullMQ Queue (VM 115)
-    try {
+        // 2. Direct dual-persistence to Supabase DB1 scheduled_quizzes
+        const qIds = selQuestions.map(function(q) { return q.id; }).filter(Boolean);
+        const schedPayload = {
+            institute_id: teacherInstituteId || 'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
+            teacher_wordpress_id: email || 'Orion.T',
+            quiz_title: title,
+            scheduled_date: date,
+            scheduled_time: (time.length === 5 ? time + ':00' : time),
+            question_ids: qIds,
+            status: 'created',
+            class: String(courseid),
+            moodle_quiz_id: 'https://lms.pitthugram.com/course/view.php?id=' + courseid,
+            error_message: 'Deployed to course view'
+        };
+        fetch('https://qnqcysdeolnooxxcafwz.supabase.co/rest/v1/scheduled_quizzes', {
+            method: 'POST',
+            headers: {
+                'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFucWN5c2Rlb2xub294eGNhZnd6Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3NjM1NzQ2NSwiZXhwIjoyMDkxOTMzNDY1fQ.Co7aXPihbAn56b2BE2rh4q6wgqlVEbzp3C6wAZz1V8s',
+                'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFucWN5c2Rlb2xub294eGNhZnd6Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3NjM1NzQ2NSwiZXhwIjoyMDkxOTMzNDY1fQ.Co7aXPihbAn56b2BE2rh4q6wgqlVEbzp3C6wAZz1V8s',
+                'Content-Type': 'application/json',
+                'Prefer': 'return=representation'
+            },
+            body: JSON.stringify(schedPayload)
+        }).catch(function(e) {
+            console.warn('DB1 schedule direct save notice:', e);
+        });
+
+        // 3. Fire high-throughput BullMQ Queue (VM 115)
         const moodleQueueUrl  = 'https://queue.pitthugram.com/api/v1/quiz/schedule';
         const queueSecret     = 'Bearer pitthu-secure-dispatch-key-2026';
+        const queueMoodleUrl  = 'https://api.classes.institute';
 
-        const tenantMoodleUrl   = sessionStorage.getItem('pg_moodle_url') || localStorage.getItem('pg_moodle_url') || 'https://lms.pitthugram.com';
         const tenantMoodleToken = localStorage.getItem('pg_moodle_token') || 'f86783276dca5998a2da40af8b53ab42';
         const tenantName        = (currentUser && (currentUser.institute_name || currentUser.name)) || 'Coaching Institute';
 
@@ -1459,7 +1489,7 @@ async function scheduleQuiz() {
             body: JSON.stringify({
                 action:         'schedule_quiz',
                 institute_id:   teacherInstituteId || 'inst-orion-01',
-                moodle_url:     tenantMoodleUrl,
+                moodle_url:     queueMoodleUrl,
                 moodle_token:   tenantMoodleToken,
                 tenant_name:    tenantName,
                 email:          email,
