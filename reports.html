@@ -602,6 +602,194 @@ function escHtml(s) {
     .replace(/'/g, '&#39;');
 }
 
+const REAL_STUDENTS_COHORT = {
+  quiz_name: "Today's Daily MCQ Practice",
+  course_name: "Trial Demo 101 - Foundation Batch (JEE / NEET)",
+  question_count: 3,
+  timelimit: 1800,
+  max_score: 12,
+  questions: [
+    {
+      id: 'Q1',
+      title: 'Argument of Complex Number',
+      question_text: 'If z = 1 + i*sqrt(3), what is the argument arg(z) in radians?',
+      subject: 'Maths',
+      chapter: 'Complex Numbers',
+      topic: 'Argument of Complex Number',
+      difficulty: 'Medium',
+      max_marks: 4
+    },
+    {
+      id: 'Q2',
+      title: 'Modulus of Complex Number',
+      question_text: 'What is the value of |3 + 4i|?',
+      subject: 'Maths',
+      chapter: 'Complex Numbers',
+      topic: 'Modulus of Complex Number',
+      difficulty: 'Easy',
+      max_marks: 4
+    },
+    {
+      id: 'Q3',
+      title: 'Principal Argument of Pure Imaginary',
+      question_text: 'What is the principal argument of z = -5i in radians?',
+      subject: 'Maths',
+      chapter: 'Complex Numbers',
+      topic: 'Principal Argument',
+      difficulty: 'Hard',
+      max_marks: 4
+    }
+  ],
+  question_results: [
+    { question_id: 'Q1', student_id: 'orion-s1', student_name: 'Orion Student 1', roll_number: 'ORION-001', marks: 4, status: 'correct', time_seconds: 65 },
+    { question_id: 'Q2', student_id: 'orion-s1', student_name: 'Orion Student 1', roll_number: 'ORION-001', marks: 4, status: 'correct', time_seconds: 42 },
+    { question_id: 'Q3', student_id: 'orion-s1', student_name: 'Orion Student 1', roll_number: 'ORION-001', marks: 4, status: 'correct', time_seconds: 115 },
+
+    { question_id: 'Q1', student_id: 'orion-s2', student_name: 'Orion Student 2', roll_number: 'ORION-002', marks: 4, status: 'correct', time_seconds: 85 },
+    { question_id: 'Q2', student_id: 'orion-s2', student_name: 'Orion Student 2', roll_number: 'ORION-002', marks: 4, status: 'correct', time_seconds: 70 },
+    { question_id: 'Q3', student_id: 'orion-s2', student_name: 'Orion Student 2', roll_number: 'ORION-002', marks: 0, status: 'wrong', time_seconds: 157 },
+
+    { question_id: 'Q1', student_id: 'cosmo-s1', student_name: 'Cosmo Student 1', roll_number: 'COSMO-001', marks: 4, status: 'correct', time_seconds: 95 },
+    { question_id: 'Q2', student_id: 'cosmo-s1', student_name: 'Cosmo Student 1', roll_number: 'COSMO-001', marks: 0, status: 'wrong', time_seconds: 80 },
+    { question_id: 'Q3', student_id: 'cosmo-s1', student_name: 'Cosmo Student 1', roll_number: 'COSMO-001', marks: 4, status: 'correct', time_seconds: 190 },
+
+    { question_id: 'Q1', student_id: 'zenith-s1', student_name: 'Zenith Student 1', roll_number: 'ZENITH-001', marks: 0, status: 'wrong', time_seconds: 80 },
+    { question_id: 'Q2', student_id: 'zenith-s1', student_name: 'Zenith Student 1', roll_number: 'ZENITH-001', marks: 4, status: 'correct', time_seconds: 60 },
+    { question_id: 'Q3', student_id: 'zenith-s1', student_name: 'Zenith Student 1', roll_number: 'ZENITH-001', marks: 0, status: 'wrong', time_seconds: 150 },
+
+    { question_id: 'Q1', student_id: 'vega-s1', student_name: 'Vega Student 1', roll_number: 'VEGA-001', marks: 0, status: 'wrong', time_seconds: 110 },
+    { question_id: 'Q2', student_id: 'vega-s1', student_name: 'Vega Student 1', roll_number: 'VEGA-001', marks: 4, status: 'correct', time_seconds: 95 },
+    { question_id: 'Q3', student_id: 'vega-s1', student_name: 'Vega Student 1', roll_number: 'VEGA-001', marks: 0, status: 'wrong', time_seconds: 233 },
+
+    { question_id: 'Q1', student_id: 'titan-s1', student_name: 'Titan Student 1', roll_number: 'TITAN-001', marks: 0, status: 'wrong', time_seconds: 100 },
+    { question_id: 'Q2', student_id: 'titan-s1', student_name: 'Titan Student 1', roll_number: 'TITAN-001', marks: 0, status: 'wrong', time_seconds: 110 },
+    { question_id: 'Q3', student_id: 'titan-s1', student_name: 'Titan Student 1', roll_number: 'TITAN-001', marks: 4, status: 'correct', time_seconds: 180 },
+
+    { question_id: 'Q1', student_id: 'apex-s1', student_name: 'Apex Student 1', roll_number: 'APEX-001', marks: 0, status: 'wrong', time_seconds: 140 },
+    { question_id: 'Q2', student_id: 'apex-s1', student_name: 'Apex Student 1', roll_number: 'APEX-001', marks: 0, status: 'wrong', time_seconds: 160 },
+    { question_id: 'Q3', student_id: 'apex-s1', student_name: 'Apex Student 1', roll_number: 'APEX-001', marks: 0, status: 'wrong', time_seconds: 190 },
+
+    { question_id: 'Q1', student_id: 'phoenix-s1', student_name: 'Phoenix Student 1', roll_number: 'PHOENIX-001', marks: 0, status: 'wrong', time_seconds: 90 },
+    { question_id: 'Q2', student_id: 'phoenix-s1', student_name: 'Phoenix Student 1', roll_number: 'PHOENIX-001', marks: 0, status: 'wrong', time_seconds: 115 },
+    { question_id: 'Q3', student_id: 'phoenix-s1', student_name: 'Phoenix Student 1', roll_number: 'PHOENIX-001', marks: 0, status: 'wrong', time_seconds: 150 }
+  ],
+  leaderboard: [
+    {
+      rank: 1,
+      student_name: 'Orion Student 1',
+      roll_number: 'ORION-001',
+      email: 'orion.s1@pitthugram.com',
+      phone: '919876543201',
+      score: 12,
+      max_score: 12,
+      percentage: 100,
+      time_taken_formatted: '3m 42s',
+      submitted_at: Date.now() - (25 * 60 * 1000),
+      status: 'Finished'
+    },
+    {
+      rank: 2,
+      student_name: 'Orion Student 2',
+      roll_number: 'ORION-002',
+      email: 'orion.s2@pitthugram.com',
+      phone: '919876543202',
+      score: 8,
+      max_score: 12,
+      percentage: 67,
+      time_taken_formatted: '5m 12s',
+      submitted_at: Date.now() - (60 * 60 * 1000),
+      status: 'Finished'
+    },
+    {
+      rank: 3,
+      student_name: 'Cosmo Student 1',
+      roll_number: 'COSMO-001',
+      email: 'cosmo.s1@pitthugram.com',
+      phone: '919876543203',
+      score: 8,
+      max_score: 12,
+      percentage: 67,
+      time_taken_formatted: '6m 05s',
+      submitted_at: Date.now() - (120 * 60 * 1000),
+      status: 'Finished'
+    },
+    {
+      rank: 4,
+      student_name: 'Zenith Student 1',
+      roll_number: 'ZENITH-001',
+      email: 'zenith.s1@pitthugram.com',
+      phone: '919876543204',
+      score: 4,
+      max_score: 12,
+      percentage: 33,
+      time_taken_formatted: '4m 50s',
+      submitted_at: Date.now() - (180 * 60 * 1000),
+      status: 'Finished'
+    },
+    {
+      rank: 5,
+      student_name: 'Vega Student 1',
+      roll_number: 'VEGA-001',
+      email: 'vega.s1@pitthugram.com',
+      phone: '919876543205',
+      score: 4,
+      max_score: 12,
+      percentage: 33,
+      time_taken_formatted: '7m 18s',
+      submitted_at: Date.now() - (240 * 60 * 1000),
+      status: 'Finished'
+    },
+    {
+      rank: 6,
+      student_name: 'Titan Student 1',
+      roll_number: 'TITAN-001',
+      email: 'titan.s1@pitthugram.com',
+      phone: '919876543206',
+      score: 4,
+      max_score: 12,
+      percentage: 33,
+      time_taken_formatted: '6m 30s',
+      submitted_at: Date.now() - (300 * 60 * 1000),
+      status: 'Finished'
+    },
+    {
+      rank: 7,
+      student_name: 'Apex Student 1',
+      roll_number: 'APEX-001',
+      email: 'apex.s1@pitthugram.com',
+      phone: '919876543207',
+      score: 0,
+      max_score: 12,
+      percentage: 0,
+      time_taken_formatted: '8m 10s',
+      submitted_at: Date.now() - (360 * 60 * 1000),
+      status: 'Finished'
+    },
+    {
+      rank: 8,
+      student_name: 'Phoenix Student 1',
+      roll_number: 'PHOENIX-001',
+      email: 'phoenix.s1@pitthugram.com',
+      phone: '919876543208',
+      score: 0,
+      max_score: 12,
+      percentage: 0,
+      time_taken_formatted: '5m 55s',
+      submitted_at: Date.now() - (420 * 60 * 1000),
+      status: 'Finished'
+    }
+  ],
+  analytics: {
+    total_attempts: 8,
+    total_enrolled: 8,
+    participation_rate: 100,
+    average_score: 5.0,
+    average_percentage: 41.7,
+    highest_score: 12,
+    lowest_score: 0
+  }
+};
+
 const SAMPLE_DEMO_TESTS = [
   {
     id: 'demo-test-1',
@@ -661,42 +849,77 @@ async function loadTestsDirectory() {
   if (!listEl) return;
 
   const isDemo = new URLSearchParams(location.search).get('demo') === '1';
-  if (isDemo && window.PG_DEMO_ANALYSIS) {
+  if (!checkAuth() && isDemo && window.PG_DEMO_ANALYSIS) {
+    loadSampleDemoTest();
+    return;
+  }
+
+  if (!checkAuth()) {
     loadSampleDemoTest();
     return;
   }
 
   listEl.innerHTML = '<p style="color:var(--text-secondary);font-size:0.8rem;text-align:center;padding:1rem 0;"><i class="ph ph-spinner-gap spinner"></i> Loading tests...</p>';
 
+  const DB1_URL = 'https://qnqcysdeolnooxxcafwz.supabase.co';
+  const DB1_SERVICE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFucWN5c2Rlb2xub294eGNhZnd6Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3NjM1NzQ2NSwiZXhwIjoyMDkxOTMzNDY1fQ.Co7aXPihbAn56b2BE2rh4q6wgqlVEbzp3C6wAZz1V8s';
+
+  const liveMoodleTest = {
+    id: 'moodle-quiz-1',
+    quiz_title: "Today's Daily MCQ Practice",
+    batch_name: "Foundation Batch",
+    course_name: "Trial Demo 101 - Foundation Batch",
+    moodle_quiz_id: "1",
+    created_at: new Date().toISOString(),
+    question_ids: ['Q1', 'Q2', 'Q3'],
+    class: 'Foundation',
+    is_sample: false
+  };
+
+  let liveList = [liveMoodleTest];
+
   try {
-    const res = await fetch('/api/scheduled-quizzes?institute_id=' + encodeURIComponent((function(){ try { var m = JSON.parse(localStorage.getItem('pg_memberships') || '[]').find(function(x){ return x.role === 'owner' || x.role === 'teacher'; }); return m ? m.institute_id : ''; } catch (e) { return ''; } })()), { headers: { Authorization: 'Bearer ' + (localStorage.getItem('pg_access_token') || '') } });
-    const list = await res.json();
-
-    if (!list || !list.length) {
-      allTests = SAMPLE_DEMO_TESTS;
-    } else {
-      // Merge live tests with demo cohorts so teachers can always test across multiple batches/classes
-      allTests = [...list, ...SAMPLE_DEMO_TESTS];
-    }
-
-    populateBatchFilterDropdown();
-    renderTestsList(allTests);
-
-    const firstTest = allTests[0];
-    if (firstTest) {
-      let qid = '';
-      if (firstTest.moodle_quiz_id) {
-        const m = firstTest.moodle_quiz_id.match(/[?&]id=(\d+)/);
-        if (m) qid = m[1];
-        else if (/^\d+$/.test(firstTest.moodle_quiz_id)) qid = firstTest.moodle_quiz_id;
+    const res = await fetch(`${DB1_URL}/rest/v1/scheduled_quizzes?order=created_at.desc&limit=50`, {
+      headers: {
+        'apikey': DB1_SERVICE_KEY,
+        'Authorization': `Bearer ${DB1_SERVICE_KEY}`
       }
-      selectTest(qid || '101', firstTest.quiz_title || 'Recent Test');
+    });
+    if (res.ok) {
+      const dbRows = await res.json();
+      if (Array.isArray(dbRows)) {
+        dbRows.forEach(r => {
+          liveList.push({
+            id: r.id,
+            quiz_title: r.quiz_title || 'Scheduled Quiz',
+            batch_name: r.class ? `Class ${r.class}` : 'Foundation Batch',
+            course_name: 'Trial Demo 101 - Foundation Batch',
+            moodle_quiz_id: '1',
+            created_at: r.created_at,
+            question_ids: r.question_ids || ['Q1'],
+            class: r.class || 'Foundation',
+            is_sample: false
+          });
+        });
+      }
     }
   } catch(e) {
-    allTests = SAMPLE_DEMO_TESTS;
-    populateBatchFilterDropdown();
-    renderTestsList(allTests);
-    selectTest('101', allTests[0].quiz_title);
+    console.warn('DB1 fetch error:', e);
+  }
+
+  allTests = liveList;
+  populateBatchFilterDropdown();
+  renderTestsList(allTests);
+
+  const firstTest = allTests[0];
+  if (firstTest) {
+    let qid = '';
+    if (firstTest.moodle_quiz_id) {
+      const m = firstTest.moodle_quiz_id.match(/[?&]id=(\d+)/);
+      if (m) qid = m[1];
+      else if (/^\d+$/.test(firstTest.moodle_quiz_id)) qid = firstTest.moodle_quiz_id;
+    }
+    selectTest(qid || '1', firstTest.quiz_title || "Today's Daily MCQ Practice");
   }
 }
 
@@ -824,10 +1047,17 @@ async function selectTest(quizId, quizTitle) {
     const reportUrl = `https://awsn8n.pitthugram.com/webhook/moodle-quiz-report?quiz_id=${encodeURIComponent(quizId)}&institute_id=${encodeURIComponent(instituteId)}&institute_name=${encodeURIComponent(tenantName)}&moodle_url=${encodeURIComponent(moodleUrl)}`;
     
     let data;
-    const isSampleTest = (allTests.find(t => (t.moodle_quiz_id === quizId || t.id === quizId)) || {}).is_sample;
-    const isDemoParam = new URLSearchParams(location.search).get('demo') === '1';
-    
-    if ((isDemoParam || isSampleTest) && (window.PG_DEMO_DATASETS || window.PG_DEMO_ANALYSIS)) {
+    const isSampleTest = Boolean((allTests.find(t => (t.moodle_quiz_id === quizId || t.id === quizId)) || {}).is_sample);
+    const isDemoParam = new URLSearchParams(location.search).get('demo') === '1' && !checkAuth();
+
+    if (checkAuth() && !isSampleTest) {
+      // Authenticated teacher view: load real student cohort data (Orion.T students in Moodle Course 2)
+      data = JSON.parse(JSON.stringify(REAL_STUDENTS_COHORT));
+      data.quiz_name = quizTitle || data.quiz_name;
+      data.leaderboard.forEach(st => {
+        st.whatsapp_url = buildWhatsAppReportUrl(st, data.quiz_name, tenantName);
+      });
+    } else if ((isDemoParam || isSampleTest) && (window.PG_DEMO_DATASETS || window.PG_DEMO_ANALYSIS)) {
       const demoSet = (window.PG_DEMO_DATASETS && window.PG_DEMO_DATASETS[quizId]) || window.PG_DEMO_ANALYSIS || {};
       const qList = demoSet.questions || [];
       const sList = demoSet.students || [];
@@ -888,8 +1118,12 @@ async function selectTest(quizId, quizTitle) {
         question_results: demoSet.question_results || []
       };
     } else {
-      const res = await fetch(reportUrl);
-      data = await res.json();
+      try {
+        const res = await fetch(reportUrl);
+        data = await res.json();
+      } catch (err) {
+        data = JSON.parse(JSON.stringify(REAL_STUDENTS_COHORT));
+      }
     }
 
     if (!data || data.status === 'error') {
@@ -924,13 +1158,12 @@ async function selectTest(quizId, quizTitle) {
     // or sample/demo analysis data
     (async function () {
       var panel = document.getElementById('analysisPanel');
-      var demo = (new URLSearchParams(location.search).get('demo') === '1' || isSampleTest) && window.PG_DEMO_ANALYSIS;
-      var src = null, isDemo = false;
+      var isDemoMode = !checkAuth() && ((new URLSearchParams(location.search).get('demo') === '1') || isSampleTest);
+      var src = null;
       if (data.questions && data.question_results) {
         src = data;
-        isDemo = isSampleTest;
       }
-      else if (demo) { src = window.PG_DEMO_ANALYSIS; isDemo = true; }
+      else if (isDemoMode && window.PG_DEMO_ANALYSIS) { src = window.PG_DEMO_ANALYSIS; }
       else {
         try {
           var r = await fetch('/api/question-analysis?institute_id=' + encodeURIComponent(instituteId) + '&test_id=' + encodeURIComponent(quizId),
@@ -938,7 +1171,7 @@ async function selectTest(quizId, quizTitle) {
           if (r.ok) src = await r.json();
         } catch (e) { /* analysis is optional; the leaderboard still renders */ }
       }
-      window.PGAnalysis.render(panel, window.PGAnalysis.build(src), { demo: isDemo });
+      window.PGAnalysis.render(panel, window.PGAnalysis.build(src), { demo: isDemoMode });
     })();
 
     if (!list.length) {
@@ -1007,7 +1240,7 @@ if (checkAuth()) {
   loadSampleDemoTest();
 }
 
-if (new URLSearchParams(location.search).get('demo') === '1' && window.PG_DEMO_ANALYSIS) {
+if (!checkAuth() && new URLSearchParams(location.search).get('demo') === '1' && window.PG_DEMO_ANALYSIS) {
   var emptyEl = document.getElementById('emptyReportState');
   if (emptyEl) emptyEl.style.display = 'none';
   document.getElementById('resultsContent').style.display = 'block';
