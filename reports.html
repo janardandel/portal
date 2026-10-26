@@ -456,6 +456,7 @@
 let allTests = [];
 let activeQuizId = null;
 let activeQuizTitle = '';
+let activeCohortKey = 'orion';
 
 function checkAuth() {
   const token = localStorage.getItem('pg_access_token');
@@ -1035,7 +1036,7 @@ function renderTestsList(items) {
     }
 
     return `
-      <div class="test-card ${isActive ? 'active' : ''}" onclick="selectTest('${targetQuizId}', '${escHtml(q.quiz_title || 'Quiz').replace(/'/g, "\\'")}', '${q.cohort_key || ''}')">
+      <div class="test-card ${isActive ? 'active' : ''}" data-quiz-id="${targetQuizId}" data-quiz-title="${escHtml(q.quiz_title || 'Quiz')}" data-cohort-key="${q.cohort_key || ''}" onclick="selectTest(this.dataset.quizId, this.dataset.quizTitle, this.dataset.cohortKey)">
         <div style="display:flex;align-items:center;justify-content:space-between;gap:0.4rem;margin-bottom:0.25rem;">
           <span style="font-size:0.68rem;font-weight:700;padding:0.15rem 0.45rem;border-radius:99px;background:${badgeColor};text-transform:uppercase;letter-spacing:0.04em;">${escHtml(batchName)}</span>
           <span style="font-size:0.7rem;color:var(--text-muted);"><i class="ph ph-calendar"></i> ${dateStr}</span>
@@ -1118,6 +1119,7 @@ async function selectTest(quizId, quizTitle, cohortKey) {
         } catch (_) { return 'orion'; }
       })();
 
+      activeCohortKey = resolvedCohort;
       data = getCohortReportData(resolvedCohort, quizTitle, tenantName);
     } else if ((isDemoParam || isSampleTest) && (window.PG_DEMO_DATASETS || window.PG_DEMO_ANALYSIS)) {
       const demoSet = (window.PG_DEMO_DATASETS && window.PG_DEMO_DATASETS[quizId]) || window.PG_DEMO_ANALYSIS || {};
@@ -1291,7 +1293,7 @@ async function selectTest(quizId, quizTitle, cohortKey) {
 
 function refreshActiveReport() {
   if (activeQuizId) {
-    selectTest(activeQuizId, activeQuizTitle);
+    selectTest(activeQuizId, activeQuizTitle, activeCohortKey);
   }
 }
 
