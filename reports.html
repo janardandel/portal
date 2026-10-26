@@ -602,13 +602,112 @@ function escHtml(s) {
     .replace(/'/g, '&#39;');
 }
 
-const REAL_STUDENTS_COHORT = {
-  quiz_name: "Today's Daily MCQ Practice",
-  course_name: "Trial Demo 101 - Foundation Batch (JEE / NEET)",
-  question_count: 3,
-  timelimit: 1800,
-  max_score: 12,
-  questions: [
+const COHORTS_DATA = {
+  orion: {
+    key: 'orion',
+    name: 'Cohort Orion',
+    batch_name: 'Cohort Orion',
+    students: [
+      { id: 'orion-s1', roll: 'ORION-001', name: 'Orion Student 1', email: 'orion.s1@pitthugram.com', phone: '919876543201', scores: [4, 4, 4], times: [65, 42, 115] },
+      { id: 'orion-s2', roll: 'ORION-002', name: 'Orion Student 2', email: 'orion.s2@pitthugram.com', phone: '919876543202', scores: [4, 4, 0], times: [85, 70, 157] },
+      { id: 'orion-s3', roll: 'ORION-003', name: 'Orion Student 3', email: 'orion.s3@pitthugram.com', phone: '919876543203', scores: [4, 0, 4], times: [90, 80, 160] },
+      { id: 'orion-s4', roll: 'ORION-004', name: 'Orion Student 4', email: 'orion.s4@pitthugram.com', phone: '919876543204', scores: [0, 4, 0], times: [80, 60, 140] },
+      { id: 'orion-s5', roll: 'ORION-005', name: 'Orion Student 5', email: 'orion.s5@pitthugram.com', phone: '919876543205', scores: [0, 0, 4], times: [95, 110, 175] }
+    ]
+  },
+  cosmo: {
+    key: 'cosmo',
+    name: 'Cohort Cosmo',
+    batch_name: 'Cohort Cosmo',
+    students: [
+      { id: 'cosmo-s1', roll: 'COSMO-001', name: 'Cosmo Student 1', email: 'cosmo.s1@pitthugram.com', phone: '919876543211', scores: [4, 4, 4], times: [60, 50, 120] },
+      { id: 'cosmo-s2', roll: 'COSMO-002', name: 'Cosmo Student 2', email: 'cosmo.s2@pitthugram.com', phone: '919876543212', scores: [4, 4, 0], times: [75, 65, 140] },
+      { id: 'cosmo-s3', roll: 'COSMO-003', name: 'Cosmo Student 3', email: 'cosmo.s3@pitthugram.com', phone: '919876543213', scores: [0, 4, 4], times: [85, 70, 150] },
+      { id: 'cosmo-s4', roll: 'COSMO-004', name: 'Cosmo Student 4', email: 'cosmo.s4@pitthugram.com', phone: '919876543214', scores: [4, 0, 0], times: [90, 85, 160] },
+      { id: 'cosmo-s5', roll: 'COSMO-005', name: 'Cosmo Student 5', email: 'cosmo.s5@pitthugram.com', phone: '919876543215', scores: [0, 0, 4], times: [100, 95, 170] }
+    ]
+  },
+  zenith: {
+    key: 'zenith',
+    name: 'Cohort Zenith',
+    batch_name: 'Cohort Zenith',
+    students: [
+      { id: 'zenith-s1', roll: 'ZENITH-001', name: 'Zenith Student 1', email: 'zenith.s1@pitthugram.com', phone: '919876543221', scores: [4, 4, 4], times: [55, 45, 110] },
+      { id: 'zenith-s2', roll: 'ZENITH-002', name: 'Zenith Student 2', email: 'zenith.s2@pitthugram.com', phone: '919876543222', scores: [4, 0, 4], times: [70, 80, 130] },
+      { id: 'zenith-s3', roll: 'ZENITH-003', name: 'Zenith Student 3', email: 'zenith.s3@pitthugram.com', phone: '919876543223', scores: [0, 4, 4], times: [80, 65, 145] },
+      { id: 'zenith-s4', roll: 'ZENITH-004', name: 'Zenith Student 4', email: 'zenith.s4@pitthugram.com', phone: '919876543224', scores: [0, 4, 0], times: [85, 75, 155] },
+      { id: 'zenith-s5', roll: 'ZENITH-005', name: 'Zenith Student 5', email: 'zenith.s5@pitthugram.com', phone: '919876543225', scores: [0, 0, 0], times: [90, 90, 160] }
+    ]
+  },
+  vega: {
+    key: 'vega',
+    name: 'Cohort Vega',
+    batch_name: 'Cohort Vega',
+    students: [
+      { id: 'vega-s1', roll: 'VEGA-001', name: 'Vega Student 1', email: 'vega.s1@pitthugram.com', phone: '919876543231', scores: [4, 4, 0], times: [70, 60, 130] },
+      { id: 'vega-s2', roll: 'VEGA-002', name: 'Vega Student 2', email: 'vega.s2@pitthugram.com', phone: '919876543232', scores: [4, 0, 4], times: [75, 80, 140] },
+      { id: 'vega-s3', roll: 'VEGA-003', name: 'Vega Student 3', email: 'vega.s3@pitthugram.com', phone: '919876543233', scores: [0, 4, 0], times: [80, 70, 150] },
+      { id: 'vega-s4', roll: 'VEGA-004', name: 'Vega Student 4', email: 'vega.s4@pitthugram.com', phone: '919876543234', scores: [0, 0, 4], times: [85, 90, 160] },
+      { id: 'vega-s5', roll: 'VEGA-005', name: 'Vega Student 5', email: 'vega.s5@pitthugram.com', phone: '919876543235', scores: [0, 0, 0], times: [95, 100, 170] }
+    ]
+  },
+  titan: {
+    key: 'titan',
+    name: 'Cohort Titan',
+    batch_name: 'Cohort Titan',
+    students: [
+      { id: 'titan-s1', roll: 'TITAN-001', name: 'Titan Student 1', email: 'titan.s1@pitthugram.com', phone: '919876543241', scores: [4, 4, 4], times: [60, 50, 115] },
+      { id: 'titan-s2', roll: 'TITAN-002', name: 'Titan Student 2', email: 'titan.s2@pitthugram.com', phone: '919876543242', scores: [4, 4, 0], times: [70, 65, 135] },
+      { id: 'titan-s3', roll: 'TITAN-003', name: 'Titan Student 3', email: 'titan.s3@pitthugram.com', phone: '919876543243', scores: [0, 4, 0], times: [80, 75, 145] },
+      { id: 'titan-s4', roll: 'TITAN-004', name: 'Titan Student 4', email: 'titan.s4@pitthugram.com', phone: '919876543244', scores: [4, 0, 0], times: [85, 80, 150] },
+      { id: 'titan-s5', roll: 'TITAN-005', name: 'Titan Student 5', email: 'titan.s5@pitthugram.com', phone: '919876543245', scores: [0, 0, 0], times: [90, 95, 165] }
+    ]
+  },
+  apex: {
+    key: 'apex',
+    name: 'Cohort Apex',
+    batch_name: 'Cohort Apex',
+    students: [
+      { id: 'apex-s1', roll: 'APEX-001', name: 'Apex Student 1', email: 'apex.s1@pitthugram.com', phone: '919876543251', scores: [4, 4, 0], times: [65, 55, 125] },
+      { id: 'apex-s2', roll: 'APEX-002', name: 'Apex Student 2', email: 'apex.s2@pitthugram.com', phone: '919876543252', scores: [0, 4, 4], times: [75, 65, 140] },
+      { id: 'apex-s3', roll: 'APEX-003', name: 'Apex Student 3', email: 'apex.s3@pitthugram.com', phone: '919876543253', scores: [4, 0, 0], times: [85, 75, 150] },
+      { id: 'apex-s4', roll: 'APEX-004', name: 'Apex Student 4', email: 'apex.s4@pitthugram.com', phone: '919876543254', scores: [0, 0, 4], times: [90, 85, 160] },
+      { id: 'apex-s5', roll: 'APEX-005', name: 'Apex Student 5', email: 'apex.s5@pitthugram.com', phone: '919876543255', scores: [0, 0, 0], times: [95, 100, 170] }
+    ]
+  },
+  phoenix: {
+    key: 'phoenix',
+    name: 'Cohort Phoenix',
+    batch_name: 'Cohort Phoenix',
+    students: [
+      { id: 'phoenix-s1', roll: 'PHOENIX-001', name: 'Phoenix Student 1', email: 'phoenix.s1@pitthugram.com', phone: '919876543261', scores: [4, 4, 4], times: [55, 48, 110] },
+      { id: 'phoenix-s2', roll: 'PHOENIX-002', name: 'Phoenix Student 2', email: 'phoenix.s2@pitthugram.com', phone: '919876543262', scores: [4, 4, 0], times: [68, 62, 130] },
+      { id: 'phoenix-s3', roll: 'PHOENIX-003', name: 'Phoenix Student 3', email: 'phoenix.s3@pitthugram.com', phone: '919876543263', scores: [4, 0, 4], times: [75, 78, 145] },
+      { id: 'phoenix-s4', roll: 'PHOENIX-004', name: 'Phoenix Student 4', email: 'phoenix.s4@pitthugram.com', phone: '919876543264', scores: [0, 4, 0], times: [82, 70, 150] },
+      { id: 'phoenix-s5', roll: 'PHOENIX-005', name: 'Phoenix Student 5', email: 'phoenix.s5@pitthugram.com', phone: '919876543265', scores: [0, 0, 0], times: [90, 95, 165] }
+    ]
+  }
+};
+
+function getCohortReportData(cohortKey, quizTitle, tenantName) {
+  const normKey = (cohortKey || '').toLowerCase();
+  let studentPool = [];
+  let cohortName = 'Cohort Orion';
+
+  if (normKey === 'all' || normKey === 'all cohorts') {
+    cohortName = 'All Cohorts (Foundation Batch)';
+    Object.values(COHORTS_DATA).forEach(c => {
+      studentPool.push(...c.students);
+    });
+  } else if (COHORTS_DATA[normKey]) {
+    cohortName = COHORTS_DATA[normKey].name;
+    studentPool = [...COHORTS_DATA[normKey].students];
+  } else {
+    cohortName = 'Cohort Orion';
+    studentPool = [...COHORTS_DATA.orion.students];
+  }
+
+  const questions = [
     {
       id: 'Q1',
       title: 'Argument of Complex Number',
@@ -639,156 +738,86 @@ const REAL_STUDENTS_COHORT = {
       difficulty: 'Hard',
       max_marks: 4
     }
-  ],
-  question_results: [
-    { question_id: 'Q1', student_id: 'orion-s1', student_name: 'Orion Student 1', roll_number: 'ORION-001', marks: 4, status: 'correct', time_seconds: 65 },
-    { question_id: 'Q2', student_id: 'orion-s1', student_name: 'Orion Student 1', roll_number: 'ORION-001', marks: 4, status: 'correct', time_seconds: 42 },
-    { question_id: 'Q3', student_id: 'orion-s1', student_name: 'Orion Student 1', roll_number: 'ORION-001', marks: 4, status: 'correct', time_seconds: 115 },
+  ];
 
-    { question_id: 'Q1', student_id: 'orion-s2', student_name: 'Orion Student 2', roll_number: 'ORION-002', marks: 4, status: 'correct', time_seconds: 85 },
-    { question_id: 'Q2', student_id: 'orion-s2', student_name: 'Orion Student 2', roll_number: 'ORION-002', marks: 4, status: 'correct', time_seconds: 70 },
-    { question_id: 'Q3', student_id: 'orion-s2', student_name: 'Orion Student 2', roll_number: 'ORION-002', marks: 0, status: 'wrong', time_seconds: 157 },
+  const maxScore = 12;
+  const questionResults = [];
+  let totalScoreSum = 0;
+  let highestScore = 0;
+  let lowestScore = maxScore;
 
-    { question_id: 'Q1', student_id: 'cosmo-s1', student_name: 'Cosmo Student 1', roll_number: 'COSMO-001', marks: 4, status: 'correct', time_seconds: 95 },
-    { question_id: 'Q2', student_id: 'cosmo-s1', student_name: 'Cosmo Student 1', roll_number: 'COSMO-001', marks: 0, status: 'wrong', time_seconds: 80 },
-    { question_id: 'Q3', student_id: 'cosmo-s1', student_name: 'Cosmo Student 1', roll_number: 'COSMO-001', marks: 4, status: 'correct', time_seconds: 190 },
+  const rankedStudents = studentPool.map((s, idx) => {
+    const sScore = (s.scores[0] || 0) + (s.scores[1] || 0) + (s.scores[2] || 0);
+    totalScoreSum += sScore;
+    if (sScore > highestScore) highestScore = sScore;
+    if (sScore < lowestScore) lowestScore = sScore;
 
-    { question_id: 'Q1', student_id: 'zenith-s1', student_name: 'Zenith Student 1', roll_number: 'ZENITH-001', marks: 0, status: 'wrong', time_seconds: 80 },
-    { question_id: 'Q2', student_id: 'zenith-s1', student_name: 'Zenith Student 1', roll_number: 'ZENITH-001', marks: 4, status: 'correct', time_seconds: 60 },
-    { question_id: 'Q3', student_id: 'zenith-s1', student_name: 'Zenith Student 1', roll_number: 'ZENITH-001', marks: 0, status: 'wrong', time_seconds: 150 },
+    const totalSeconds = (s.times[0] || 60) + (s.times[1] || 60) + (s.times[2] || 60);
+    const m = Math.floor(totalSeconds / 60);
+    const sec = totalSeconds % 60;
+    const timeFormatted = `${m}m ${sec < 10 ? '0' + sec : sec}s`;
 
-    { question_id: 'Q1', student_id: 'vega-s1', student_name: 'Vega Student 1', roll_number: 'VEGA-001', marks: 0, status: 'wrong', time_seconds: 110 },
-    { question_id: 'Q2', student_id: 'vega-s1', student_name: 'Vega Student 1', roll_number: 'VEGA-001', marks: 4, status: 'correct', time_seconds: 95 },
-    { question_id: 'Q3', student_id: 'vega-s1', student_name: 'Vega Student 1', roll_number: 'VEGA-001', marks: 0, status: 'wrong', time_seconds: 233 },
+    questions.forEach((q, qIdx) => {
+      const qMark = s.scores[qIdx] || 0;
+      questionResults.push({
+        question_id: q.id,
+        student_id: s.id,
+        student_name: s.name,
+        roll_number: s.roll,
+        marks: qMark,
+        status: qMark > 0 ? 'correct' : 'wrong',
+        time_seconds: s.times[qIdx] || 60
+      });
+    });
 
-    { question_id: 'Q1', student_id: 'titan-s1', student_name: 'Titan Student 1', roll_number: 'TITAN-001', marks: 0, status: 'wrong', time_seconds: 100 },
-    { question_id: 'Q2', student_id: 'titan-s1', student_name: 'Titan Student 1', roll_number: 'TITAN-001', marks: 0, status: 'wrong', time_seconds: 110 },
-    { question_id: 'Q3', student_id: 'titan-s1', student_name: 'Titan Student 1', roll_number: 'TITAN-001', marks: 4, status: 'correct', time_seconds: 180 },
+    const pct = Math.round((sScore / maxScore) * 1000) / 10;
+    return {
+      student_id: s.id,
+      student_name: s.name,
+      name: s.name,
+      roll_number: s.roll,
+      email: s.email,
+      phone: s.phone,
+      score: sScore,
+      max_score: maxScore,
+      percentage: pct,
+      time_taken_formatted: timeFormatted,
+      submitted_at: Date.now() - ((idx + 1) * 35 * 60 * 1000),
+      status: 'Finished'
+    };
+  });
 
-    { question_id: 'Q1', student_id: 'apex-s1', student_name: 'Apex Student 1', roll_number: 'APEX-001', marks: 0, status: 'wrong', time_seconds: 140 },
-    { question_id: 'Q2', student_id: 'apex-s1', student_name: 'Apex Student 1', roll_number: 'APEX-001', marks: 0, status: 'wrong', time_seconds: 160 },
-    { question_id: 'Q3', student_id: 'apex-s1', student_name: 'Apex Student 1', roll_number: 'APEX-001', marks: 0, status: 'wrong', time_seconds: 190 },
+  rankedStudents.sort((a, b) => b.score - a.score);
+  rankedStudents.forEach((st, idx) => {
+    st.rank = idx + 1;
+    st.whatsapp_url = buildWhatsAppReportUrl(st, quizTitle || "Today's Daily MCQ Practice", tenantName);
+  });
 
-    { question_id: 'Q1', student_id: 'phoenix-s1', student_name: 'Phoenix Student 1', roll_number: 'PHOENIX-001', marks: 0, status: 'wrong', time_seconds: 90 },
-    { question_id: 'Q2', student_id: 'phoenix-s1', student_name: 'Phoenix Student 1', roll_number: 'PHOENIX-001', marks: 0, status: 'wrong', time_seconds: 115 },
-    { question_id: 'Q3', student_id: 'phoenix-s1', student_name: 'Phoenix Student 1', roll_number: 'PHOENIX-001', marks: 0, status: 'wrong', time_seconds: 150 }
-  ],
-  leaderboard: [
-    {
-      rank: 1,
-      student_name: 'Orion Student 1',
-      roll_number: 'ORION-001',
-      email: 'orion.s1@pitthugram.com',
-      phone: '919876543201',
-      score: 12,
-      max_score: 12,
-      percentage: 100,
-      time_taken_formatted: '3m 42s',
-      submitted_at: Date.now() - (25 * 60 * 1000),
-      status: 'Finished'
-    },
-    {
-      rank: 2,
-      student_name: 'Orion Student 2',
-      roll_number: 'ORION-002',
-      email: 'orion.s2@pitthugram.com',
-      phone: '919876543202',
-      score: 8,
-      max_score: 12,
-      percentage: 67,
-      time_taken_formatted: '5m 12s',
-      submitted_at: Date.now() - (60 * 60 * 1000),
-      status: 'Finished'
-    },
-    {
-      rank: 3,
-      student_name: 'Cosmo Student 1',
-      roll_number: 'COSMO-001',
-      email: 'cosmo.s1@pitthugram.com',
-      phone: '919876543203',
-      score: 8,
-      max_score: 12,
-      percentage: 67,
-      time_taken_formatted: '6m 05s',
-      submitted_at: Date.now() - (120 * 60 * 1000),
-      status: 'Finished'
-    },
-    {
-      rank: 4,
-      student_name: 'Zenith Student 1',
-      roll_number: 'ZENITH-001',
-      email: 'zenith.s1@pitthugram.com',
-      phone: '919876543204',
-      score: 4,
-      max_score: 12,
-      percentage: 33,
-      time_taken_formatted: '4m 50s',
-      submitted_at: Date.now() - (180 * 60 * 1000),
-      status: 'Finished'
-    },
-    {
-      rank: 5,
-      student_name: 'Vega Student 1',
-      roll_number: 'VEGA-001',
-      email: 'vega.s1@pitthugram.com',
-      phone: '919876543205',
-      score: 4,
-      max_score: 12,
-      percentage: 33,
-      time_taken_formatted: '7m 18s',
-      submitted_at: Date.now() - (240 * 60 * 1000),
-      status: 'Finished'
-    },
-    {
-      rank: 6,
-      student_name: 'Titan Student 1',
-      roll_number: 'TITAN-001',
-      email: 'titan.s1@pitthugram.com',
-      phone: '919876543206',
-      score: 4,
-      max_score: 12,
-      percentage: 33,
-      time_taken_formatted: '6m 30s',
-      submitted_at: Date.now() - (300 * 60 * 1000),
-      status: 'Finished'
-    },
-    {
-      rank: 7,
-      student_name: 'Apex Student 1',
-      roll_number: 'APEX-001',
-      email: 'apex.s1@pitthugram.com',
-      phone: '919876543207',
-      score: 0,
-      max_score: 12,
-      percentage: 0,
-      time_taken_formatted: '8m 10s',
-      submitted_at: Date.now() - (360 * 60 * 1000),
-      status: 'Finished'
-    },
-    {
-      rank: 8,
-      student_name: 'Phoenix Student 1',
-      roll_number: 'PHOENIX-001',
-      email: 'phoenix.s1@pitthugram.com',
-      phone: '919876543208',
-      score: 0,
-      max_score: 12,
-      percentage: 0,
-      time_taken_formatted: '5m 55s',
-      submitted_at: Date.now() - (420 * 60 * 1000),
-      status: 'Finished'
+  const count = rankedStudents.length;
+  const avgScore = count ? (Math.round((totalScoreSum / count) * 10) / 10) : 0;
+  const avgPct = maxScore ? (Math.round((avgScore / maxScore) * 1000) / 10) : 0;
+
+  return {
+    quiz_name: quizTitle || "Today's Daily MCQ Practice",
+    course_name: `Trial Demo 101 - ${cohortName}`,
+    cohort_name: cohortName,
+    question_count: 3,
+    timelimit: 1800,
+    max_score: maxScore,
+    questions: questions,
+    question_results: questionResults,
+    leaderboard: rankedStudents,
+    analytics: {
+      total_attempts: count,
+      total_enrolled: count,
+      participation_rate: 100,
+      average_score: avgScore,
+      average_percentage: avgPct,
+      highest_score: count ? highestScore : 0,
+      lowest_score: count ? lowestScore : 0
     }
-  ],
-  analytics: {
-    total_attempts: 8,
-    total_enrolled: 8,
-    participation_rate: 100,
-    average_score: 5.0,
-    average_percentage: 41.7,
-    highest_score: 12,
-    lowest_score: 0
-  }
-};
+  };
+}
 
 const SAMPLE_DEMO_TESTS = [
   {
@@ -864,19 +893,29 @@ async function loadTestsDirectory() {
   const DB1_URL = 'https://qnqcysdeolnooxxcafwz.supabase.co';
   const DB1_SERVICE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFucWN5c2Rlb2xub294eGNhZnd6Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3NjM1NzQ2NSwiZXhwIjoyMDkxOTMzNDY1fQ.Co7aXPihbAn56b2BE2rh4q6wgqlVEbzp3C6wAZz1V8s';
 
-  const liveMoodleTest = {
-    id: 'moodle-quiz-1',
-    quiz_title: "Today's Daily MCQ Practice",
-    batch_name: "Foundation Batch",
-    course_name: "Trial Demo 101 - Foundation Batch",
-    moodle_quiz_id: "1",
+  const cohortsList = [
+    { key: 'orion', name: 'Cohort Orion', title: "Today's Daily MCQ Practice (Cohort Orion)" },
+    { key: 'cosmo', name: 'Cohort Cosmo', title: "Today's Daily MCQ Practice (Cohort Cosmo)" },
+    { key: 'zenith', name: 'Cohort Zenith', title: "Today's Daily MCQ Practice (Cohort Zenith)" },
+    { key: 'vega', name: 'Cohort Vega', title: "Today's Daily MCQ Practice (Cohort Vega)" },
+    { key: 'titan', name: 'Cohort Titan', title: "Today's Daily MCQ Practice (Cohort Titan)" },
+    { key: 'apex', name: 'Cohort Apex', title: "Today's Daily MCQ Practice (Cohort Apex)" },
+    { key: 'phoenix', name: 'Cohort Phoenix', title: "Today's Daily MCQ Practice (Cohort Phoenix)" },
+    { key: 'all', name: 'All Cohorts', title: "Today's Daily MCQ Practice (All Cohorts)" }
+  ];
+
+  let liveList = cohortsList.map(c => ({
+    id: `moodle-quiz-1-${c.key}`,
+    quiz_title: c.title,
+    batch_name: c.name,
+    cohort_key: c.key,
+    course_name: `Trial Demo 101 - ${c.name}`,
+    moodle_quiz_id: `1-${c.key}`,
     created_at: new Date().toISOString(),
     question_ids: ['Q1', 'Q2', 'Q3'],
-    class: 'Foundation',
+    class: c.name,
     is_sample: false
-  };
-
-  let liveList = [liveMoodleTest];
+  }));
 
   try {
     const res = await fetch(`${DB1_URL}/rest/v1/scheduled_quizzes?order=created_at.desc&limit=50`, {
@@ -894,7 +933,8 @@ async function loadTestsDirectory() {
             quiz_title: r.quiz_title || 'Scheduled Quiz',
             batch_name: r.class ? `Class ${r.class}` : 'Foundation Batch',
             course_name: 'Trial Demo 101 - Foundation Batch',
-            moodle_quiz_id: '1',
+            moodle_quiz_id: '1-orion',
+            cohort_key: 'orion',
             created_at: r.created_at,
             question_ids: r.question_ids || ['Q1'],
             class: r.class || 'Foundation',
@@ -913,13 +953,7 @@ async function loadTestsDirectory() {
 
   const firstTest = allTests[0];
   if (firstTest) {
-    let qid = '';
-    if (firstTest.moodle_quiz_id) {
-      const m = firstTest.moodle_quiz_id.match(/[?&]id=(\d+)/);
-      if (m) qid = m[1];
-      else if (/^\d+$/.test(firstTest.moodle_quiz_id)) qid = firstTest.moodle_quiz_id;
-    }
-    selectTest(qid || '1', firstTest.quiz_title || "Today's Daily MCQ Practice");
+    selectTest(firstTest.moodle_quiz_id || '1-orion', firstTest.quiz_title, firstTest.cohort_key || 'orion');
   }
 }
 
@@ -928,6 +962,13 @@ function getTestBatchName(q) {
   if (q.cohort_name) return q.cohort_name;
   if (q.course_name) return q.course_name;
   const title = (q.quiz_title || '').toLowerCase();
+  if (title.includes('orion')) return 'Cohort Orion';
+  if (title.includes('cosmo')) return 'Cohort Cosmo';
+  if (title.includes('zenith')) return 'Cohort Zenith';
+  if (title.includes('vega')) return 'Cohort Vega';
+  if (title.includes('titan')) return 'Cohort Titan';
+  if (title.includes('apex')) return 'Cohort Apex';
+  if (title.includes('phoenix')) return 'Cohort Phoenix';
   if (title.includes('jee evening') || title.includes('evening batch')) return 'JEE Evening';
   if (title.includes('jee morning') || title.includes('morning batch')) return 'JEE Morning';
   if (title.includes('neet droppers') || title.includes('neet dropper')) return 'NEET Droppers';
@@ -965,7 +1006,7 @@ function renderTestsList(items) {
     if (q.moodle_quiz_id) {
       const m = q.moodle_quiz_id.match(/[?&]id=(\d+)/);
       if (m) qid = m[1];
-      else if (/^\d+$/.test(q.moodle_quiz_id)) qid = q.moodle_quiz_id;
+      else if (/^\d+/.test(q.moodle_quiz_id)) qid = q.moodle_quiz_id;
     }
     const targetQuizId = qid || '13';
     const isActive = activeQuizId === targetQuizId;
@@ -974,23 +1015,34 @@ function renderTestsList(items) {
     const batchName = getTestBatchName(q);
 
     let badgeColor = 'rgba(59,130,246,0.15);color:#60a5fa;border:1px solid rgba(59,130,246,0.3)';
-    if (batchName.toLowerCase().includes('neet')) {
-      badgeColor = 'rgba(34,197,94,0.15);color:#4ade80;border:1px solid rgba(34,197,94,0.3)';
-    } else if (batchName.toLowerCase().includes('evening')) {
-      badgeColor = 'rgba(234,179,8,0.15);color:#facc15;border:1px solid rgba(234,179,8,0.3)';
-    } else if (batchName.toLowerCase().includes('jee')) {
+    const bLower = batchName.toLowerCase();
+    if (bLower.includes('orion')) {
       badgeColor = 'rgba(168,85,247,0.15);color:#c084fc;border:1px solid rgba(168,85,247,0.3)';
+    } else if (bLower.includes('cosmo')) {
+      badgeColor = 'rgba(56,189,248,0.15);color:#38bdf8;border:1px solid rgba(56,189,248,0.3)';
+    } else if (bLower.includes('zenith')) {
+      badgeColor = 'rgba(34,197,94,0.15);color:#4ade80;border:1px solid rgba(34,197,94,0.3)';
+    } else if (bLower.includes('vega')) {
+      badgeColor = 'rgba(249,115,22,0.15);color:#fb923c;border:1px solid rgba(249,115,22,0.3)';
+    } else if (bLower.includes('titan')) {
+      badgeColor = 'rgba(239,68,68,0.15);color:#f87171;border:1px solid rgba(239,68,68,0.3)';
+    } else if (bLower.includes('apex')) {
+      badgeColor = 'rgba(139,92,246,0.15);color:#a78bfa;border:1px solid rgba(139,92,246,0.3)';
+    } else if (bLower.includes('phoenix')) {
+      badgeColor = 'rgba(234,179,8,0.15);color:#facc15;border:1px solid rgba(234,179,8,0.3)';
+    } else if (bLower.includes('neet')) {
+      badgeColor = 'rgba(34,197,94,0.15);color:#4ade80;border:1px solid rgba(34,197,94,0.3)';
     }
 
     return `
-      <div class="test-card ${isActive ? 'active' : ''}" onclick="selectTest('${targetQuizId}', '${escHtml(q.quiz_title || 'Quiz').replace(/'/g, "\\'")}')">
+      <div class="test-card ${isActive ? 'active' : ''}" onclick="selectTest('${targetQuizId}', '${escHtml(q.quiz_title || 'Quiz').replace(/'/g, "\\'")}', '${q.cohort_key || ''}')">
         <div style="display:flex;align-items:center;justify-content:space-between;gap:0.4rem;margin-bottom:0.25rem;">
           <span style="font-size:0.68rem;font-weight:700;padding:0.15rem 0.45rem;border-radius:99px;background:${badgeColor};text-transform:uppercase;letter-spacing:0.04em;">${escHtml(batchName)}</span>
           <span style="font-size:0.7rem;color:var(--text-muted);"><i class="ph ph-calendar"></i> ${dateStr}</span>
         </div>
         <div class="test-card-title">${escHtml(q.quiz_title || 'Scheduled Quiz')}</div>
         <div class="test-card-meta">
-          <span><i class="ph ph-graduation-cap"></i> Class ${escHtml(q.class || '11')}</span>
+          <span><i class="ph ph-graduation-cap"></i> ${escHtml(q.class || 'Foundation')}</span>
           <span><i class="ph ph-list-checks"></i> ${qCount} Qs</span>
         </div>
       </div>
@@ -1011,7 +1063,7 @@ function filterTestList() {
   renderTestsList(filtered);
 }
 
-async function selectTest(quizId, quizTitle) {
+async function selectTest(quizId, quizTitle, cohortKey) {
   activeQuizId = quizId;
   activeQuizTitle = quizTitle;
   renderTestsList(allTests);
@@ -1051,12 +1103,22 @@ async function selectTest(quizId, quizTitle) {
     const isDemoParam = new URLSearchParams(location.search).get('demo') === '1' && !checkAuth();
 
     if (checkAuth() && !isSampleTest) {
-      // Authenticated teacher view: load real student cohort data (Orion.T students in Moodle Course 2)
-      data = JSON.parse(JSON.stringify(REAL_STUDENTS_COHORT));
-      data.quiz_name = quizTitle || data.quiz_name;
-      data.leaderboard.forEach(st => {
-        st.whatsapp_url = buildWhatsAppReportUrl(st, data.quiz_name, tenantName);
-      });
+      // Authenticated teacher view: resolve active cohort (defaults to Orion for Orion.T)
+      const resolvedCohort = cohortKey || (allTests.find(t => (t.moodle_quiz_id === quizId || t.id === quizId)) || {}).cohort_key || (function(){
+        try {
+          const u = JSON.parse(localStorage.getItem('pg_user') || '{}');
+          const ident = (u.email || u.username || '').toLowerCase();
+          if (ident.includes('cosmo')) return 'cosmo';
+          if (ident.includes('zenith')) return 'zenith';
+          if (ident.includes('vega')) return 'vega';
+          if (ident.includes('titan')) return 'titan';
+          if (ident.includes('apex')) return 'apex';
+          if (ident.includes('phoenix')) return 'phoenix';
+          return 'orion';
+        } catch (_) { return 'orion'; }
+      })();
+
+      data = getCohortReportData(resolvedCohort, quizTitle, tenantName);
     } else if ((isDemoParam || isSampleTest) && (window.PG_DEMO_DATASETS || window.PG_DEMO_ANALYSIS)) {
       const demoSet = (window.PG_DEMO_DATASETS && window.PG_DEMO_DATASETS[quizId]) || window.PG_DEMO_ANALYSIS || {};
       const qList = demoSet.questions || [];
